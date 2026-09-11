@@ -1,0 +1,36 @@
+1. Only Admin have access to add the user not everyone can create an account.
+2. Like we Had in our Company under different departments e.g HR, SAFETY, MAINTENANCE, PRODUCTION, QUALITY, DESIGN , DEVELOPMENT, IT , AI, CENTRAL PROCESSING ENGINEERING, STORE, DISPATCH etc.
+like some video are mandotory to watch for ALL departments, some video where admin upload required only Particular Watch and can see thats videos- Preapred a plan like we decided we like make a top of domain when user admin create that time we need to selection for the departments - recommend make
+3. When Particular User how much time they spend of particular video and certification is provide needed for not as selection from admin and like all certification need mentioned like you have successfully completion of training like
+
+
+
+create a Admin
+cd "c:\Users\vivek\Documents\Office project\learning_app"
+node scripts/create-admin.js --email admin@yourcompany.com --password YourPassword123
+
+# Create admin WITH department
+node scripts/create-admin.js --email admin@company.com --password Secret123 --department Maintenance
+
+# Create employee with department
+node scripts/create-admin.js --email emp@company.com --password Secret123 --role employee --department "Quality Control"
+
+
+
+🏢  Available Departments:
+
+    1.  HR
+    2.  SAFETY
+    3.  MAINTENANCE
+    4.  PRODUCTION
+    5.  QUALITY
+    6.  DESIGN
+    7.  DEVELOPMENT
+    8.  IT
+    9.  AI
+   10.  CENTRAL_PROCESSING_ENGINEERING
+   11.  STORE
+   12.  DISPATCH
+
+   Usage example:
+   node scripts/create-admin.js --email x@y.com --password pass123 --department MAINTENANCE
