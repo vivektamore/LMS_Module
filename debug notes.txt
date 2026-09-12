@@ -1,0 +1,6 @@
+1. Watch calculate and display to the admin how there users has there video watched.
+2. in video we have provided a quiz but when the quiz we correct option choose some aniamtion like correct answer banner or wrong answer banner should diplay need to correct the ui 
+3. Im Card time time how much tutorial taken which we cant see.
+4. once we started then the lecture should be in In progress
+5. when we print certificate the admin also has access to print the certificate of there user.
+
