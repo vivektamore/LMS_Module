@@ -1,7 +1,10 @@
 -- ============================================================================
--- LEARNING APP — Final MySQL 8.0+ Database Schema
--- Tables: 11 | Engine: InnoDB | Charset: utf8mb4
--- Run this file on a fresh MySQL server to set up the full database.
+-- LEARNING APP — PRODUCTION MYSQL SCHEMA
+-- Target Engine: MySQL 8.0+ | Engine: InnoDB | Charset: utf8mb4
+-- Tables: 11 | Purpose: Server Deployment & Initial Setup
+-- 
+-- Run on your production MySQL server:
+--   mysql -u root -p < db/final_schema_server.sql
 -- ============================================================================
 
 CREATE DATABASE IF NOT EXISTS learning_app_db
@@ -9,6 +12,8 @@ CREATE DATABASE IF NOT EXISTS learning_app_db
   COLLATE utf8mb4_unicode_ci;
 
 USE learning_app_db;
+
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================================
 -- TABLE 1: users
@@ -19,9 +24,9 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash   VARCHAR(255)                         NOT NULL,
   role            ENUM('admin', 'employee', 'student') NOT NULL DEFAULT 'employee',
   department      ENUM(
-                    'HR','SAFETY','MAINTENANCE','PRODUCTION','QUALITY',
-                    'DESIGN','DEVELOPMENT','IT','AI',
-                    'CENTRAL_PROCESSING_ENGINEERING','STORE','DISPATCH'
+                    'HR', 'SAFETY', 'MAINTENANCE', 'PRODUCTION', 'QUALITY',
+                    'DESIGN', 'DEVELOPMENT', 'IT', 'AI',
+                    'CENTRAL_PROCESSING_ENGINEERING', 'STORE', 'DISPATCH'
                   )                                    NULL,
   last_sign_in_at DATETIME                             NULL,
   created_at      DATETIME                             NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -56,7 +61,7 @@ CREATE TABLE IF NOT EXISTS courses (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- TABLE 4: course_departments (links courses to specific departments)
+-- TABLE 4: course_departments (Visibility mapping for specific departments)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS course_departments (
   course_id  VARCHAR(36) NOT NULL,
@@ -94,7 +99,7 @@ CREATE TABLE IF NOT EXISTS lessons (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- TABLE 7: lesson_quizzes (in-video quizzes)
+-- TABLE 7: lesson_quizzes (In-video checkpoint quizzes with anti-skip protection)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS lesson_quizzes (
   id            VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -108,7 +113,7 @@ CREATE TABLE IF NOT EXISTS lesson_quizzes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- TABLE 8: enrollments (Many-to-Many: users <-> courses)
+-- TABLE 8: enrollments (User course enrollments)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS enrollments (
   id           VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -122,7 +127,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- TABLE 9: lesson_progress (per-user per-lesson completion tracking)
+-- TABLE 9: lesson_progress (Lesson completion & playback tracking)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS lesson_progress (
   id                   VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -138,7 +143,7 @@ CREATE TABLE IF NOT EXISTS lesson_progress (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- TABLE 10: video_watch_time (exact seconds watched per user per lesson)
+-- TABLE 10: video_watch_time (Exact second-by-second watch tracking)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS video_watch_time (
   id              VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -153,7 +158,7 @@ CREATE TABLE IF NOT EXISTS video_watch_time (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- TABLE 11: certificates (auto-issued on course completion)
+-- TABLE 11: certificates (Issued upon 100% course completion)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS certificates (
   id        VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -166,7 +171,7 @@ CREATE TABLE IF NOT EXISTS certificates (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- INDEXES (for performance)
+-- PERFORMANCE INDEXES
 -- ============================================================================
 CREATE INDEX idx_courses_category_id          ON courses(category_id);
 CREATE INDEX idx_courses_created_by           ON courses(created_by);
@@ -183,36 +188,6 @@ CREATE INDEX idx_watch_time_lesson_id         ON video_watch_time(lesson_id);
 CREATE INDEX idx_certificates_user_id         ON certificates(user_id);
 CREATE INDEX idx_certificates_course_id       ON certificates(course_id);
 
--- ============================================================================
--- SEED DATA — Default Admin & Categories
--- ============================================================================
+SET FOREIGN_KEY_CHECKS = 1;
 
--- Default Admin User (Password: Admin@123)
-INSERT INTO users (id, email, password_hash, role)
-VALUES (
-  '11111111-1111-1111-1111-111111111111',
-  'admin@example.com',
-  '$2a$10$7R.Z0w0B0N.kY6mY5vY7u.h2X9Q1u4A2Z8wY6m7R.Z0w0B0N.kY6',
-  'admin'
-)
-ON DUPLICATE KEY UPDATE role = 'admin';
-
--- Default Employee User (Password: Employee@123)
-INSERT INTO users (id, email, password_hash, role)
-VALUES (
-  '22222222-2222-2222-2222-222222222222',
-  'employee@example.com',
-  '$2a$10$7R.Z0w0B0N.kY6mY5vY7u.h2X9Q1u4A2Z8wY6m7R.Z0w0B0N.kY6',
-  'employee'
-)
-ON DUPLICATE KEY UPDATE role = 'employee';
-
--- Default Categories
-INSERT INTO categories (id, name, slug) VALUES
-  ('cat-1111-1111-1111', 'Hydraulics',                    'hydraulics'),
-  ('cat-2222-2222-2222', 'Pneumatics',                    'pneumatics'),
-  ('cat-3333-3333-3333', 'PLC Automation',                'plc'),
-  ('cat-4444-4444-4444', 'Standard Operating Procedures', 'sop')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
-
-SELECT 'Learning App DB setup complete!' AS status;
+SELECT 'Production Database Schema initialized successfully!' AS Status;

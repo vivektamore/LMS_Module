@@ -11,7 +11,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3000,           // The port you want the app to run on
-        ALLOW_ADMIN_BYPASS: 'true'
+        ALLOW_ADMIN_BYPASS: 'false'
       }
     }
   ]

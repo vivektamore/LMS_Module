@@ -1,17 +1,26 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { jwtVerify } from 'jose';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'learning_app_jwt_secret_key_change_in_production';
+
+async function verifyToken(token: string): Promise<boolean> {
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    await jwtVerify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function proxy(request: NextRequest) {
-  const response = NextResponse.next({ request });
-
-  // Get local JWT auth token from cookies
   const token = request.cookies.get('token')?.value;
-  const user = token ? verifyToken(token) : null;
+  const isAuth = token ? await verifyToken(token) : false;
 
   const pathname = request.nextUrl.pathname;
 
   // Protect /dashboard, /admin, and /course — redirect to /login if not authenticated
-  if (!user && (
+  if (!isAuth && (
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/course')
@@ -22,13 +31,13 @@ export async function proxy(request: NextRequest) {
   }
 
   // If logged in and tries to visit /login, redirect to dashboard
-  if (user && pathname === '/login') {
+  if (isAuth && pathname === '/login') {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
-  return response;
+  return NextResponse.next({ request });
 }
 
 export const config = {
@@ -36,3 +45,4 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
+

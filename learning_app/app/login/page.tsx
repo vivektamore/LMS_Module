@@ -9,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +30,7 @@ export default function LoginPage() {
       const formData = new FormData();
       formData.append('email', email);
       formData.append('password', password);
+      formData.append('rememberMe', String(rememberMe));
 
       const res = await login(formData);
       if (res.error) throw new Error(res.error);
@@ -37,7 +39,6 @@ export default function LoginPage() {
       router.refresh();
     } catch (err: any) {
       setError(friendlyError(err.message || 'An error occurred. Please try again.'));
-    } finally {
       setLoading(false);
     }
   }
@@ -92,6 +93,26 @@ export default function LoginPage() {
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
+            </div>
+
+            {/* Remember Me / Session Expire Checkbox */}
+            <div className="flex items-center justify-between py-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  id="remember-me"
+                  name="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-xs sm:text-sm text-gray-700 font-medium">
+                  Stay signed in for 7 days
+                </span>
+              </label>
+              <span className="text-[11px] text-gray-400">
+                {rememberMe ? '7-day login' : 'Session only (auto-logout on close)'}
+              </span>
             </div>
 
             <div>

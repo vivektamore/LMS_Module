@@ -61,6 +61,14 @@ export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [openingCertCourseId, setOpeningCertCourseId] = useState<string | null>(null);
+  // Safety net: if loading is still true after 10s, force-stop to avoid permanent spinner
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setLoading(false);
+      setDataReady(true);
+    }, 10_000);
+    return () => clearTimeout(t);
+  }, []);
 
   async function handleSignout() {
     setSigningOut(true);
@@ -102,29 +110,34 @@ export default function DashboardPage() {
   useEffect(() => {
     let active = true;
     async function loadData() {
-      const res = await fetch('/api/auth/me');
-      const { user } = res.ok ? await res.json() : { user: null };
-      if (!active) return;
-      if (user) {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) {
+          if (active) router.replace('/login');
+          return;
+        }
+        const data = await res.json();
+        const user = data?.user ?? null;
+        if (!active) return;
+        if (!user) {
+          router.replace('/login');
+          return;
+        }
+
         setUserEmail(user.email ?? null);
 
-        // Try fetching user data. If it returns false (unauthorized), retry after 500ms
+        // Try fetching user data; retry once if it returns 401 (cookie sync delay)
         let success = await fetchUserData();
         if (!success && active) {
-          console.warn('Dashboard fetch unauthorized, retrying in 500ms for cookie sync...');
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 800));
           if (!active) return;
-          success = await fetchUserData();
-
-          // If still failing, retry one more time after 1000ms
-          if (!success && active) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            if (!active) return;
-            await fetchUserData();
-          }
+          await fetchUserData();
         }
+      } catch (e) {
+        console.error('Dashboard auth check failed', e);
+      } finally {
+        if (active) setDataReady(true);
       }
-      setDataReady(true);
     }
 
     loadData();
@@ -132,7 +145,7 @@ export default function DashboardPage() {
     // Re-fetch silently when the user returns to this browser tab
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        fetchUserData(); // refresh completedLessons + enrollments + watch time
+        fetchUserData();
       }
     }
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -140,7 +153,8 @@ export default function DashboardPage() {
       active = false;
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [fetchUserData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 2. Fetch all course details once enrollment data is ready
   useEffect(() => {

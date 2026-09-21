@@ -196,8 +196,39 @@ export default function CourseDetailPage({
       prev.includes(modId) ? prev.filter((id) => id !== modId) : [...prev, modId]
     );
 
+  // Flush watch progress when navigating away or closing the browser tab
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (activeLessonId && maxWatchedRef.current > 0) {
+        const total = videoRef.current?.duration || activeLesson?.duration_seconds || 0;
+        try {
+          const payload = JSON.stringify({
+            lesson_id: activeLessonId,
+            watched_seconds: Math.round(maxWatchedRef.current),
+            total_seconds: Math.round(total),
+          });
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon?.('/api/progress/watchtime', blob);
+        } catch {}
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (activeLessonId && maxWatchedRef.current > 0) {
+        const total = videoRef.current?.duration || activeLesson?.duration_seconds || 0;
+        syncWatchtime(activeLessonId, maxWatchedRef.current, total);
+      }
+    };
+  }, [activeLessonId, activeLesson, syncWatchtime]);
+
   function handleLessonClick(lesson: Lesson) {
     if (activeLessonId !== lesson.id) {
+      if (activeLessonId && maxWatchedRef.current > 0) {
+        const total = videoRef.current?.duration || activeLesson?.duration_seconds || 0;
+        syncWatchtime(activeLessonId, maxWatchedRef.current, total);
+      }
       setActiveLessonId(lesson.id);
       setIsPlaying(false);
     }
@@ -326,6 +357,23 @@ export default function CourseDetailPage({
     // Prevent unpausing if a quiz is active
     if (activeQuizRef.current && videoRef.current) {
       videoRef.current.pause();
+    }
+  }
+
+  function handlePause() {
+    if (activeLessonId && maxWatchedRef.current > 0) {
+      const total = videoRef.current?.duration || activeLesson?.duration_seconds || 0;
+      syncWatchtime(activeLessonId, maxWatchedRef.current, total);
+    }
+  }
+
+  function handlePlaylistPause() {
+    if (activeLesson && activeLesson.type === 'playlist') {
+      const totalWatched = Object.values(maxPlaylistWatchedRef.current).reduce((a, b) => a + b, 0);
+      const estimatedTotal = activeLesson.duration_seconds || 300;
+      if (totalWatched > 0) {
+        syncWatchtime(activeLesson.id, totalWatched, estimatedTotal);
+      }
     }
   }
 
@@ -651,6 +699,7 @@ export default function CourseDetailPage({
                       src={activeLesson.playlist_urls[playlistIndex]?.url}
                       onTimeUpdate={handlePlaylistTimeUpdate}
                       onSeeking={handlePlaylistSeeking}
+                      onPause={handlePlaylistPause}
                       onEnded={() => {
                         if (playlistIndex < activeLesson.playlist_urls!.length - 1) {
                           setPlaylistIndex(prev => prev + 1);
@@ -701,6 +750,7 @@ export default function CourseDetailPage({
                       onTimeUpdate={handleTimeUpdate}
                       onSeeking={handleSeeking}
                       onPlay={handlePlay}
+                      onPause={handlePause}
                     >
                       Your browser does not support HTML5 video.
                     </video>

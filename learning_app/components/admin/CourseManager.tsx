@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CategoryManager from '@/components/admin/CategoryManager';
 import { CourseBuilder } from '@/components/admin/CourseBuilder';
 import CoursePageHeader from '@/components/admin/CoursePageHeader';
@@ -25,6 +25,34 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
   const [courses, setCourses] = useState<CourseItem[]>(initialCourses);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [recentlySavedId, setRecentlySavedId] = useState<string | null>(null);
+
+  // Synchronize state whenever initialCourses changes from server
+  useEffect(() => {
+    setCourses(initialCourses);
+  }, [initialCourses]);
+
+  // Client-side instant refresh without requiring manual browser reload
+  async function refreshCourses() {
+    try {
+      const res = await fetch('/api/courses?admin=true');
+      const data = await res.json();
+      if (data.courses) {
+        setCourses(
+          data.courses.map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            category: c.categories?.name || 'Uncategorized',
+            modules: Number(c.module_count || 0),
+            lessons: Number(c.lessons?.length || 0),
+            status: 'Published',
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to refresh courses live:', err);
+    }
+  }
 
   // Handle Edit Course click
   function handleEditCourse(id: string) {
@@ -46,11 +74,12 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to delete course');
 
-      // Remove course from state and refresh
+      // Remove course from state immediately
       setCourses((prev) => prev.filter((c) => c.id !== course.id));
       if (editingCourseId === course.id) {
         setEditingCourseId(null);
       }
+      await refreshCourses();
       router.refresh();
     } catch (err: any) {
       alert(`Delete Error: ${err.message}`);
@@ -59,9 +88,16 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
     }
   }
 
-  function handleCourseSaved() {
+  async function handleCourseSaved(savedId?: string) {
     setEditingCourseId(null);
+    if (savedId) {
+      setRecentlySavedId(savedId);
+      setTimeout(() => setRecentlySavedId(null), 5000);
+    }
+    // Instant live update without manual F5 refresh
+    await refreshCourses();
     router.refresh();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   return (
@@ -87,16 +123,30 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
                 </td>
               </tr>
             )}
-            {courses.map((course) => (
-              <tr key={course.id} className="hover:bg-gray-50 transition-colors">
-                <td className="p-4 font-medium text-gray-900">
-                  {course.title}
-                  {course.category && (
-                    <span className="ml-2 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-50 rounded-full">
-                      {course.category}
-                    </span>
-                  )}
-                </td>
+            {courses.map((course) => {
+              const isRecent = course.id === recentlySavedId;
+              return (
+                <tr
+                  key={course.id}
+                  className={`transition-all duration-500 ${
+                    isRecent ? 'bg-indigo-50 border-l-4 border-indigo-600' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <td className="p-4 font-medium text-gray-900">
+                    <div className="flex items-center gap-2">
+                      <span>{course.title}</span>
+                      {isRecent && (
+                        <span className="px-2 py-0.5 text-[10px] font-bold text-green-700 bg-green-100 rounded-full animate-pulse">
+                          Just Updated ✓
+                        </span>
+                      )}
+                      {course.category && (
+                        <span className="ml-2 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-50 rounded-full">
+                          {course.category}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                 <td className="p-4 text-sm text-gray-600">
                   {course.modules} Modules • {course.lessons} Lessons
                 </td>
@@ -133,7 +183,8 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
                   </button>
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       </div>

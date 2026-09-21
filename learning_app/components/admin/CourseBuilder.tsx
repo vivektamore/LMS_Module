@@ -28,6 +28,7 @@ interface PlaylistSegment {
   file: File | null;
   uploadedUrl: string | null;
   uploading: boolean;
+  uploadPercent?: number;
   error: string | null;
 }
 
@@ -86,7 +87,7 @@ function makeModule(): Module {
 }
 
 function makeSegment(): PlaylistSegment {
-  return { id: uid(), title: '', file: null, uploadedUrl: null, uploading: false, error: null };
+  return { id: uid(), title: '', file: null, uploadedUrl: null, uploading: false, uploadPercent: 0, error: null };
 }
 
 // ─── Single video uploader cell ───────────────────────────────────────────────
@@ -100,25 +101,54 @@ function SingleVideoUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [urlInput, setUrlInput] = useState(lesson.singleUrl ?? '');
+  const [uploadPercent, setUploadPercent] = useState<number>(0);
 
   async function handleFile(file: File) {
     if (file.type !== 'video/mp4') {
       onUpdate({ singleError: 'Only .mp4 files are supported.' });
       return;
     }
+    setUploadPercent(0);
     onUpdate({ singleFile: file, singleUploading: true, singleError: null, singleUrl: null });
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('path', 'lessons');
-      const res = await fetch('/api/upload-video', { method: 'POST', body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Upload failed');
-      onUpdate({ singleUrl: json.publicUrl, singleUploading: false });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload failed';
-      onUpdate({ singleUploading: false, singleError: msg });
-    }
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('path', 'lessons');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload-video');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        setUploadPercent(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          setUploadPercent(100);
+          onUpdate({ singleUrl: json.publicUrl, singleUploading: false });
+        } catch {
+          onUpdate({ singleUploading: false, singleError: 'Upload failed: invalid server response' });
+        }
+      } else {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          onUpdate({ singleUploading: false, singleError: json.error || 'Upload failed' });
+        } catch {
+          onUpdate({ singleUploading: false, singleError: `Upload failed (status ${xhr.status})` });
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      onUpdate({ singleUploading: false, singleError: 'Network error occurred during video upload' });
+    };
+
+    xhr.send(fd);
   }
 
   function handleUrlSave() {
@@ -130,7 +160,7 @@ function SingleVideoUploader({
   // Already has a URL set
   if (lesson.singleUrl) {
     return (
-      <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+      <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg animate-in fade-in">
         <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-green-800 truncate">
@@ -150,9 +180,29 @@ function SingleVideoUploader({
 
   if (lesson.singleUploading) {
     return (
-      <div className="flex items-center gap-3 p-4 border-2 border-dashed border-indigo-300 rounded-lg bg-indigo-50">
-        <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
-        <span className="text-sm text-indigo-600 font-medium">Uploading video…</span>
+      <div className="p-4 border-2 border-dashed border-indigo-400 rounded-xl bg-indigo-50/80 space-y-2.5 animate-in fade-in">
+        <div className="flex items-center justify-between text-xs font-semibold">
+          <div className="flex items-center gap-2 text-indigo-900">
+            <Loader2 className="w-4 h-4 text-indigo-600 animate-spin shrink-0" />
+            <span className="truncate max-w-[260px] sm:max-w-sm">
+              Uploading {lesson.singleFile?.name || 'video.mp4'}…
+            </span>
+          </div>
+          <span className="px-2 py-0.5 bg-white text-indigo-700 rounded-full font-bold border border-indigo-200 shadow-sm">
+            {uploadPercent}%
+          </span>
+        </div>
+        {/* Animated Progress Bar */}
+        <div className="w-full bg-indigo-200/70 rounded-full h-2.5 overflow-hidden relative">
+          <div
+            className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full transition-all duration-300 ease-out shadow-sm"
+            style={{ width: `${Math.max(5, uploadPercent)}%` }}
+          />
+        </div>
+        <p className="text-[11px] text-indigo-600/90 flex items-center justify-between">
+          <span>Uploading directly to server storage</span>
+          <span>{uploadPercent < 100 ? 'In progress…' : 'Processing final video…'}</span>
+        </p>
       </div>
     );
   }
@@ -248,21 +298,45 @@ function PlaylistBuilder({
       updateSegment(segId, { error: 'Only .mp4 files are supported.' });
       return;
     }
-    updateSegment(segId, { file, uploading: true, error: null, uploadedUrl: null });
+    updateSegment(segId, { file, uploading: true, uploadPercent: 0, error: null, uploadedUrl: null });
 
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('path', 'playlists');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('path', 'playlists');
 
-      const res = await fetch('/api/upload-video', { method: 'POST', body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Upload failed');
-      updateSegment(segId, { uploadedUrl: json.publicUrl, uploading: false });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload failed';
-      updateSegment(segId, { uploading: false, error: msg });
-    }
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload-video');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        updateSegment(segId, { uploadPercent: pct });
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          updateSegment(segId, { uploadedUrl: json.publicUrl, uploading: false, uploadPercent: 100 });
+        } catch {
+          updateSegment(segId, { uploading: false, error: 'Upload failed: invalid response' });
+        }
+      } else {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          updateSegment(segId, { uploading: false, error: json.error || 'Upload failed' });
+        } catch {
+          updateSegment(segId, { uploading: false, error: `Upload failed (status ${xhr.status})` });
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      updateSegment(segId, { uploading: false, error: 'Network error during upload' });
+    };
+
+    xhr.send(fd);
   }
 
   return (
@@ -281,12 +355,23 @@ function PlaylistBuilder({
               className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-indigo-500"
             />
             {seg.uploadedUrl ? (
-              <div className="flex items-center gap-2 text-xs text-green-700 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" /> {seg.file?.name} — uploaded
+              <div className="flex items-center gap-2 text-xs text-green-700 font-medium bg-green-50 p-1.5 rounded border border-green-200">
+                <CheckCircle2 className="w-3.5 h-3.5" /> {seg.file?.name} — uploaded ✓
               </div>
             ) : seg.uploading ? (
-              <div className="flex items-center gap-2 text-xs text-indigo-600">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading…
+              <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg space-y-1.5 animate-in fade-in">
+                <div className="flex items-center justify-between text-xs text-indigo-800 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" /> Uploading segment…
+                  </span>
+                  <span className="font-bold bg-white px-1.5 py-0.5 rounded border border-indigo-100">{seg.uploadPercent || 0}%</span>
+                </div>
+                <div className="w-full bg-indigo-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.max(5, seg.uploadPercent || 0)}%` }}
+                  />
+                </div>
               </div>
             ) : (
               <div>
@@ -445,7 +530,7 @@ function QuizBuilder({
 
 export interface CourseBuilderProps {
   editingCourseId?: string | null;
-  onCourseSaved?: () => void;
+  onCourseSaved?: (savedId?: string) => void;
   onCancelEdit?: () => void;
 }
 
@@ -465,51 +550,79 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
   const [thumbnailMode, setThumbnailMode] = useState<'upload' | 'url'>('upload');
   const [thumbnailUrlInput, setThumbnailUrlInput] = useState('');
   const [isDraggingThumbnail, setIsDraggingThumbnail] = useState(false);
+  const [thumbnailUploadPercent, setThumbnailUploadPercent] = useState(0);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [publishError, setPublishError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [savedCourseTitle, setSavedCourseTitle] = useState('');
   const [loadingEditData, setLoadingEditData] = useState(false);
 
   async function uploadThumbnailFile(file: File) {
     const ext = file.name.split('.').pop()?.toLowerCase();
-    const validExts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'jfif', 'avif', 'bmp', 'pjpeg', 'pjp'];
+    const validExts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'jfif', 'avif', 'bmp', 'pjpeg', 'pjp', 'ico', 'tiff', 'tif'];
     const isImage = (typeof file.type === 'string' && file.type.startsWith('image/')) || (ext && validExts.includes(ext));
 
     if (!isImage) {
       setThumbnailError('Please select a valid image file (JPEG, PNG, WebP, SVG, GIF, AVIF).');
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setThumbnailError('Image must be under 10 MB.');
+    if (file.size > 50 * 1024 * 1024) {
+      setThumbnailError('Image size exceeds 50 MB limit.');
       return;
     }
 
     setThumbnailError(null);
     setThumbnailFile(file);
     setThumbnailUploading(true);
+    setThumbnailUploadPercent(0);
 
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload-thumbnail', { method: 'POST', body: fd });
-      const json = await res.json();
-      if (!res.ok) {
-        if (res.status === 403) {
-          throw new Error(json.error || 'Admin session expired. Please log out and log back in as admin.');
-        }
-        throw new Error(json.error || `Upload failed (${res.status})`);
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload-thumbnail');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        setThumbnailUploadPercent(pct);
       }
-      setThumbnailUrl(json.publicUrl);
-      setThumbnailUrlInput(json.publicUrl);
-      setThumbnailFile(null);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed';
-      setThumbnailError(msg);
-      setThumbnailFile(null);
-    } finally {
+    };
+
+    xhr.onload = () => {
       setThumbnailUploading(false);
-    }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          setThumbnailUrl(json.publicUrl);
+          setThumbnailUrlInput(json.publicUrl);
+          setThumbnailFile(null);
+          setThumbnailUploadPercent(100);
+        } catch {
+          setThumbnailError('Invalid response received from server.');
+        }
+      } else {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          if (xhr.status === 401 || xhr.status === 403) {
+            setThumbnailError(json.error || 'Your session expired. Please sign in again to upload thumbnails.');
+          } else {
+            setThumbnailError(json.error || `Upload failed (${xhr.status})`);
+          }
+        } catch {
+          setThumbnailError(`Upload failed with status code ${xhr.status}`);
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      setThumbnailUploading(false);
+      setThumbnailError('Network error while uploading thumbnail image.');
+    };
+
+    xhr.send(fd);
   }
 
   // Fetch existing course data if editing
@@ -689,8 +802,12 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to save course');
 
+      const savedId = json.courseId || editingCourseId;
       setPublishStatus('success');
-      if (onCourseSaved) onCourseSaved();
+      setSavedCourseTitle(courseTitle);
+      setShowSuccessModal(true);
+      if (onCourseSaved) onCourseSaved(savedId);
+
       // Reset form if creating new
       if (!editingCourseId) {
         setTimeout(() => {
@@ -698,7 +815,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
           setVisibility('all'); setSelectedDepts([]); setHasCertificate(false);
           setThumbnailUrl(null); setThumbnailFile(null); setThumbnailError(null);
           setModules([makeModule()]); setPublishStatus('idle');
-        }, 2000);
+        }, 3000);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Publish failed';
@@ -713,6 +830,51 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
 
   return (
     <div id="course-builder" className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 max-w-4xl mx-auto mt-8 relative z-10 w-full mb-10 overflow-hidden">
+
+      {/* ── Publishing Screen Animation Overlay ── */}
+      {publishing && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center flex flex-col items-center border border-indigo-100">
+            <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 relative">
+              <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+              <Film className="w-7 h-7 text-indigo-600 animate-pulse" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">
+              {editingCourseId ? 'Updating Course…' : 'Publishing Tutorial…'}
+            </h3>
+            <p className="text-xs text-gray-500">
+              Saving curriculum, videos, and settings to the system...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Success Celebration Modal ── */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center flex flex-col items-center border border-green-100 relative">
+            <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-4 shadow-inner">
+              <CheckCircle2 className="w-10 h-10 text-green-600 animate-bounce" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {editingCourseId ? 'Course Updated Successfully!' : '🎉 Tutorial Published Successfully!'}
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              "{savedCourseTitle}" has been saved and is immediately live on the dashboard for your selected departments.
+            </p>
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2"
+            >
+              <span>View in Courses Table</span>
+              <CheckCircle2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
@@ -741,13 +903,13 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
 
       {/* Success / Error Banner */}
       {publishStatus === 'success' && (
-        <div className="flex items-center gap-3 mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="flex items-center gap-3 mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 animate-in fade-in">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
-          <span className="font-medium">Course published successfully! Resetting form…</span>
+          <span className="font-medium">Course published successfully! The list above has updated.</span>
         </div>
       )}
       {publishStatus === 'error' && (
-        <div className="flex items-center gap-3 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="flex items-center gap-3 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 animate-in fade-in">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span className="font-medium">{publishError}</span>
         </div>
@@ -835,9 +997,23 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             </div>
           ) : thumbnailUploading ? (
             /* Uploading spinner */
-            <div className="w-full h-36 border-2 border-dashed border-indigo-300 rounded-xl flex flex-col items-center justify-center gap-2 bg-indigo-50/50 animate-pulse">
-              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-              <span className="text-sm text-indigo-700 font-semibold">Uploading & optimizing thumbnail…</span>
+            <div className="w-full h-36 border-2 border-dashed border-indigo-400 rounded-xl flex flex-col items-center justify-center p-4 bg-indigo-50/70 space-y-2 animate-in fade-in">
+              <div className="flex items-center justify-between w-full max-w-xs text-xs font-semibold text-indigo-900">
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                  Uploading thumbnail…
+                </span>
+                <span className="bg-white px-2 py-0.5 rounded-full border border-indigo-200 text-indigo-700 shadow-sm font-bold">
+                  {thumbnailUploadPercent}%
+                </span>
+              </div>
+              <div className="w-full max-w-xs bg-indigo-200/80 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-indigo-600 h-full rounded-full transition-all duration-200"
+                  style={{ width: `${Math.max(5, thumbnailUploadPercent)}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-indigo-500">Processing and saving thumbnail image…</p>
             </div>
           ) : thumbnailMode === 'upload' ? (
             /* Drop zone / File selector */
@@ -864,7 +1040,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 <p className="text-sm font-semibold text-gray-700">
                   {isDraggingThumbnail ? 'Drop image here to upload' : 'Click to browse or drag & drop'}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">Supports PNG, JPG, JPEG, WebP, SVG, GIF (max 10 MB)</p>
+                <p className="text-xs text-gray-400 mt-0.5">Supports PNG, JPG, JPEG, WebP, SVG, GIF, AVIF (max 50 MB)</p>
               </div>
             </div>
           ) : (
@@ -933,12 +1109,17 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
           <input
             ref={thumbnailInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.svg,.jfif,.avif,.bmp"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              e.target.value = '';
-              if (file) uploadThumbnailFile(file);
+              if (file) {
+                uploadThumbnailFile(file);
+              }
+              // Safely reset input after file is handed off
+              setTimeout(() => {
+                if (e.target) e.target.value = '';
+              }, 100);
             }}
           />
 

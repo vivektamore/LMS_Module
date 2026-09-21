@@ -49,9 +49,12 @@ export async function GET() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const isoDate = d.toISOString().slice(0, 10);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateKey = `${y}-${m}-${day}`;
       const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
-      trendMap[isoDate] = { seconds: 0, dateStr: isoDate, weekday };
+      trendMap[dateKey] = { seconds: 0, dateStr: dateKey, weekday };
     }
 
     // Daily watch time from video_watch_time grouped by date

@@ -10,11 +10,11 @@ export interface AuthUser {
   department?: string | null;
 }
 
-export function signToken(user: AuthUser): string {
+export function signToken(user: AuthUser, expiresIn: string = '7d'): string {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role, department: user.department ?? null },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: expiresIn as any }
   );
 }
 
