@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Jolly Clamps - Technical Training Portal</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-card": "#FFFFFF", "tertiary-fixed": "#d5e3fd", "surface-container-high": "#e6e8ea", "on-tertiary-container": "#dae7ff", "tertiary": "#425065", "surface-dim": "#d8dadc", "error-container": "#ffdad6", "on-error": "#ffffff", "tertiary-fixed-dim": "#b9c7e0", "on-primary-fixed": "#410003", "on-background": "#191c1e", "surface-container-lowest": "#ffffff", "surface-container": "#eceef0", "outline": "#8f706c", "on-secondary": "#ffffff", "surface": "#f7f9fb", "on-primary": "#ffffff", "on-tertiary": "#ffffff", "brand-crimson": "#EF2E50", "on-error-container": "#93000a", "on-surface-variant": "#5b403d", "tertiary-container": "#5a687e", "error": "#ba1a1a", "on-primary-fixed-variant": "#93000e", "primary-container": "#c62828", "on-secondary-container": "#5c647a", "primary-fixed-dim": "#ffb4ac", "inverse-surface": "#2d3133", "on-primary-container": "#ffe0dd", "border-grid": "#E2E8F0", "primary-fixed": "#ffdad6", "secondary": "#565e74", "on-tertiary-fixed": "#0d1c2f", "inverse-on-surface": "#eff1f3", "warning-caution": "#D97706", "surface-container-highest": "#e0e3e5", "on-surface": "#191c1e", "outline-variant": "#e4beba", "on-secondary-fixed-variant": "#3f465c", "background": "#f7f9fb", "text-primary": "#0F172A", "on-secondary-fixed": "#131b2e", "surface-muted": "#F1F5F9", "surface-variant": "#e0e3e5", "secondary-container": "#dae2fd", "surface-bright": "#f7f9fb", "success-industrial": "#16A34A", "primary": "#a20513", "surface-tint": "#b91d20", "secondary-fixed": "#dae2fd", "border-strong": "#CBD5E1", "surface-container-low": "#f2f4f6", "inverse-primary": "#ffb4ac", "text-muted": "#64748B", "secondary-fixed-dim": "#bec6e0", "on-tertiary-fixed-variant": "#3a485c" }, borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, spacing: { "space-lg": "1.5rem", "space-xl": "2.25rem", "margin-sm": "1rem", "space-md": "1rem", "margin": "2rem", "space-sm": "0.5rem", "margin-lg": "3rem", "gutter-sm": "0.75rem", "gutter-lg": "1.75rem", "gutter": "1.25rem", "space-xs": "0.25rem" }, fontFamily: { "code-technical": ["IBM Plex Sans"], "body-md": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["IBM Plex Sans"], "body-lg": ["Inter"], "label-md": ["IBM Plex Sans"], "label-sm": ["IBM Plex Sans"], "headline-xl-mobile": ["IBM Plex Sans"], "headline-md": ["IBM Plex Sans"], "headline-sm": ["IBM Plex Sans"], "headline-xl": ["IBM Plex Sans"], "headline-lg-mobile": ["IBM Plex Sans"] }, fontSize: { "code-technical": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "500" }], "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }], "body-sm": ["12px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "400" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }], "body-lg": ["16px", { lineHeight: "26px", letterSpacing: "0em", fontWeight: "400" }], "label-md": ["13px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.06em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }], "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "600" }], "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-lg-mobile": ["22px", { lineHeight: "30px", letterSpacing: "0em", fontWeight: "600" }] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-card border-b border-border-grid shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-[68px] max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Jolly Clamps Technical Training Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vp2qBnT_VBfU24Im0X7v6kx06n0SS0e0rF7H5ucpxiH3ftfrcGQ_7HJESmQimz4yp0Ryy-sxZA0TflLyLkfytITN9Frs1ggv_XTmZhKhW9tGBoqBOLjliRdc6_rp1Ag-84Hsj_udNn0wVsBmLNAXqVHuZSZm0nR4fBfaOP-80t5d7JOp3OJVEAlfvFy0dvoWd3ZLAuUj8w6z11btXNP1eWK2IgmXEKsF9owPslFK9K-d78v4cNq8Acbw"/><div class="flex flex-col border-l border-border-grid pl-space-md"><span class="font-headline-sm text-headline-sm uppercase tracking-tight text-on-surface leading-tight">Jolly Clamps</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Technical Training LMS</span></div></div><nav class="flex items-center gap-space-sm" data-active-classes="bg-surface-container text-primary font-bold rounded-lg border-b-2 border-primary"><a class="px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="courses" href="#">All Courses</a><a class="px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="my-learning" href="#">My Learning</a></nav><div class="flex items-center gap-space-md"><nav class="flex items-center gap-space-xs" data-active-classes="bg-surface-container text-primary font-bold rounded-lg border-b-2 border-primary"><a aria-current="page" class="px-space-sm py-space-xs transition-colors bg-surface-container text-primary font-bold rounded-lg border-b-2 border-primary" data-path="dashboard" href="#">Dashboard</a><a class="px-space-sm py-space-xs font-label-md text-label-md text-secondary hover:text-on-surface hover:bg-surface-container transition-colors flex items-center gap-1 border border-border-grid rounded" data-path="admin" href="#"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Admin Panel</a></nav><div class="h-6 w-px bg-border-grid mx-space-xs"></div><div class="flex items-center gap-space-sm"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-border-strong" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAPP0rF3ycgLQEW1o1otCnlvtDqe9l_jLght92Gzxc9OX4MwcfOtSqrUY6Fje5qymh1BIyumkcOn7DxI3zeGhLhdxxQOjX0rrZi81hOp6_WaVyf_RvRAIrnJz0AHEcVYDWVk6XiMLM3Uumwxt_B9elSKATG1r-vKb3MtS73uV2YS1U8AoQ6WJo_pQHf1PtKyL0_SBUyHIymbMFURIDs4lNZHNIhCSWQV6HR6-blfMjOmECOT_d-_OX"/><a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors uppercase tracking-wider" data-path="login" href="#">Sign Out</a></div></div></div></header><main class="w-full pt-[68px] bg-background min-h-screen"><div class="max-w-7xl mx-auto px-6 lg:px-12 py-space-lg"><div class="flex flex-col w-full">
+<!-- Top Technical Header / Welcome Bar -->
+<div class="relative overflow-hidden bg-surface-card rounded-xl p-space-md lg:p-space-lg shadow-sm border-l-4 border-l-primary-container mb-space-lg">
+<!-- Blueprint grid accent background (inline SVG) -->
+<div class="absolute inset-0 opacity-[0.04] pointer-events-none" style="background-image: radial-gradient(#0F172A 1px, transparent 1px); background-size: 16px 16px;"></div>
+<div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="space-y-space-xs max-w-3xl">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="inline-flex items-center gap-1 font-code-technical text-code-technical px-2 py-0.5 rounded bg-surface-muted text-secondary tracking-wider uppercase font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-success-industrial"></span> System Calibrated
+          </span>
+<span class="font-body-sm text-body-sm text-text-muted">|</span>
+<span class="font-code-technical text-code-technical text-text-muted uppercase">Employee Portal ID: #JC-4082</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight font-bold">
+          Level Up Your Engineering Skills
+        </h1>
+<p class="font-body-md text-body-md text-secondary leading-relaxed">
+          Build technical expertise through structured training modules, standard operating procedures, and precision manufacturing practices.
+        </p>
+<div class="pt-1 flex items-center gap-2 text-text-primary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-primary">badge</span>
+<span class="font-medium text-text-primary">Welcome back, Rajesh Sharma</span>
+<span class="text-text-muted">•</span>
+<span class="text-secondary font-code-technical text-code-technical">Mechanical Maintenance Dept.</span>
+</div>
+</div>
+<!-- Right Industrial Schematic Card -->
+<div class="flex-shrink-0 flex items-center lg:justify-end">
+<div class="bg-surface-muted rounded-lg p-space-sm pl-space-md pr-space-md flex items-center gap-space-md shadow-inner">
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Active Assignment</span>
+<span class="font-headline-sm text-headline-sm text-text-primary font-bold">Shift A • Plant 1</span>
+<span class="font-code-technical text-code-technical text-primary font-semibold">PUNE PRECISION FACILITY</span>
+</div>
+<div class="h-10 w-10 rounded-lg bg-surface-card flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[24px]">precision_manufacturing</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Industrial Telemetry KPI Strip -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md mb-space-lg">
+<!-- Metric 1 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm relative overflow-hidden group hover:bg-surface transition-colors">
+<div class="absolute top-0 right-0 w-16 h-16 bg-success-industrial/5 rounded-bl-full pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<span class="font-code-technical text-code-technical text-text-muted uppercase tracking-wider">Completed Courses</span>
+<span class="material-symbols-outlined text-success-industrial text-[20px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-xl text-headline-xl font-bold text-text-primary tabular-nums">04</span>
+<span class="font-label-sm text-label-sm text-success-industrial font-semibold uppercase tracking-wider">Certified</span>
+</div>
+<p class="mt-1 font-body-sm text-body-sm text-text-muted truncate">Successfully certified &amp; validated</p>
+<div class="mt-3 h-1 w-full bg-surface-muted rounded-full overflow-hidden">
+<div class="h-full bg-success-industrial rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm relative overflow-hidden group hover:bg-surface transition-colors">
+<div class="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<span class="font-code-technical text-code-technical text-text-muted uppercase tracking-wider">In Progress</span>
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container animate-pulse"></span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-xl text-headline-xl font-bold text-text-primary tabular-nums">02</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold uppercase tracking-wider">Active</span>
+</div>
+<p class="mt-1 font-body-sm text-body-sm text-text-muted truncate">Active technical training units</p>
+<div class="mt-3 h-1 w-full bg-surface-muted rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 58%;"></div>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm relative overflow-hidden group hover:bg-surface transition-colors">
+<div class="flex items-start justify-between">
+<span class="font-code-technical text-code-technical text-text-muted uppercase tracking-wider">Modules Completed</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">fact_check</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-xl text-headline-xl font-bold text-text-primary tabular-nums">18</span>
+<span class="font-code-technical text-code-technical text-text-muted">/ 26 Modules</span>
+</div>
+<p class="mt-1 font-body-sm text-body-sm text-text-muted truncate">Assigned plant curriculum</p>
+<div class="mt-3 h-1 w-full bg-surface-muted rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 69%;"></div>
+</div>
+</div>
+<!-- Metric 4 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm relative overflow-hidden group hover:bg-surface transition-colors">
+<div class="flex items-start justify-between">
+<span class="font-code-technical text-code-technical text-text-muted uppercase tracking-wider">Training Logged</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">timelapse</span>
+</div>
+<div class="mt-2 flex items-baseline gap-1">
+<span class="font-headline-xl text-headline-xl font-bold text-text-primary tabular-nums">12.5</span>
+<span class="font-headline-md text-headline-md text-text-primary font-medium">hrs</span>
+</div>
+<p class="mt-1 font-body-sm text-body-sm text-text-muted truncate">Total verified instructional time</p>
+<div class="mt-3 h-1 w-full bg-surface-muted rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 78%;"></div>
+</div>
+</div>
+</div>
+<!-- Primary Action Area: Continue Learning -->
+<div class="mb-space-xl">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between mb-space-md gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-4 bg-primary rounded-sm"></span>
+<h2 class="font-headline-md text-headline-md font-bold text-text-primary tracking-tight">Continue Learning</h2>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted ml-4">Pick up where you left off across assigned manufacturing certifications</p>
+</div>
+<a class="font-label-md text-label-md text-primary font-semibold hover:underline flex items-center gap-1 self-start sm:self-auto" href="#">
+        View All Curriculum Modules <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- Course Card 1: Machine Maintenance Fundamentals -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex flex-col justify-between group transition-all duration-200 hover:shadow-md relative overflow-hidden">
+<!-- Accent top line indicator -->
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+<div>
+<!-- Thumbnail / Visual Component Placeholder -->
+<div class="relative w-full h-36 rounded mb-space-sm overflow-hidden bg-surface-muted">
+<img class="w-full h-full object-cover" data-alt="Close up photograph of industrial mechanical maintenance technician calibrating pneumatic torque tools and inspecting precision stainless steel Jolly clamps on an automated assembly line, cinematic industrial lighting, high precision metallic textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDW78qd4VFpQnGGcAdpDUuVioHNl2w1Adsh1bZv92z0tO42MoHjxqqElyGTocq2AugcCkQz5l5oUV2sA_zh_jZt0fXfSApO1P1ZpG2jSuRMndZY1iyersAHzz4SIBQQQVNZ3hXMy8tiOMmFnnUs4KjZhmOmBaVGXR9fxWtobEaSrZOAHlaXIS5PDV7eWa25roXZcHA9C33G7vfFcp0qz10s2ImKKTiFkXRhYTMDGW_vDgNX2MzwBC35"/>
+<div class="absolute top-2 left-2">
+<span class="font-label-sm text-label-sm bg-surface-card/90 backdrop-blur-xs text-text-primary px-2 py-0.5 rounded shadow-xs font-bold uppercase tracking-wider">
+                MACHINE MAINTENANCE
+              </span>
+</div>
+<div class="absolute bottom-2 right-2 bg-text-primary/80 backdrop-blur-xs text-surface-card font-code-technical text-code-technical px-2 py-0.5 rounded">
+              72% Complete
+            </div>
+</div>
+<div class="flex items-center gap-space-xs text-text-muted font-code-technical text-code-technical mb-1">
+<span>SOP-MEC-204</span>
+<span>•</span>
+<span>12 Modules</span>
+<span>•</span>
+<span>3h 20m</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-text-primary group-hover:text-primary transition-colors line-clamp-1">
+            Machine Maintenance Fundamentals
+          </h3>
+<p class="mt-1 font-body-sm text-body-sm text-secondary line-clamp-2 leading-snug">
+            Learn essential machine maintenance practices, inspection procedures and preventive maintenance standards.
+          </p>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-muted/30 rounded p-space-xs">
+<div class="flex items-center justify-between text-code-technical font-code-technical text-text-muted mb-1.5">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-success-industrial"></span> Active 12m ago</span>
+<span class="font-bold text-text-primary">72%</span>
+</div>
+<!-- Progress Bar -->
+<div class="h-1.5 w-full bg-surface-container rounded-sm overflow-hidden mb-space-sm">
+<div class="h-full bg-primary-container rounded-sm transition-all duration-500" style="width: 72%;"></div>
+</div>
+<button class="w-full py-2 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center justify-center gap-2 transition-colors shadow-xs">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+            Continue Learning
+          </button>
+</div>
+</div>
+<!-- Course Card 2: Quality Control & Inspection Standards -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex flex-col justify-between group transition-all duration-200 hover:shadow-md relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+<div>
+<!-- Thumbnail / Visual Component Placeholder -->
+<div class="relative w-full h-36 rounded mb-space-sm overflow-hidden bg-surface-muted">
+<img class="w-full h-full object-cover" data-alt="High tech industrial metrology quality inspection bench with digital vernier calipers, micrometers, and precision machined clamp components under cool crisp laboratory lighting, dark slate tones and steel reflections" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMZFcrJpHE_dSvm-BiX9xsRN5jqIuZeYjSoEwJJfQNEmEQHwxJJnhDXtf1vr_3SIuKWwNM_aBeg_vaTqnFEQv76jCmrYeRi8bI7qExLrV0oPa1SD6gSeeDPCRczqmV0jku47_SYCXmxB7ArXXB8H25lEaywz4LLVH6b8dIyPxclHmvihC9vFnc3xNUQD5QAzMDoKt-ArDiAX-EOzJicCEDPN4KT1sVmRdXMCgxSk63u_4awAaWtJyd"/>
+<div class="absolute top-2 left-2">
+<span class="font-label-sm text-label-sm bg-surface-card/90 backdrop-blur-xs text-text-primary px-2 py-0.5 rounded shadow-xs font-bold uppercase tracking-wider">
+                QUALITY
+              </span>
+</div>
+<div class="absolute bottom-2 right-2 bg-text-primary/80 backdrop-blur-xs text-surface-card font-code-technical text-code-technical px-2 py-0.5 rounded">
+              45% Complete
+            </div>
+</div>
+<div class="flex items-center gap-space-xs text-text-muted font-code-technical text-code-technical mb-1">
+<span>QA-MET-102</span>
+<span>•</span>
+<span>8 Modules</span>
+<span>•</span>
+<span>2h 10m</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-text-primary group-hover:text-primary transition-colors line-clamp-1">
+            Quality Control &amp; Inspection Standards
+          </h3>
+<p class="mt-1 font-body-sm text-body-sm text-secondary line-clamp-2 leading-snug">
+            Precision measurement techniques, vernier/micrometer calibration, and defect tolerance thresholds.
+          </p>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-muted/30 rounded p-space-xs">
+<div class="flex items-center justify-between text-code-technical font-code-technical text-text-muted mb-1.5">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Last accessed yesterday</span>
+<span class="font-bold text-text-primary">45%</span>
+</div>
+<!-- Progress Bar -->
+<div class="h-1.5 w-full bg-surface-container rounded-sm overflow-hidden mb-space-sm">
+<div class="h-full bg-primary-container rounded-sm transition-all duration-500" style="width: 45%;"></div>
+</div>
+<button class="w-full py-2 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center justify-center gap-2 transition-colors shadow-xs">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+            Continue Learning
+          </button>
+</div>
+</div>
+<!-- Course Card 3: Engineering Standards & Best Practices -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex flex-col justify-between group transition-all duration-200 hover:shadow-md relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-secondary"></div>
+<div>
+<!-- Thumbnail / Visual Component Placeholder -->
+<div class="relative w-full h-36 rounded mb-space-sm overflow-hidden bg-surface-muted">
+<img class="w-full h-full object-cover" data-alt="Technical CAD blueprint engineering drawings showing detailed isometric views of heavy duty worm drive hose clamps with dimensional tolerances and DIN ISO specifications, warm tungsten blueprint backlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiBXqYa_dNCtKRJyu-a6vGOuzoDXsHVJmHnqyI-iIjIfi9nDtKvoiLwhEyCHSclqyLdAEQpcx9vtWH6vIvVqYRSksQUFe2345Dg9jEp0lsGNqjQTVLPWAZGv7N1u_BDCFagun8l7esrYji30hGwp_xECcqYsGeAhY1DzBRk37ykQbR-c0DhUGyc9ygafQ97UU5cbHGV-E_Ch1LpkJjirm-6nRJ87u2OsDojY1iCozPCFrvqOX7uvGn"/>
+<div class="absolute top-2 left-2">
+<span class="font-label-sm text-label-sm bg-surface-card/90 backdrop-blur-xs text-text-primary px-2 py-0.5 rounded shadow-xs font-bold uppercase tracking-wider">
+                ENGINEERING
+              </span>
+</div>
+<div class="absolute bottom-2 right-2 bg-text-primary/80 backdrop-blur-xs text-surface-card font-code-technical text-code-technical px-2 py-0.5 rounded">
+              35% Complete
+            </div>
+</div>
+<div class="flex items-center gap-space-xs text-text-muted font-code-technical text-code-technical mb-1">
+<span>ENG-DIN-3017</span>
+<span>•</span>
+<span>7 Modules</span>
+<span>•</span>
+<span>1h 50m</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-text-primary group-hover:text-primary transition-colors line-clamp-1">
+            Engineering Standards &amp; Best Practices
+          </h3>
+<p class="mt-1 font-body-sm text-body-sm text-secondary line-clamp-2 leading-snug">
+            DIN/ISO tolerance systems, torque fastening specs for high-pressure industrial hose clamps.
+          </p>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-muted/30 rounded p-space-xs">
+<div class="flex items-center justify-between text-code-technical font-code-technical text-text-muted mb-1.5">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Started 3 days ago</span>
+<span class="font-bold text-text-primary">35%</span>
+</div>
+<!-- Progress Bar -->
+<div class="h-1.5 w-full bg-surface-container rounded-sm overflow-hidden mb-space-sm">
+<div class="h-full bg-primary-container rounded-sm transition-all duration-500" style="width: 35%;"></div>
+</div>
+<button class="w-full py-2 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center justify-center gap-2 transition-colors shadow-xs">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+            Continue Learning
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Split Grid: Detailed Progress Audit vs Recent Activity Timeline -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Left Column: My Learning Progress (5 cols) -->
+<div class="lg:col-span-5 bg-surface-card rounded-xl p-space-md lg:p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-sm mb-space-md border-b border-border-grid">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">analytics</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-text-primary">My Learning Progress</h2>
+</div>
+<span class="font-code-technical text-code-technical text-text-muted">CYCLE Q3-2024</span>
+</div>
+<!-- Radial Progress Graphic with SVG -->
+<div class="flex items-center gap-space-md p-space-sm bg-surface-muted rounded-lg mb-space-md">
+<div class="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
+<svg class="w-24 h-24 transform -rotate-90" viewbox="0 0 100 100">
+<!-- Background circle -->
+<circle class="text-surface-container" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+<!-- Progress arc (68% of 251.2 circumference = 170.8) -->
+<circle class="text-primary-container" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="80.38" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline-md text-headline-md font-bold text-text-primary">68%</span>
+<span class="font-label-sm text-label-sm text-text-muted uppercase text-[9px] -mt-1">Overall</span>
+</div>
+</div>
+<div class="flex-1 space-y-1">
+<h4 class="font-label-md text-label-md font-bold text-text-primary">Plant Floor Qualification</h4>
+<p class="font-body-sm text-body-sm text-secondary leading-snug">
+            You are on schedule for the Advanced Heavy-Duty Clamping Systems Specialist certification.
+          </p>
+</div>
+</div>
+<!-- Telemetry Breakdown List -->
+<div class="space-y-space-xs font-body-sm text-body-sm">
+<div class="flex items-center justify-between py-2 px-3 rounded bg-surface">
+<span class="text-secondary flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-success-industrial"></span> Completed Courses
+          </span>
+<span class="font-bold text-text-primary tabular-nums">4 Courses</span>
+</div>
+<div class="flex items-center justify-between py-2 px-3 rounded bg-surface">
+<span class="text-secondary flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span> In-Progress Training
+          </span>
+<span class="font-bold text-text-primary tabular-nums">2 Courses</span>
+</div>
+<div class="flex items-center justify-between py-2 px-3 rounded bg-surface">
+<span class="text-secondary flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Modules Completed
+          </span>
+<span class="font-bold text-text-primary tabular-nums">18 / 26</span>
+</div>
+<div class="flex items-center justify-between py-2 px-3 rounded bg-surface">
+<span class="text-secondary flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> Total Instructional Log
+          </span>
+<span class="font-bold text-text-primary tabular-nums">12.5 hrs</span>
+</div>
+</div>
+<!-- Compliance Notice Banner -->
+<div class="mt-space-md p-space-sm bg-success-industrial/10 rounded-lg flex items-start gap-2">
+<span class="material-symbols-outlined text-success-industrial text-[20px] flex-shrink-0 mt-0.5">verified_user</span>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-success-industrial font-bold block">Compliance Status: Verified</span>
+<p class="font-body-sm text-body-sm text-text-primary">
+            100% up to date on mandatory plant floor safety and OSHA industrial clamping standards.
+          </p>
+</div>
+</div>
+</div>
+<!-- Right Column: Recent Learning Activity (7 cols) -->
+<div class="lg:col-span-7 bg-surface-card rounded-xl p-space-md lg:p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-sm mb-space-md border-b border-border-grid">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">history_edu</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-text-primary">Recent Learning Activity</h2>
+</div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Audit Log</span>
+</div>
+<!-- Timeline Component -->
+<div class="relative pl-6 space-y-space-md before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container">
+<!-- Activity Item 1 (Today) -->
+<div class="relative">
+<span class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-primary ring-4 ring-surface-card"></span>
+<div class="bg-surface rounded-lg p-space-sm transition-colors hover:bg-surface-muted/60">
+<div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold">Today • 12 minutes ago</span>
+<span class="font-code-technical text-code-technical px-1.5 py-0.5 rounded bg-surface-container text-text-muted">MOD-03</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-text-primary text-[15px]">
+              Machine Maintenance Fundamentals
+            </h4>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">
+              Completed <span class="font-medium text-text-primary">Module 03: High-Torque Clamp Lubrication &amp; Wear Standards</span>. Practical checklist signed off by Shift Supervisor.
+            </p>
+</div>
+</div>
+<!-- Activity Item 2 (Yesterday) -->
+<div class="relative">
+<span class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-secondary ring-4 ring-surface-card"></span>
+<div class="bg-surface rounded-lg p-space-sm transition-colors hover:bg-surface-muted/60">
+<div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Yesterday • 4:15 PM</span>
+<span class="font-code-technical text-code-technical px-1.5 py-0.5 rounded bg-surface-container text-text-muted">MOD-04</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-text-primary text-[15px]">
+              Quality Control &amp; Inspection Standards
+            </h4>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">
+              Completed <span class="font-medium text-text-primary">Module 04: Dimensional Tolerance Verification (Micrometer Calibration)</span> with an assessment score of <span class="font-semibold text-text-primary">96%</span>.
+            </p>
+</div>
+</div>
+<!-- Activity Item 3 (18 Sep) -->
+<div class="relative">
+<span class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-success-industrial ring-4 ring-surface-card"></span>
+<div class="bg-surface rounded-lg p-space-sm transition-colors hover:bg-surface-muted/60">
+<div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-success-industrial font-bold">18 Sep • Formal Certification</span>
+<span class="font-code-technical text-code-technical px-1.5 py-0.5 rounded bg-success-industrial/10 text-success-industrial font-bold">100% SCORE</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-text-primary text-[15px] flex items-center gap-1.5">
+              Industrial Safety &amp; Safe Work Practices
+              <span class="material-symbols-outlined text-success-industrial text-[16px]">verified</span>
+</h4>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">
+              Full Course Completed &amp; Verified. Official Plant Safety credential issued (Certificate ID: <span class="font-code-technical text-code-technical text-text-primary">CERT-JC-9021</span>).
+            </p>
+</div>
+</div>
+<!-- Activity Item 4 (14 Sep) -->
+<div class="relative">
+<span class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-surface-container-high ring-4 ring-surface-card"></span>
+<div class="bg-surface rounded-lg p-space-sm transition-colors hover:bg-surface-muted/60">
+<div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted font-bold">14 Sep • Standard Track</span>
+<span class="font-code-technical text-code-technical px-1.5 py-0.5 rounded bg-surface-container text-text-muted">MOD-01</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-text-primary text-[15px]">
+              Production Process Fundamentals
+            </h4>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">
+              Completed <span class="font-medium text-text-primary">Module 01: Assembly Line Workflows &amp; Tool Staging Protocol</span>. 45 minutes logged.
+            </p>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="mt-space-md pt-space-sm flex items-center justify-between border-t border-border-grid">
+<span class="font-body-sm text-body-sm text-text-muted">Showing last 4 recorded activities</span>
+<button class="font-label-sm text-label-sm uppercase tracking-wider text-text-primary font-bold hover:text-primary transition-colors flex items-center gap-1">
+          Full Training History <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div></div></main><footer class="w-full bg-surface-card border-t border-border-grid py-space-lg"><div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-space-md text-on-surface-variant"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm uppercase tracking-tight text-on-surface">Jolly Clamps Pvt. Ltd.</span><span class="text-border-strong">|</span><span class="font-code-technical text-code-technical text-text-muted">PRECISION ENGINEERING DIVISION</span></div><div class="font-body-sm text-body-sm text-text-muted">© 2024 Jolly Clamps Pvt. Ltd. Mechanical Compliance &amp; Quality Technical Training.</div></div></footer></body></html>

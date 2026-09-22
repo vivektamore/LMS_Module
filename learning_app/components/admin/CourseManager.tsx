@@ -13,7 +13,18 @@ interface CourseItem {
   category?: string;
   modules: number;
   lessons: number;
+  totalDurationSeconds?: number;
   status: string;
+}
+
+function formatDuration(sec: number) {
+  if (!sec) return '—';
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  if (m > 0) return `${m}m`;
+  return `${sec}s`;
 }
 
 interface CourseManagerProps {
@@ -45,6 +56,7 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
             category: c.categories?.name || 'Uncategorized',
             modules: Number(c.module_count || 0),
             lessons: Number(c.lessons?.length || 0),
+            totalDurationSeconds: Number(c.total_duration_seconds || 0),
             status: 'Published',
           }))
         );
@@ -133,22 +145,28 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
                   }`}
                 >
                   <td className="p-4 font-medium text-gray-900">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span>{course.title}</span>
+                      <span className="px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded">
+                        Created by You
+                      </span>
                       {isRecent && (
                         <span className="px-2 py-0.5 text-[10px] font-bold text-green-700 bg-green-100 rounded-full animate-pulse">
                           Just Updated ✓
                         </span>
                       )}
                       {course.category && (
-                        <span className="ml-2 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-50 rounded-full">
+                        <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-50 rounded-full">
                           {course.category}
                         </span>
                       )}
                     </div>
                   </td>
                 <td className="p-4 text-sm text-gray-600">
-                  {course.modules} Modules • {course.lessons} Lessons
+                  <div className="font-medium text-gray-800">{course.modules} Modules • {course.lessons} Lessons</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Duration: <span className="font-semibold text-indigo-700">{formatDuration(course.totalDurationSeconds || 0)}</span>
+                  </div>
                 </td>
                 <td className="p-4">
                   <span

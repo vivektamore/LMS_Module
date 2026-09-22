@@ -1,7 +1,8 @@
 import { query } from '@/lib/db';
 import { notFound } from 'next/navigation';
-import { Award, CheckCircle, BookOpen } from 'lucide-react';
+import { Award, CheckCircle } from 'lucide-react';
 import PrintButton from '@/components/PrintButton';
+import CertificateNameEditor from '@/components/CertificateNameEditor';
 
 export default async function CertificatePage({
   params,
@@ -11,7 +12,7 @@ export default async function CertificatePage({
   const { id } = await params;
 
   const rows = await query<any[]>(`
-    SELECT c.id, c.issued_at,
+    SELECT c.id, c.issued_at, c.recipient_name,
            u.email, u.department,
            cr.title AS course_title,
            cr.id AS course_id
@@ -44,25 +45,33 @@ export default async function CertificatePage({
         <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-600 opacity-5 rounded-br-full print:hidden" />
         <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-600 opacity-5 rounded-tl-full print:hidden" />
 
-        {/* Header Icon */}
+        {/* Company Logo Header */}
         <div className="flex justify-center mb-6">
-          <div className="bg-indigo-600 p-4 rounded-2xl shadow-lg print:shadow-none">
-            <BookOpen className="w-10 h-10 text-white" />
+          <div className="p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 inline-flex items-center justify-center">
+            <img
+              src="/jolly-clamps-logo.png"
+              alt="Jolly Clamps Logo"
+              className="h-16 w-auto object-contain"
+            />
           </div>
         </div>
 
-        <p className="text-indigo-600 font-semibold uppercase tracking-[0.2em] text-sm mb-2">
-          Jolly Technical Training Academy
+        <p className="text-indigo-600 font-bold uppercase tracking-[0.25em] text-xs mb-1">
+          Jolly Clamps Technical Training Academy
         </p>
         <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
           Certificate of Completion
         </h1>
-        <div className="h-1 w-24 bg-indigo-600 mx-auto rounded-full mb-8" />
+        <div className="h-1 w-28 bg-indigo-600 mx-auto rounded-full mb-8" />
 
         <p className="text-gray-500 text-lg mb-2">This certifies that</p>
-        <p className="text-3xl font-bold text-indigo-700 mb-1">{cert.email}</p>
+        <CertificateNameEditor
+          certificateId={cert.id}
+          initialName={cert.recipient_name || ''}
+          userEmail={cert.email}
+        />
         {cert.department && (
-          <p className="text-gray-600 text-sm font-semibold mb-6 uppercase tracking-widest">
+          <p className="text-gray-600 text-sm font-semibold mb-6 uppercase tracking-widest mt-1">
             Department: {cert.department.replace(/_/g, ' ')}
           </p>
         )}

@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import {
   GripVertical, UploadCloud, Trash2, Video, ListVideo,
   Plus, Loader2, CheckCircle2, AlertCircle, X, Film,
-  Award, Users, Lock, Image as ImageIcon, Link2, Sparkles
+  Award, Users, Lock, Image as ImageIcon, Link2, Sparkles,
+  ChevronUp, ChevronDown, FileVideo, RefreshCw, Check
 } from 'lucide-react';
 
 const ALL_DEPARTMENTS = [
@@ -26,6 +27,9 @@ interface PlaylistSegment {
   id: string;
   title: string;
   file: File | null;
+  fileName?: string;
+  fileSize?: number;
+  durationSeconds?: number;
   uploadedUrl: string | null;
   uploading: boolean;
   uploadPercent?: number;
@@ -44,6 +48,7 @@ interface Lesson {
   id: string;
   title: string;
   type: 'single' | 'playlist';
+  duration_seconds?: number;
   // single
   singleFile: File | null;
   singleUrl: string | null;
@@ -73,9 +78,50 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+function formatBytes(bytes?: number): string {
+  if (!bytes || bytes <= 0) return '';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function cleanFileNameToTitle(name: string): string {
+  return name
+    .replace(/\.[^/.]+$/, '') // strip extension
+    .replace(/^[0-9]+[\s_.-]*/, '') // strip leading "01 - " or "1_"
+    .replace(/[_-]+/g, ' ') // replace underscores/dashes with spaces
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // Capitalize words
+}
+
+function probeVideoDuration(fileOrUrl: File | string): Promise<number> {
+  return new Promise((resolve) => {
+    try {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        if (fileOrUrl instanceof File) window.URL.revokeObjectURL(video.src);
+        resolve(Math.round(video.duration || 0));
+      };
+      video.onerror = () => {
+        if (fileOrUrl instanceof File) window.URL.revokeObjectURL(video.src);
+        resolve(0);
+      };
+      if (fileOrUrl instanceof File) {
+        video.src = URL.createObjectURL(fileOrUrl);
+      } else {
+        video.src = fileOrUrl;
+      }
+    } catch {
+      resolve(0);
+    }
+  });
+}
+
 function makeLesson(): Lesson {
   return {
-    id: uid(), title: '', type: 'single',
+    id: uid(), title: '', type: 'single', duration_seconds: 0,
     singleFile: null, singleUrl: null, singleUploading: false, singleError: null,
     segments: [],
     quizzes: [],
@@ -86,8 +132,19 @@ function makeModule(): Module {
   return { id: uid(), title: 'New Module', lessons: [makeLesson()] };
 }
 
-function makeSegment(): PlaylistSegment {
-  return { id: uid(), title: '', file: null, uploadedUrl: null, uploading: false, uploadPercent: 0, error: null };
+function makeSegment(title = '', file: File | null = null, fileName = '', fileSize?: number): PlaylistSegment {
+  return {
+    id: uid(),
+    title,
+    file,
+    fileName: fileName || (file ? file.name : ''),
+    fileSize: fileSize || (file ? file.size : undefined),
+    durationSeconds: 0,
+    uploadedUrl: null,
+    uploading: false,
+    uploadPercent: 0,
+    error: null,
+  };
 }
 
 // ─── Single video uploader cell ───────────────────────────────────────────────
@@ -108,8 +165,15 @@ function SingleVideoUploader({
       onUpdate({ singleError: 'Only .mp4 files are supported.' });
       return;
     }
+    const duration = await probeVideoDuration(file);
     setUploadPercent(0);
-    onUpdate({ singleFile: file, singleUploading: true, singleError: null, singleUrl: null });
+    onUpdate({
+      singleFile: file,
+      duration_seconds: duration,
+      singleUploading: true,
+      singleError: null,
+      singleUrl: null,
+    });
 
     const fd = new FormData();
     fd.append('file', file);
@@ -130,7 +194,7 @@ function SingleVideoUploader({
         try {
           const json = JSON.parse(xhr.responseText);
           setUploadPercent(100);
-          onUpdate({ singleUrl: json.publicUrl, singleUploading: false });
+          onUpdate({ singleUrl: json.publicUrl, duration_seconds: duration, singleUploading: false });
         } catch {
           onUpdate({ singleUploading: false, singleError: 'Upload failed: invalid server response' });
         }
@@ -151,14 +215,19 @@ function SingleVideoUploader({
     xhr.send(fd);
   }
 
-  function handleUrlSave() {
+  async function handleUrlSave() {
     const url = urlInput.trim();
     if (!url) { onUpdate({ singleError: 'Please enter a video URL.' }); return; }
-    onUpdate({ singleUrl: url, singleError: null });
+    const duration = await probeVideoDuration(url);
+    onUpdate({ singleUrl: url, duration_seconds: duration, singleError: null });
   }
 
   // Already has a URL set
   if (lesson.singleUrl) {
+    const min = Math.floor((lesson.duration_seconds || 0) / 60);
+    const sec = (lesson.duration_seconds || 0) % 60;
+    const durStr = lesson.duration_seconds ? ` • ${min}m ${sec}s` : '';
+
     return (
       <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg animate-in fade-in">
         <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
@@ -166,10 +235,10 @@ function SingleVideoUploader({
           <p className="text-sm font-medium text-green-800 truncate">
             {lesson.singleFile?.name ?? lesson.singleUrl}
           </p>
-          <p className="text-xs text-green-600">Video ready ✓</p>
+          <p className="text-xs text-green-600">Video ready ✓{durStr}</p>
         </div>
         <button
-          onClick={() => { onUpdate({ singleFile: null, singleUrl: null }); setUrlInput(''); }}
+          onClick={() => { onUpdate({ singleFile: null, singleUrl: null, duration_seconds: 0 }); setUrlInput(''); }}
           className="p-1 text-gray-400 hover:text-red-500 transition"
         >
           <X className="w-4 h-4" />
@@ -287,18 +356,54 @@ function PlaylistBuilder({
   lesson: Lesson;
   onUpdate: (patch: Partial<Lesson>) => void;
 }) {
+  const [isBatchDragging, setIsBatchDragging] = useState(false);
+  const [activeDragSegId, setActiveDragSegId] = useState<string | null>(null);
+  const batchFileInputRef = useRef<HTMLInputElement>(null);
+
   function updateSegment(segId: string, patch: Partial<PlaylistSegment>) {
     onUpdate({
       segments: lesson.segments.map((s) => (s.id === segId ? { ...s, ...patch } : s)),
     });
   }
 
-  async function handleSegmentFile(segId: string, file: File) {
-    if (file.type !== 'video/mp4') {
-      updateSegment(segId, { error: 'Only .mp4 files are supported.' });
+  function moveSegment(index: number, direction: 'up' | 'down') {
+    const newIdx = direction === 'up' ? index - 1 : index + 1;
+    if (newIdx < 0 || newIdx >= lesson.segments.length) return;
+    const next = [...lesson.segments];
+    const temp = next[index];
+    next[index] = next[newIdx];
+    next[newIdx] = temp;
+    onUpdate({ segments: next });
+  }
+
+  async function uploadFileForSegment(segId: string, file: File, customTitle?: string) {
+    if (file.type !== 'video/mp4' && !file.name.toLowerCase().endsWith('.mp4')) {
+      updateSegment(segId, { error: 'Only .mp4 video files are supported.' });
       return;
     }
-    updateSegment(segId, { file, uploading: true, uploadPercent: 0, error: null, uploadedUrl: null });
+
+    const duration = await probeVideoDuration(file);
+    const titlePatch = customTitle ? { title: customTitle } : {};
+    
+    // Update segment with file and duration
+    const currentSegments = lesson.segments.map((s) =>
+      s.id === segId
+        ? {
+            ...s,
+            ...titlePatch,
+            file,
+            fileName: file.name,
+            fileSize: file.size,
+            durationSeconds: duration,
+            uploading: true,
+            uploadPercent: 0,
+            error: null,
+            uploadedUrl: null,
+          }
+        : s
+    );
+    const totalLessonDur = currentSegments.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
+    onUpdate({ segments: currentSegments, duration_seconds: totalLessonDur });
 
     const fd = new FormData();
     fd.append('file', file);
@@ -318,7 +423,14 @@ function PlaylistBuilder({
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const json = JSON.parse(xhr.responseText);
-          updateSegment(segId, { uploadedUrl: json.publicUrl, uploading: false, uploadPercent: 100 });
+          updateSegment(segId, {
+            uploadedUrl: json.publicUrl,
+            uploading: false,
+            uploadPercent: 100,
+            fileName: file.name,
+            fileSize: file.size,
+            durationSeconds: duration,
+          });
         } catch {
           updateSegment(segId, { uploading: false, error: 'Upload failed: invalid response' });
         }
@@ -339,69 +451,283 @@ function PlaylistBuilder({
     xhr.send(fd);
   }
 
-  return (
-    <div className="space-y-3">
-      {lesson.segments.map((seg, idx) => (
-        <div key={seg.id} className="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shrink-0 mt-1">
-            {idx + 1}
-          </span>
-          <div className="flex-1 space-y-2 min-w-0">
-            <input
-              type="text"
-              placeholder="Segment title…"
-              value={seg.title}
-              onChange={(e) => updateSegment(seg.id, { title: e.target.value })}
-              className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-indigo-500"
-            />
-            {seg.uploadedUrl ? (
-              <div className="flex items-center gap-2 text-xs text-green-700 font-medium bg-green-50 p-1.5 rounded border border-green-200">
-                <CheckCircle2 className="w-3.5 h-3.5" /> {seg.file?.name} — uploaded ✓
-              </div>
-            ) : seg.uploading ? (
-              <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg space-y-1.5 animate-in fade-in">
-                <div className="flex items-center justify-between text-xs text-indigo-800 font-medium">
-                  <span className="flex items-center gap-1.5">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" /> Uploading segment…
-                  </span>
-                  <span className="font-bold bg-white px-1.5 py-0.5 rounded border border-indigo-100">{seg.uploadPercent || 0}%</span>
-                </div>
-                <div className="w-full bg-indigo-200 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-indigo-600 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${Math.max(5, seg.uploadPercent || 0)}%` }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label className="inline-flex items-center cursor-pointer px-3 py-1.5 bg-white border border-indigo-200 rounded text-xs text-indigo-600 font-medium hover:bg-indigo-50 transition">
-                  <UploadCloud className="w-3.5 h-3.5 mr-1.5" /> Attach .mp4
-                  <input
-                    type="file"
-                    accept="video/mp4"
-                    className="hidden"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSegmentFile(seg.id, f); }}
-                  />
-                </label>
-                {seg.error && <p className="text-xs text-red-500 mt-1">{seg.error}</p>}
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => onUpdate({ segments: lesson.segments.filter((s) => s.id !== seg.id) })}
-            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition shrink-0"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ))}
+  async function handleBatchFiles(files: File[]) {
+    const mp4Files = files.filter(
+      (f) => f.type === 'video/mp4' || f.name.toLowerCase().endsWith('.mp4')
+    );
 
-      <button
-        onClick={() => onUpdate({ segments: [...lesson.segments, makeSegment()] })}
-        className="text-sm text-indigo-600 font-medium hover:underline flex items-center"
+    if (mp4Files.length === 0) {
+      alert('Please drop valid .mp4 video files.');
+      return;
+    }
+
+    // Sort files naturally by filename so "Part 1", "Part 2", "01", "02" are placed in logical order
+    mp4Files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+    const newSegments: PlaylistSegment[] = [];
+    for (const file of mp4Files) {
+      const generatedTitle = cleanFileNameToTitle(file.name);
+      const dur = await probeVideoDuration(file);
+      const seg = makeSegment(generatedTitle, file, file.name, file.size);
+      seg.durationSeconds = dur;
+      newSegments.push(seg);
+    }
+
+    // Append to existing segments
+    const updatedSegments = [...lesson.segments, ...newSegments];
+    const totalLessonDur = updatedSegments.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
+    onUpdate({ segments: updatedSegments, duration_seconds: totalLessonDur });
+
+    // Initiate upload for each file
+    newSegments.forEach((seg, idx) => {
+      uploadFileForSegment(seg.id, mp4Files[idx]);
+    });
+  }
+
+  const uploadedCount = lesson.segments.filter((s) => !!s.uploadedUrl).length;
+
+  return (
+    <div className="space-y-4">
+      {/* ── BATCH DRAG & DROP ZONE ── */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setIsBatchDragging(true); }}
+        onDragEnter={(e) => { e.preventDefault(); setIsBatchDragging(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setIsBatchDragging(false); }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsBatchDragging(false);
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleBatchFiles(Array.from(e.dataTransfer.files));
+          }
+        }}
+        onClick={() => batchFileInputRef.current?.click()}
+        className={`relative border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer group ${
+          isBatchDragging
+            ? 'border-indigo-500 bg-indigo-50/80 ring-4 ring-indigo-100 scale-[1.01]'
+            : 'border-indigo-200 hover:border-indigo-400 bg-gradient-to-b from-indigo-50/40 to-white'
+        }`}
       >
-        <Plus className="w-4 h-4 mr-1" /> Add Segment
+        <input
+          ref={batchFileInputRef}
+          type="file"
+          accept="video/mp4"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              handleBatchFiles(Array.from(e.target.files));
+              e.target.value = '';
+            }
+          }}
+        />
+        <div className="flex flex-col items-center justify-center pointer-events-none">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+            <UploadCloud className="w-6 h-6" />
+          </div>
+          <p className="text-sm font-semibold text-gray-800">
+            Drag & Drop multiple .mp4 files here, or <span className="text-indigo-600 underline">browse</span>
+          </p>
+          <p className="text-xs text-gray-500 mt-1 max-w-md">
+            Drop all your series parts at once — we'll automatically create ordered segments with auto-generated titles and upload them seamlessly!
+          </p>
+        </div>
+      </div>
+
+      {/* ── SEGMENT STATS BAR (when segments exist) ── */}
+      {lesson.segments.length > 0 && (
+        <div className="flex items-center justify-between text-xs text-gray-500 px-1">
+          <span className="font-semibold text-gray-700 flex items-center gap-1.5">
+            <ListVideo className="w-4 h-4 text-indigo-600" />
+            {lesson.segments.length} {lesson.segments.length === 1 ? 'Part' : 'Parts'} in Series
+          </span>
+          <span className="bg-indigo-50 text-indigo-700 font-medium px-2 py-0.5 rounded-full border border-indigo-100">
+            {uploadedCount} of {lesson.segments.length} videos ready
+          </span>
+        </div>
+      )}
+
+      {/* ── SEGMENTS LIST ── */}
+      <div className="space-y-3">
+        {lesson.segments.map((seg, idx) => {
+          const isCurrentDragging = activeDragSegId === seg.id;
+          const displayFileName =
+            seg.fileName ||
+            seg.file?.name ||
+            (seg.uploadedUrl ? decodeURIComponent(seg.uploadedUrl.split('/').pop() || '').replace(/^\d+_/, '') : '');
+
+          return (
+            <div
+              key={seg.id}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setActiveDragSegId(seg.id);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                if (activeDragSegId === seg.id) setActiveDragSegId(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setActiveDragSegId(null);
+                const file = e.dataTransfer.files?.[0];
+                if (file) {
+                  const newTitle = seg.title.trim() ? seg.title : cleanFileNameToTitle(file.name);
+                  uploadFileForSegment(seg.id, file, newTitle);
+                }
+              }}
+              className={`p-3.5 bg-white border rounded-xl shadow-sm transition-all ${
+                isCurrentDragging
+                  ? 'border-indigo-500 bg-indigo-50/60 ring-2 ring-indigo-200'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                {/* Reorder Buttons & Number Badge */}
+                <div className="flex flex-col items-center gap-1 shrink-0 pt-0.5">
+                  <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center text-xs font-bold shadow-xs">
+                    {idx + 1}
+                  </span>
+                  <div className="flex flex-col -space-y-1">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => moveSegment(idx, 'up')}
+                      title="Move part up"
+                      className="p-1 text-gray-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-gray-400 transition"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === lesson.segments.length - 1}
+                      onClick={() => moveSegment(idx, 'down')}
+                      title="Move part down"
+                      className="p-1 text-gray-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-gray-400 transition"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Main Content Area */}
+                <div className="flex-1 space-y-2.5 min-w-0">
+                  {/* Segment Title Input */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder={`e.g. Part ${idx + 1}: Preparation & Safety`}
+                      value={seg.title}
+                      onChange={(e) => updateSegment(seg.id, { title: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                    />
+                  </div>
+
+                  {/* Video Attachment / Upload State */}
+                  {seg.uploadedUrl ? (
+                    <div className="flex items-center justify-between gap-2 p-2 bg-emerald-50/70 border border-emerald-200/80 rounded-lg text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                          <Check className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-emerald-900 truncate">
+                            {displayFileName || 'Video attached'}
+                          </p>
+                          {seg.fileSize && (
+                            <p className="text-[10px] text-emerald-600 font-medium">
+                              {formatBytes(seg.fileSize)} • Ready to stream
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Replace video button */}
+                      <label className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-emerald-200 hover:border-emerald-300 text-emerald-800 rounded text-[11px] font-medium cursor-pointer transition shrink-0 hover:bg-emerald-50">
+                        <RefreshCw className="w-3 h-3 text-emerald-600" />
+                        Replace
+                        <input
+                          type="file"
+                          accept="video/mp4"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadFileForSegment(seg.id, f);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                  ) : seg.uploading ? (
+                    <div className="p-3 bg-indigo-50/80 border border-indigo-200 rounded-lg space-y-2 animate-in fade-in">
+                      <div className="flex items-center justify-between text-xs text-indigo-900 font-medium">
+                        <span className="flex items-center gap-2 truncate">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600 shrink-0" />
+                          Uploading {seg.fileName || 'video'}…
+                        </span>
+                        <span className="font-bold bg-white px-2 py-0.5 rounded border border-indigo-100 text-indigo-700 shrink-0">
+                          {seg.uploadPercent || 0}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-indigo-200/80 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                          style={{ width: `${Math.max(5, seg.uploadPercent || 0)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Segment Dropzone if no video attached yet */
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50/60 hover:bg-indigo-50/40 rounded-lg cursor-pointer transition text-xs text-gray-600 hover:text-indigo-600">
+                        <UploadCloud className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
+                        <span>Drag & drop video here or <strong className="underline text-indigo-600">browse .mp4</strong></span>
+                        <input
+                          type="file"
+                          accept="video/mp4"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              const newTitle = seg.title.trim() ? seg.title : cleanFileNameToTitle(f.name);
+                              uploadFileForSegment(seg.id, f, newTitle);
+                            }
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {seg.error && (
+                    <p className="text-xs text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      {seg.error}
+                    </p>
+                  )}
+                </div>
+
+                {/* Delete Segment Button */}
+                <button
+                  type="button"
+                  title="Remove this segment"
+                  onClick={() => onUpdate({ segments: lesson.segments.filter((s) => s.id !== seg.id) })}
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0 mt-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── ADD SEGMENT MANUALLY BUTTON ── */}
+      <button
+        type="button"
+        onClick={() => onUpdate({ segments: [...lesson.segments, makeSegment()] })}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg text-xs font-semibold transition"
+      >
+        <Plus className="w-3.5 h-3.5" /> Add Segment Manually
       </button>
     </div>
   );
@@ -652,18 +978,27 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 id: l.id || uid(),
                 title: l.title || 'Untitled Lesson',
                 type: l.playlist_urls?.length ? 'playlist' : 'single',
+                duration_seconds: l.duration_seconds || 0,
                 singleFile: null,
                 singleUrl: l.video_url || null,
                 singleUploading: false,
                 singleError: null,
-                segments: (l.playlist_urls || []).map((p: any) => ({
-                  id: uid(),
-                  title: p.title || '',
-                  file: null,
-                  uploadedUrl: p.url || null,
-                  uploading: false,
-                  error: null,
-                })),
+                segments: (l.playlist_urls || []).map((p: any) => {
+                  let inferredFileName = '';
+                  if (p.url) {
+                    const raw = decodeURIComponent(p.url.split('/').pop() || '');
+                    inferredFileName = raw.replace(/^\d+_/, '');
+                  }
+                  return {
+                    id: uid(),
+                    title: p.title || '',
+                    file: null,
+                    fileName: inferredFileName || p.title || 'Video segment',
+                    uploadedUrl: p.url || null,
+                    uploading: false,
+                    error: null,
+                  };
+                }),
                 quizzes: (l.lesson_quizzes || []).map((q: any) => ({
                   id: q.id || uid(),
                   timestampSec: q.timestamp_sec || 0,
@@ -735,6 +1070,10 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
   async function handlePublish() {
     if (!courseTitle.trim()) { alert('Please enter a course title.'); return; }
     if (!selectedCategoryId) { alert('Please select a category.'); return; }
+    if (visibility === 'specific' && selectedDepts.length === 0) {
+      alert('Please select at least one department under "Course Visibility" or switch to "All Employees".');
+      return;
+    }
     if (!modules.length) { alert('Add at least one module.'); return; }
 
     // Validate all lessons have videos
@@ -745,6 +1084,10 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
           alert(`Lesson "${lesson.title}" has no uploaded video.`); return;
         }
         if (lesson.type === 'playlist') {
+          if (lesson.segments.length === 0) {
+            alert(`Playlist lesson "${lesson.title}" must have at least one video segment.`);
+            return;
+          }
           for (const seg of lesson.segments) {
             if (!seg.uploadedUrl) { alert(`Playlist segment "${seg.title || 'Untitled'}" has no uploaded video.`); return; }
           }
@@ -769,9 +1112,11 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
         departments: visibility === 'specific' ? selectedDepts : [],
         has_certificate: hasCertificate,
         modules: modules.map((mod, mi) => ({
+          id: mod.id,
           title: mod.title,
           order_index: mi,
           lessons: mod.lessons.map((lesson, li) => ({
+            id: lesson.id,
             title: lesson.title,
             type: lesson.type,
             video_url: lesson.type === 'single' ? lesson.singleUrl : undefined,
@@ -779,8 +1124,10 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               lesson.type === 'playlist'
                 ? lesson.segments.map((s) => ({ title: s.title, url: s.uploadedUrl }))
                 : undefined,
+            duration_seconds: lesson.duration_seconds || 0,
             order_index: li,
             quizzes: lesson.quizzes.map((q) => ({
+              id: q.id,
               timestamp_sec: q.timestampSec,
               question: q.question,
               options: q.options,
@@ -1200,23 +1547,55 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               </button>
             </div>
             {visibility === 'specific' && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {ALL_DEPARTMENTS.map(dept => (
-                  <button
-                    key={dept}
-                    type="button"
-                    onClick={() => setSelectedDepts(prev =>
-                      prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]
-                    )}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
-                      selectedDepts.includes(dept)
-                        ? 'bg-indigo-100 text-indigo-700 border-indigo-300'
-                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-indigo-300'
-                    }`}
-                  >
-                    {DEPT_LABELS[dept]}
-                  </button>
-                ))}
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500 font-medium">Target Departments (Mandatory)</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDepts([...ALL_DEPARTMENTS])}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDepts([])}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                {selectedDepts.length === 0 && (
+                  <div className="flex items-start gap-1.5 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs animate-pulse">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Action required:</strong> You must select at least one department when course visibility is set to &ldquo;Specific Depts&rdquo;.
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {ALL_DEPARTMENTS.map(dept => (
+                    <button
+                      key={dept}
+                      type="button"
+                      onClick={() => setSelectedDepts(prev =>
+                        prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]
+                      )}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
+                        selectedDepts.includes(dept)
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-indigo-300'
+                      }`}
+                    >
+                      {DEPT_LABELS[dept]}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>

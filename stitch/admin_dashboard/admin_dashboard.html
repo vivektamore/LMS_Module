@@ -1,0 +1,841 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary":"#a20513","on-secondary-container":"#5c647a","secondary":"#565e74","text-primary":"#0F172A","text-muted":"#64748B","outline":"#8f706c","inverse-primary":"#ffb4ac","on-secondary-fixed-variant":"#3f465c","surface-card":"#FFFFFF","on-error-container":"#93000a","surface-container-lowest":"#ffffff","primary-container":"#c62828","on-tertiary-fixed":"#0d1c2f","tertiary":"#425065","surface-muted":"#F1F5F9","surface-container":"#eceef0","secondary-container":"#dae2fd","on-primary-fixed":"#410003","on-tertiary":"#ffffff","surface-dim":"#d8dadc","on-error":"#ffffff","primary-fixed-dim":"#ffb4ac","on-background":"#191c1e","surface-container-high":"#e6e8ea","success-industrial":"#16A34A","secondary-fixed":"#dae2fd","error-container":"#ffdad6","warning-caution":"#D97706","on-tertiary-container":"#dae7ff","border-strong":"#CBD5E1","tertiary-fixed":"#d5e3fd","inverse-on-surface":"#eff1f3","outline-variant":"#e4beba","surface-variant":"#e0e3e5","on-primary":"#ffffff","tertiary-fixed-dim":"#b9c7e0","error":"#ba1a1a","on-surface":"#191c1e","surface-tint":"#b91d20","surface":"#f7f9fb","surface-bright":"#f7f9fb","surface-container-low":"#f2f4f6","secondary-fixed-dim":"#bec6e0","on-secondary":"#ffffff","surface-container-highest":"#e0e3e5","inverse-surface":"#2d3133","on-tertiary-fixed-variant":"#3a485c","border-grid":"#E2E8F0","on-primary-fixed-variant":"#93000e","on-surface-variant":"#5b403d","background":"#f7f9fb","tertiary-container":"#5a687e","on-secondary-fixed":"#131b2e","on-primary-container":"#ffe0dd","primary-fixed":"#ffdad6","brand-crimson":"#EF2E50"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-sm":"0.5rem","gutter-sm":"0.75rem","margin-lg":"3rem","margin-sm":"1rem","gutter":"1.25rem","space-xl":"2.25rem","margin":"2rem","space-md":"1rem","space-lg":"1.5rem","gutter-lg":"1.75rem","space-xs":"0.25rem"},"fontFamily":{"headline-md":["IBM Plex Sans"],"code-technical":["IBM Plex Sans"],"headline-lg-mobile":["IBM Plex Sans"],"headline-lg":["IBM Plex Sans"],"label-md":["IBM Plex Sans"],"body-sm":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-sm":["IBM Plex Sans"],"headline-xl":["IBM Plex Sans"],"label-sm":["IBM Plex Sans"],"headline-xl-mobile":["IBM Plex Sans"]},"fontSize":{"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"code-technical":["12px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"headline-lg-mobile":["22px",{"lineHeight":"30px","letterSpacing":"0em","fontWeight":"600"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["13px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0.01em","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"0em","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"0em","fontWeight":"400"}],"headline-sm":["16px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}],"headline-xl":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.06em","fontWeight":"700"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"700"}]}}}};</script></head><body class="bg-surface text-on-surface antialiased selection:bg-primary-container selection:text-on-primary"><aside class="fixed left-0 top-0 h-screen w-[220px] bg-surface-container-lowest border-r border-border-grid z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-16 flex items-center px-4 gap-3 border-b border-border-grid bg-surface-container-lowest"><img alt="Brand logo. - Primary color: #c62828
+- Font: ibmPlexSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VG9WgSwFLva2rRrGOH8dQlvsQi1huaNk3b3CzeqAZbshX0kCFr_aW_83L5yBKhnXmx5sArlacv2xZI03qwgHDO8cBqmNvz3hLvsCf3IP9YNcN_q8P5L3E5KYNG4ohvGJgw5FECMKcbytIIaWzH8aDX7d9yuQ6Y0mTMSPERQ5WEHwX0w4kQoyXC8AZxd4IcEnckNZ-HEv2COu8n9C9x8mRRivMW5FFV19lzG-UbC9GDwYa8zc8lbLqOKEI"><div class="flex flex-col"><span class="font-headline-sm text-headline-sm uppercase tracking-tight text-on-surface font-bold leading-none">Jolly Clamps</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-semibold mt-0.5">Admin Panel</span></div></div><div class="px-3 pt-4 pb-2"><span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary px-2 font-bold">Administration</span></div><nav class="flex flex-col px-2 gap-1" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors bg-primary-container text-on-primary font-semibold shadow-sm" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="">Dashboard</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md text-label-md" data-path="courses" href="#"><span class="material-symbols-outlined text-[18px]">menu_book</span><span class="">Courses</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md text-label-md" data-path="enrollments" href="#"><span class="material-symbols-outlined text-[18px]">how_to_reg</span><span class="">Enrollments</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md text-label-md" data-path="users" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span class="">Users</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md text-label-md" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span class="">Settings</span></a></nav></div><div class="p-2 border-t border-border-grid bg-surface-container-lowest"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary hover:bg-error-container hover:text-on-error-container transition-colors font-label-md text-label-md" data-path="login" href="#"><span class="material-symbols-outlined text-[18px]">logout</span><span class="">Logout</span></a></div></aside><div class="pl-[220px]"><header class="fixed top-0 left-[220px] right-0 h-16 bg-surface-card border-b border-border-grid z-40 flex items-center justify-between px-6"><div class="flex flex-col justify-center"><div class="flex items-center gap-3"><h1 class="font-headline-sm text-headline-sm text-text-primary uppercase tracking-tight">Admin Dashboard</h1></div><p class="font-body-sm text-body-sm text-text-muted mt-0.5">Manage technical training, employee enrollments and learning progress.</p></div><div class="flex items-center gap-4"><button aria-label="Refresh records" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-border-strong rounded text-secondary hover:bg-surface-muted hover:text-on-surface transition-colors font-label-md text-label-md" type="button"><span class="material-symbols-outlined text-[16px]">refresh</span><span class="">Sync</span></button><div class="h-5 w-px bg-border-grid"></div><div class="flex items-center gap-3 pl-1"><h1 class="font-headline-sm text-headline-sm text-text-primary uppercase tracking-tight">Admin Dashboard</h1></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<div class="max-w-[1240px] w-full mx-auto px-6 py-8 space-y-8"><section aria-label="Key Performance Indicators" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+  <!-- Card 1: Total Courses -->
+  <div class="bg-surface-card rounded-lg p-5 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all border border-border-grid">
+    <div class="absolute top-0 left-0 right-0 h-[3px] bg-primary"></div>
+    <div class="flex items-start justify-between">
+      <div>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Total Courses</span>
+        <div class="flex items-baseline gap-2 mt-2">
+          <span class="font-headline-xl text-headline-xl text-text-primary tracking-tight">6</span>
+          <span class="font-code-technical text-code-technical text-text-muted uppercase">Curricula</span>
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded bg-surface-muted flex items-center justify-center text-secondary">
+        <span class="material-symbols-outlined text-[20px]">menu_book</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 flex items-center justify-between font-body-sm text-body-sm text-text-muted bg-surface-muted -mx-5 -mb-5 px-5 py-2.5">
+      <span class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-success-industrial"></span> 4 Published
+      </span>
+      <span class="text-border-strong">•</span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 2 Draft
+      </span>
+    </div>
+  </div>
+
+  <!-- Card 2: Total Employees -->
+  <div class="bg-surface-card rounded-lg p-5 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all border border-border-grid">
+    <div class="absolute top-0 left-0 right-0 h-[3px] bg-secondary"></div>
+    <div class="flex items-start justify-between">
+      <div>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Total Employees</span>
+        <div class="flex items-baseline gap-2 mt-2">
+          <span class="font-headline-xl text-headline-xl text-text-primary tracking-tight">42</span>
+          <span class="font-code-technical text-code-technical text-text-muted uppercase">Personnel</span>
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded bg-surface-muted flex items-center justify-center text-secondary">
+        <span class="material-symbols-outlined text-[20px]">badge</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 flex items-center justify-between font-body-sm text-body-sm text-text-muted bg-surface-muted -mx-5 -mb-5 px-5 py-2.5">
+      <span class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> 28 Active in last 7 days
+      </span>
+      <span class="font-code-technical text-code-technical text-text-muted font-medium">66.7%</span>
+    </div>
+  </div>
+
+  <!-- Card 3: Active Enrollments -->
+  <div class="bg-surface-card rounded-lg p-5 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all border border-border-grid">
+    <div class="absolute top-0 left-0 right-0 h-[3px] bg-primary"></div>
+    <div class="flex items-start justify-between">
+      <div>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Active Enrollments</span>
+        <div class="flex items-baseline gap-2 mt-2">
+          <span class="font-headline-xl text-headline-xl text-primary tracking-tight">86</span>
+          <span class="font-code-technical text-code-technical text-text-muted uppercase">Assigned</span>
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded bg-primary-fixed flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 flex items-center justify-between font-body-sm text-body-sm text-text-muted bg-surface-muted -mx-5 -mb-5 px-5 py-2.5">
+      <span class="truncate">52 Completed • 21 In Progress • 13 Not Started</span>
+    </div>
+  </div>
+
+  <!-- Card 4: Completion Rate -->
+  <div class="bg-surface-card rounded-lg p-5 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all border border-border-grid">
+    <div class="absolute top-0 left-0 right-0 h-[3px] bg-success-industrial"></div>
+    <div class="flex items-start justify-between">
+      <div>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Completion Rate</span>
+        <div class="flex items-baseline gap-2 mt-2">
+          <span class="font-headline-xl text-headline-xl text-text-primary tracking-tight">74%</span>
+          <span class="font-code-technical text-code-technical text-success-industrial font-semibold flex items-center">
+            <span class="material-symbols-outlined text-[14px]">arrow_upward</span> +4.2% MoM
+          </span>
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded bg-surface-muted flex items-center justify-center text-success-industrial">
+        <span class="material-symbols-outlined text-[20px]">verified</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 flex items-center justify-between font-body-sm text-body-sm text-text-muted bg-surface-muted -mx-5 -mb-5 px-5 py-2.5">
+      <span class="">64 of 86 completed</span>
+      <span class="font-code-technical text-code-technical text-success-industrial font-semibold">+4.2% MoM</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Recent Enrollments & User Progress (Moved directly below KPIs) -->
+<div class="bg-surface-card rounded-lg shadow-sm border border-border-grid overflow-hidden">
+  <div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest border-b border-border-grid">
+    <div>
+      <h2 class="font-headline-sm text-headline-sm text-text-primary">Recent Enrollments</h2>
+      <p class="font-body-sm text-body-sm text-text-muted">Track employee course assignments and learning progress.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="relative w-full sm:w-72">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-text-muted">search</span>
+        <input class="w-full pl-9 pr-3 py-1.5 bg-surface-card border border-border-strong rounded font-body-sm text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Search employee by name, ID or email..." type="text">
+      </div>
+      <div class="relative">
+        <select aria-label="Filter by department" class="appearance-none bg-surface-card border border-border-strong rounded px-3 py-1.5 pr-8 font-label-md text-label-md text-text-primary focus:outline-none focus:border-primary">
+          <option value="all">All Departments</option>
+          <option value="maint">Maintenance</option>
+          <option value="prod">Production</option>
+          <option value="qa">Quality</option>
+          <option value="eng">Engineering</option>
+        </select>
+        <span class="material-symbols-outlined absolute right-2 top-2 text-[18px] text-text-muted pointer-events-none">arrow_drop_down</span>
+      </div>
+      <button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-muted hover:bg-surface-container text-text-primary rounded font-label-md text-label-md transition-colors border border-border-strong" type="button">
+        <span class="material-symbols-outlined text-[16px]">file_download</span>
+        <span class="">Export CSV</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-left font-body-sm text-body-sm">
+      <thead>
+        <tr class="bg-surface-muted text-secondary font-label-sm text-label-sm uppercase tracking-wider select-none border-b border-border-grid">
+          <th class="py-3 px-4 font-bold" scope="col">Employee</th>
+          <th class="py-3 px-3 font-bold" scope="col">Department</th>
+          <th class="py-3 px-4 font-bold" scope="col">Course</th>
+          <th class="py-3 px-3 font-bold" scope="col">Enrolled Date</th>
+          <th class="py-3 px-4 font-bold" scope="col">Progress</th>
+          <th class="py-3 px-3 font-bold text-center" scope="col">Status</th>
+          <th class="py-3 px-4 font-bold text-right" scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border-grid">
+        <!-- Row 1: Rajesh Sharma -->
+        <tr class="hover:bg-surface-muted transition-colors">
+          <td class="py-3.5 px-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surface-muted flex items-center justify-center font-bold text-text-primary font-headline-sm text-[12px] uppercase border border-border-grid">
+                RS
+              </div>
+              <div>
+                <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Rajesh Sharma</div>
+                <span class="font-code-technical text-code-technical text-text-muted">ID: JC-ENG-082</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 bg-surface-muted rounded font-code-technical text-code-technical text-text-primary border border-border-grid">
+              Maintenance
+            </span>
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="text-text-primary font-medium">Machine Maintenance Video Series</span>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+            21 Sep 2026
+          </td>
+          <td class="py-3.5 px-4 w-36">
+            <div class="flex items-center gap-2">
+              <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                <div class="bg-success-industrial h-1.5 rounded" style="width: 100%"></div>
+              </div>
+              <span class="font-code-technical text-code-technical text-success-industrial font-semibold">100%</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 text-center whitespace-nowrap">
+            <span class="inline-block px-2.5 py-0.5 bg-[#DCFCE7] text-[#166534] rounded font-label-sm text-label-sm uppercase tracking-wide">
+              Completed
+            </span>
+          </td>
+          <td class="py-3.5 px-4 text-right whitespace-nowrap">
+            <button class="px-3 py-1 bg-surface border border-border-strong hover:bg-surface-muted text-text-primary rounded font-label-md text-label-md transition-colors" type="button">
+              View Progress
+            </button>
+          </td>
+        </tr>
+
+        <!-- Row 2: Amit Verma -->
+        <tr class="hover:bg-surface-muted transition-colors">
+          <td class="py-3.5 px-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surface-muted flex items-center justify-center font-bold text-text-primary font-headline-sm text-[12px] uppercase border border-border-grid">
+                AV
+              </div>
+              <div>
+                <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Amit Verma</div>
+                <span class="font-code-technical text-code-technical text-text-muted">ID: JC-PROD-114</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 bg-surface-muted rounded font-code-technical text-code-technical text-text-primary border border-border-grid">
+              Production
+            </span>
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="text-text-primary font-medium">Industrial Safety &amp; Safe Work Practices</span>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+            22 Sep 2026
+          </td>
+          <td class="py-3.5 px-4 w-36">
+            <div class="flex items-center gap-2">
+              <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                <div class="bg-primary h-1.5 rounded" style="width: 65%"></div>
+              </div>
+              <span class="font-code-technical text-code-technical text-text-primary font-semibold">65%</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 text-center whitespace-nowrap">
+            <span class="inline-block px-2.5 py-0.5 bg-[#EFF6FF] text-[#1E40AF] rounded font-label-sm text-label-sm uppercase tracking-wide">
+              In Progress
+            </span>
+          </td>
+          <td class="py-3.5 px-4 text-right whitespace-nowrap">
+            <button class="px-3 py-1 bg-surface border border-border-strong hover:bg-surface-muted text-text-primary rounded font-label-md text-label-md transition-colors" type="button">
+              View Progress
+            </button>
+          </td>
+        </tr>
+
+        <!-- Row 3: Sunita Patel -->
+        <tr class="hover:bg-surface-muted transition-colors">
+          <td class="py-3.5 px-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surface-muted flex items-center justify-center font-bold text-text-primary font-headline-sm text-[12px] uppercase border border-border-grid">
+                SP
+              </div>
+              <div>
+                <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Sunita Patel</div>
+                <span class="font-code-technical text-code-technical text-text-muted">ID: JC-QA-045</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 bg-surface-muted rounded font-code-technical text-code-technical text-text-primary border border-border-grid">
+              Quality
+            </span>
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="text-text-primary font-medium">Quality Control &amp; Inspection Standards</span>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+            20 Sep 2026
+          </td>
+          <td class="py-3.5 px-4 w-36">
+            <div class="flex items-center gap-2">
+              <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                <div class="bg-primary h-1.5 rounded" style="width: 90%"></div>
+              </div>
+              <span class="font-code-technical text-code-technical text-text-primary font-semibold">90%</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 text-center whitespace-nowrap">
+            <span class="inline-block px-2.5 py-0.5 bg-[#EFF6FF] text-[#1E40AF] rounded font-label-sm text-label-sm uppercase tracking-wide">
+              In Progress
+            </span>
+          </td>
+          <td class="py-3.5 px-4 text-right whitespace-nowrap">
+            <button class="px-3 py-1 bg-surface border border-border-strong hover:bg-surface-muted text-text-primary rounded font-label-md text-label-md transition-colors" type="button">
+              View Progress
+            </button>
+          </td>
+        </tr>
+
+        <!-- Row 4: Vikram Singh -->
+        <tr class="hover:bg-surface-muted transition-colors">
+          <td class="py-3.5 px-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surface-muted flex items-center justify-center font-bold text-text-primary font-headline-sm text-[12px] uppercase border border-border-grid">
+                VS
+              </div>
+              <div>
+                <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Vikram Singh</div>
+                <span class="font-code-technical text-code-technical text-text-muted">ID: JC-ENG-102</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 bg-surface-muted rounded font-code-technical text-code-technical text-text-primary border border-border-grid">
+              Engineering
+            </span>
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="text-text-primary font-medium">Engineering Standards &amp; Best Practices</span>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+            19 Sep 2026
+          </td>
+          <td class="py-3.5 px-4 w-36">
+            <div class="flex items-center gap-2">
+              <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                <div class="bg-primary h-1.5 rounded" style="width: 15%"></div>
+              </div>
+              <span class="font-code-technical text-code-technical text-text-primary font-semibold">15%</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 text-center whitespace-nowrap">
+            <span class="inline-block px-2.5 py-0.5 bg-[#EFF6FF] text-[#1E40AF] rounded font-label-sm text-label-sm uppercase tracking-wide">
+              In Progress
+            </span>
+          </td>
+          <td class="py-3.5 px-4 text-right whitespace-nowrap">
+            <button class="px-3 py-1 bg-surface border border-border-strong hover:bg-surface-muted text-text-primary rounded font-label-md text-label-md transition-colors" type="button">
+              View Progress
+            </button>
+          </td>
+        </tr>
+
+        <!-- Row 5: Pooja Nair -->
+        <tr class="hover:bg-surface-muted transition-colors">
+          <td class="py-3.5 px-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surface-muted flex items-center justify-center font-bold text-text-primary font-headline-sm text-[12px] uppercase border border-border-grid">
+                PN
+              </div>
+              <div>
+                <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Pooja Nair</div>
+                <span class="font-code-technical text-code-technical text-text-muted">ID: JC-MAINT-059</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 bg-surface-muted rounded font-code-technical text-code-technical text-text-primary border border-border-grid">
+              Maintenance
+            </span>
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="text-text-primary font-medium">Machine Maintenance Video Series</span>
+          </td>
+          <td class="py-3.5 px-3 whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+            18 Sep 2026
+          </td>
+          <td class="py-3.5 px-4 w-36">
+            <div class="flex items-center gap-2">
+              <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                <div class="bg-secondary h-1.5 rounded" style="width: 0%"></div>
+              </div>
+              <span class="font-code-technical text-code-technical text-text-muted font-semibold">0%</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-3 text-center whitespace-nowrap">
+            <span class="inline-block px-2.5 py-0.5 bg-surface-muted text-secondary rounded font-label-sm text-label-sm uppercase tracking-wide border border-border-grid">
+              Not Started
+            </span>
+          </td>
+          <td class="py-3.5 px-4 text-right whitespace-nowrap">
+            <button class="px-3 py-1 bg-primary text-on-primary hover:bg-primary-container rounded font-label-md text-label-md transition-colors" type="button">
+              Assign Course
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="px-5 py-3 bg-surface-muted flex flex-wrap items-center justify-between gap-3 text-text-muted font-body-sm text-body-sm border-t border-border-grid">
+    <div class="flex items-center gap-2">
+      <span class="">Showing <strong>1-5</strong> of <strong>86</strong> enrollments</span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <button class="px-2.5 py-1 bg-surface-card border border-border-strong rounded text-text-muted opacity-50 cursor-not-allowed font-label-sm text-label-sm" disabled="" type="button">
+        Previous
+      </button>
+      <span class="px-3 py-1 bg-primary text-on-primary rounded font-label-sm text-label-sm font-semibold">1</span>
+      <button class="px-3 py-1 bg-surface-card border border-border-strong hover:bg-surface rounded text-text-primary font-label-sm text-label-sm transition-colors" type="button">2</button>
+      <button class="px-3 py-1 bg-surface-card border border-border-strong hover:bg-surface rounded text-text-primary font-label-sm text-label-sm transition-colors" type="button">3</button>
+      <button class="px-2.5 py-1 bg-surface-card border border-border-strong hover:bg-surface rounded text-text-primary font-label-sm text-label-sm transition-colors" type="button">
+        Next
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Lower Section: Two Columns (Course Overview ~65% on left, Training Analytics ~35% on right) -->
+<div class="bg-surface-card rounded-lg shadow-sm border border-border-grid overflow-hidden"><div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-container-lowest border-b border-border-grid"><div class="flex items-start sm:items-center gap-3.5"><div class="w-10 h-10 rounded bg-[#FEF3C7] border border-[#F59E0B] flex items-center justify-center text-[#B45309] shadow-sm flex-shrink-0"><span class="material-symbols-outlined text-[24px]">workspace_premium</span></div><div><div class="flex flex-wrap items-center gap-2"><h2 class="font-headline-sm text-headline-sm text-text-primary font-bold tracking-tight">Factory Leadership Board — Top Tutorial Achievers</h2><span class="px-2 py-0.5 rounded bg-surface-muted text-secondary font-code-technical text-[11px] font-semibold uppercase tracking-wider border border-border-grid">Plant #04 Stamping &amp; Assembly</span><span class="px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] font-label-sm text-[10px] font-bold uppercase tracking-wide">Q3 Active Sprint</span></div><p class="font-body-sm text-body-sm text-text-muted mt-0.5">Recognizing shop-floor technical learners, speed to certification, and qualification benchmarks.</p></div></div><div class="flex items-center gap-2 self-start lg:self-center"><div class="inline-flex items-center p-1 bg-surface-muted border border-border-grid rounded"><button class="px-2.5 py-1 bg-surface-card rounded font-label-sm text-label-sm font-semibold text-text-primary shadow-sm border border-border-grid" type="button">All Time</button><button class="px-2.5 py-1 rounded font-label-sm text-label-sm text-text-muted hover:text-text-primary transition-colors" type="button">This Month</button><button class="px-2.5 py-1 rounded font-label-sm text-label-sm text-text-muted hover:text-text-primary transition-colors" type="button">This Shift</button></div><button aria-label="Refresh leaderboard" class="w-8 h-8 rounded border border-border-strong bg-surface-card hover:bg-surface-muted text-text-muted hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">sync</span></button></div></div><div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-4"><!-- Card 1: Gold Rank 1 (maintenance.pew) -->
+<div class="rounded-lg border-2 border-[#F59E0B] bg-[#FEF3C7]/50 p-4.5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+  <div class="absolute top-0 right-0 left-0 h-1 bg-[#F59E0B] rounded-t"></div>
+  <div>
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <div class="w-9 h-9 rounded-lg bg-[#FEF3C7] border border-[#F59E0B] flex items-center justify-center font-headline-sm text-[15px] font-bold text-[#B45309] shadow-sm">
+            1
+          </div>
+          <span class="material-symbols-outlined absolute -top-2 -right-2 text-[16px] text-[#F59E0B] leading-none select-none drop-shadow-sm">military_tech</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-headline-sm text-[14px] font-bold text-text-primary tracking-tight">maintenance.pew</span>
+            <span class="px-1.5 py-0.2 bg-primary text-on-primary font-label-sm text-[10px] font-bold rounded tracking-wide uppercase">YOU</span>
+          </div>
+          <span class="font-code-technical text-[10px] uppercase tracking-wider text-text-muted font-semibold block mt-0.5">MAINTENANCE DEPT · CELL 04</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1 bg-surface-card/80 border border-[#FEF3C7] px-2 py-0.5 rounded text-[#B45309] font-code-technical text-[11px] font-bold shadow-sm">
+        <span class="material-symbols-outlined text-[14px] text-success-industrial">trending_up</span>
+        98.4 pts
+      </div>
+    </div>
+
+    <!-- Credentials / Skill Track Badge -->
+    <div class="mt-3 p-2 bg-surface-card rounded border border-border-grid flex items-center justify-between">
+      <div class="flex items-center gap-1.5 text-text-primary font-code-technical text-[11px]">
+        <span class="w-2 h-2 rounded-full bg-success-industrial"></span>
+        <span class="font-medium truncate">Torque Calibration Lead</span>
+      </div>
+      <span class="px-1.5 py-0.5 rounded bg-[#DCFCE7] text-[#166534] font-label-sm text-[10px] font-bold uppercase tracking-wide">Certified</span>
+    </div>
+
+    <!-- 3-Stat Industrial Micro-grid -->
+    <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+      <div class="bg-surface-card/80 border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Tutorials</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">1</span>
+      </div>
+      <div class="bg-surface-card/80 border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Certs</span>
+        <span class="font-headline-sm text-[14px] font-bold text-[#B45309] mt-0.5">1</span>
+      </div>
+      <div class="bg-surface-card/80 border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Watched</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">11m</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-3 pt-2.5 border-t border-border-grid flex items-center justify-between font-code-technical text-[11px]">
+    <span class="text-text-muted">Sprint Velocity</span>
+    <span class="font-bold text-success-industrial flex items-center gap-1">
+      <span class="material-symbols-outlined text-[14px]">verified</span> 100% On-Target
+    </span>
+  </div>
+</div>
+
+<!-- Card 2: Silver Rank 2 (emp.maint) -->
+<div class="rounded-lg border border-border-strong bg-surface-card p-4.5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+  <div class="absolute top-0 right-0 left-0 h-1 bg-border-strong rounded-t"></div>
+  <div>
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <div class="w-9 h-9 rounded-lg bg-surface-muted border border-border-strong flex items-center justify-center font-headline-sm text-[15px] font-bold text-secondary shadow-sm">
+            2
+          </div>
+          <span class="material-symbols-outlined absolute -top-2 -right-2 text-[16px] text-secondary leading-none select-none">workspace_premium</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-headline-sm text-[14px] font-bold text-text-primary tracking-tight">emp.maint</span>
+          </div>
+          <span class="font-code-technical text-[10px] uppercase tracking-wider text-text-muted font-semibold block mt-0.5">MAINTENANCE DEPT</span>
+        </div>
+      </div>
+      <span class="px-2 py-0.5 bg-surface-muted border border-border-grid rounded text-text-muted font-code-technical text-[11px]">
+        Rank 2
+      </span>
+    </div>
+
+    <!-- Goal Tracker -->
+    <div class="mt-3 p-2 bg-surface-muted rounded border border-border-grid flex items-center justify-between">
+      <span class="font-code-technical text-[10px] uppercase tracking-wider text-text-muted font-semibold">Track Goal</span>
+      <span class="font-code-technical text-[11px] font-medium text-text-primary truncate max-w-[170px]" title="Next: LOTO Safety Protocol">Next: LOTO Safety Protocol</span>
+    </div>
+
+    <!-- 3-Stat Industrial Micro-grid -->
+    <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+      <div class="bg-surface-muted border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Tutorials</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">0</span>
+      </div>
+      <div class="bg-surface-muted border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Certs</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">0</span>
+      </div>
+      <div class="bg-surface-muted border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Watched</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">0m</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progression Bar & Status -->
+  <div class="mt-3 pt-2.5 border-t border-border-grid space-y-1.5">
+    <div class="flex items-center justify-between font-code-technical text-[11px]">
+      <span class="text-text-muted">Qualification Status</span>
+      <span class="text-text-muted font-medium">0% Assigned</span>
+    </div>
+    <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+      <div class="bg-secondary h-1.5 rounded" style="width: 0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Card 3: Bronze Rank 3 (emp.quality) -->
+<div class="rounded-lg border border-border-grid bg-surface-card p-4.5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+  <div class="absolute top-0 right-0 left-0 h-1 bg-[#F59E0B]/50 rounded-t"></div>
+  <div>
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <div class="w-9 h-9 rounded-lg bg-[#FEF3C7]/50 border border-border-strong flex items-center justify-center font-headline-sm text-[15px] font-bold text-[#B45309] shadow-sm">
+            3
+          </div>
+          <span class="material-symbols-outlined absolute -top-2 -right-2 text-[16px] text-[#B45309] leading-none select-none">verified</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-headline-sm text-[14px] font-bold text-text-primary tracking-tight">emp.quality</span>
+          </div>
+          <span class="font-code-technical text-[10px] uppercase tracking-wider text-text-muted font-semibold block mt-0.5">QUALITY INSPECTION</span>
+        </div>
+      </div>
+      <span class="px-2 py-0.5 bg-surface-muted border border-border-grid rounded text-text-muted font-code-technical text-[11px]">
+        Rank 3
+      </span>
+    </div>
+
+    <!-- Goal Tracker -->
+    <div class="mt-3 p-2 bg-surface-muted rounded border border-border-grid flex items-center justify-between">
+      <span class="font-code-technical text-[10px] uppercase tracking-wider text-text-muted font-semibold">Track Goal</span>
+      <span class="font-code-technical text-[11px] font-medium text-text-primary truncate max-w-[170px]" title="Next: Caliper &amp; DIN 3017 Check">Next: Caliper &amp; DIN 3017 Check</span>
+    </div>
+
+    <!-- 3-Stat Industrial Micro-grid -->
+    <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+      <div class="bg-surface-muted border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Tutorials</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">0</span>
+      </div>
+      <div class="bg-surface-muted border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Certs</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">0</span>
+      </div>
+      <div class="bg-surface-muted border border-border-grid rounded p-2 flex flex-col items-center">
+        <span class="font-code-technical text-[10px] text-text-muted uppercase tracking-wider">Watched</span>
+        <span class="font-headline-sm text-[14px] font-bold text-text-primary mt-0.5">0m</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progression Bar & Status -->
+  <div class="mt-3 pt-2.5 border-t border-border-grid space-y-1.5">
+    <div class="flex items-center justify-between font-code-technical text-[11px]">
+      <span class="text-text-muted">Qualification Status</span>
+      <span class="text-text-muted font-medium">0% Assigned</span>
+    </div>
+    <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+      <div class="bg-secondary h-1.5 rounded" style="width: 0%"></div>
+    </div>
+  </div>
+</div></div><div class="px-5 py-2.5 bg-surface-muted border-t border-border-grid flex flex-wrap items-center justify-between gap-3 font-body-sm text-body-sm"><div class="flex items-center gap-2 text-text-muted font-code-technical text-[12px]"><span class="text-primary font-bold">⚡</span><span class=""><strong class="text-text-primary font-semibold">Current Sprint Pacesetter:</strong> maintenance.pew (+11 min)</span><span class="text-border-strong">•</span><span class="">32 Technicians Pending Shift Recertification</span></div><a class="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:text-primary-container font-semibold transition-colors" href="#">Full Plant Ranking<span class="material-symbols-outlined text-[16px]">arrow_forward</span></a></div></div><div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+  <!-- Left Column (~65% ~ 8 cols): Course Overview Table -->
+  <div class="lg:col-span-8 bg-surface-card rounded-lg shadow-sm border border-border-grid flex flex-col overflow-hidden">
+    <div class="px-5 py-4 flex items-center justify-between bg-surface-container-lowest border-b border-border-grid">
+      <div class="flex items-center gap-2.5">
+        <span class="w-1 h-4 bg-primary rounded-full"></span>
+        <div>
+          <h2 class="font-headline-sm text-headline-sm text-text-primary">Course Overview</h2>
+          <p class="font-body-sm text-body-sm text-text-muted">Monitor course usage, enrollment and completion.</p>
+        </div>
+      </div>
+      <a class="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:text-primary-container font-semibold transition-colors" href="#">
+        Manage Courses
+        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+      </a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left font-body-sm text-body-sm">
+        <thead>
+          <tr class="bg-surface-muted text-secondary font-label-sm text-label-sm uppercase tracking-wider select-none border-b border-border-grid">
+            <th class="py-3 px-4 font-bold" scope="col">Course</th>
+            <th class="py-3 px-3 font-bold" scope="col">Category</th>
+            <th class="py-3 px-3 font-bold text-center" scope="col">Modules</th>
+            <th class="py-3 px-3 font-bold text-center" scope="col">Enrolled</th>
+            <th class="py-3 px-3 font-bold" scope="col">Completion</th>
+            <th class="py-3 px-3 font-bold text-center" scope="col">Status</th>
+            <th class="py-3 px-4 font-bold text-right" scope="col">Last Updated</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border-grid">
+          <!-- Course 1 -->
+          <tr class="hover:bg-surface-muted transition-colors">
+            <td class="py-3.5 px-4">
+              <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Machine Maintenance Fundamentals</div>
+              <span class="font-code-technical text-code-technical text-text-muted">ID: MEC-ENG-101</span>
+            </td>
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 bg-surface-muted text-text-primary rounded font-code-technical text-code-technical border border-border-grid">
+                Maintenance
+              </span>
+            </td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary">12</td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary font-semibold">24</td>
+            <td class="py-3.5 px-3 w-28">
+              <div class="flex items-center gap-2">
+                <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                  <div class="bg-primary h-1.5 rounded" style="width: 75%"></div>
+                </div>
+                <span class="font-code-technical text-code-technical text-text-primary font-semibold">75%</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+              <span class="inline-block px-2 py-0.5 bg-[#DCFCE7] text-[#166534] rounded font-label-sm text-label-sm uppercase tracking-wide">
+                Published
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+              20 Sep 2026
+            </td>
+          </tr>
+          <!-- Course 2 -->
+          <tr class="hover:bg-surface-muted transition-colors">
+            <td class="py-3.5 px-4">
+              <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Quality Control &amp; Inspection Standards</div>
+              <span class="font-code-technical text-code-technical text-text-muted">ID: QUA-MET-202</span>
+            </td>
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 bg-surface-muted text-text-primary rounded font-code-technical text-code-technical border border-border-grid">
+                Quality
+              </span>
+            </td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary">8</td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary font-semibold">18</td>
+            <td class="py-3.5 px-3 w-28">
+              <div class="flex items-center gap-2">
+                <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                  <div class="bg-primary h-1.5 rounded" style="width: 67%"></div>
+                </div>
+                <span class="font-code-technical text-code-technical text-text-primary font-semibold">67%</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+              <span class="inline-block px-2 py-0.5 bg-[#DCFCE7] text-[#166534] rounded font-label-sm text-label-sm uppercase tracking-wide">
+                Published
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+              18 Sep 2026
+            </td>
+          </tr>
+          <!-- Course 3 -->
+          <tr class="hover:bg-surface-muted transition-colors">
+            <td class="py-3.5 px-4">
+              <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Industrial Safety &amp; Safe Work Practices</div>
+              <span class="font-code-technical text-code-technical text-text-muted">ID: SAF-OSH-001</span>
+            </td>
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 bg-surface-muted text-text-primary rounded font-code-technical text-code-technical border border-border-grid">
+                Safety
+              </span>
+            </td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary">10</td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary font-semibold">32</td>
+            <td class="py-3.5 px-3 w-28">
+              <div class="flex items-center gap-2">
+                <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                  <div class="bg-primary h-1.5 rounded" style="width: 88%"></div>
+                </div>
+                <span class="font-code-technical text-code-technical text-text-primary font-semibold">88%</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+              <span class="inline-block px-2 py-0.5 bg-[#DCFCE7] text-[#166534] rounded font-label-sm text-label-sm uppercase tracking-wide">
+                Published
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+              21 Sep 2026
+            </td>
+          </tr>
+          <!-- Course 4 -->
+          <tr class="hover:bg-surface-muted transition-colors">
+            <td class="py-3.5 px-4">
+              <div class="font-headline-sm text-[13px] font-semibold text-text-primary leading-tight">Engineering Standards &amp; Best Practices</div>
+              <span class="font-code-technical text-code-technical text-text-muted">ID: ENG-TOL-305</span>
+            </td>
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 bg-surface-muted text-text-primary rounded font-code-technical text-code-technical border border-border-grid">
+                Engineering
+              </span>
+            </td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary">7</td>
+            <td class="py-3.5 px-3 text-center font-code-technical text-code-technical text-text-primary font-semibold">12</td>
+            <td class="py-3.5 px-3 w-28">
+              <div class="flex items-center gap-2">
+                <div class="w-full bg-surface-container h-1.5 rounded overflow-hidden">
+                  <div class="bg-primary h-1.5 rounded" style="width: 62%"></div>
+                </div>
+                <span class="font-code-technical text-code-technical text-text-primary font-semibold">62%</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+              <span class="inline-block px-2 py-0.5 bg-surface-muted text-secondary rounded font-label-sm text-label-sm uppercase tracking-wide border border-border-grid">
+                Draft
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap font-code-technical text-code-technical text-text-muted">
+              19 Sep 2026
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-5 py-3 bg-surface-muted flex items-center justify-between text-text-muted font-body-sm text-body-sm border-t border-border-grid">
+      <span class="">Showing 4 of 6 active curricula</span>
+      <span class="font-code-technical text-code-technical text-secondary">All Curricula Verified</span>
+    </div>
+  </div>
+
+  <!-- Right Column (~35% ~ 4 cols): Training Analytics (Learning Activity & Enrollment Status) -->
+  <div class="lg:col-span-4 space-y-6">
+    <!-- Learning Activity Card -->
+    <div class="bg-surface-card rounded-lg p-5 shadow-sm border border-border-grid">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-headline-sm text-headline-sm text-text-primary">Learning Activity</h2>
+          <p class="font-body-sm text-body-sm text-text-muted">Training minutes • Last 7 Days</p>
+        </div>
+        <div class="text-right">
+          <span class="font-headline-sm text-[16px] text-text-primary font-bold">1,510 min</span>
+          <span class="block font-code-technical text-[10px] text-text-muted uppercase">Weekly Total</span>
+        </div>
+      </div>
+      <!-- Minimal Industrial Bar Chart (Mon - Sun) -->
+      <div class="h-44 flex items-end justify-between gap-3 pt-6 pb-2 px-1">
+        <!-- Mon: 140m -->
+        <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+          <span class="font-code-technical text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">140m</span>
+          <div class="w-full bg-secondary rounded-t transition-all group-hover:bg-primary" style="height: 34%;"></div>
+          <span class="font-label-sm text-label-sm text-text-muted uppercase">Mon</span>
+        </div>
+        <!-- Tue: 210m -->
+        <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+          <span class="font-code-technical text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">210m</span>
+          <div class="w-full bg-secondary rounded-t transition-all group-hover:bg-primary" style="height: 51%;"></div>
+          <span class="font-label-sm text-label-sm text-text-muted uppercase">Tue</span>
+        </div>
+        <!-- Wed: 320m -->
+        <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+          <span class="font-code-technical text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">320m</span>
+          <div class="w-full bg-secondary rounded-t transition-all group-hover:bg-primary" style="height: 78%;"></div>
+          <span class="font-label-sm text-label-sm text-text-muted uppercase">Wed</span>
+        </div>
+        <!-- Thu: 280m -->
+        <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+          <span class="font-code-technical text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">280m</span>
+          <div class="w-full bg-secondary rounded-t transition-all group-hover:bg-primary" style="height: 68%;"></div>
+          <span class="font-label-sm text-label-sm text-text-muted uppercase">Thu</span>
+        </div>
+        <!-- Fri: 410m (Peak) -->
+        <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+          <span class="font-code-technical text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity">410m</span>
+          <div class="w-full bg-primary rounded-t transition-all" style="height: 100%;"></div>
+          <span class="font-label-sm text-label-sm text-primary font-bold uppercase">Fri</span>
+        </div>
+        <!-- Sat: 90m -->
+        <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+          <span class="font-code-technical text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">90m</span>
+          <div class="w-full bg-surface-container-high rounded-t transition-all group-hover:bg-secondary" style="height: 22%;"></div>
+          <span class="font-label-sm text-label-sm text-text-muted uppercase">Sat</span>
+        </div>
+        <!-- Sun: 60m -->
+        <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+          <span class="font-code-technical text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">60m</span>
+          <div class="w-full bg-surface-container-high rounded-t transition-all group-hover:bg-secondary" style="height: 15%;"></div>
+          <span class="font-label-sm text-label-sm text-text-muted uppercase">Sun</span>
+        </div>
+      </div>
+      <div class="mt-3 pt-3 flex items-center justify-between font-code-technical text-code-technical text-text-muted bg-surface-muted -mx-5 -mb-5 px-5 py-2.5 border-t border-border-grid">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 bg-primary rounded-sm"></span> Peak: Friday · 215 min
+        </span>
+        <span class="">Avg: 215 m/day</span>
+      </div>
+    </div>
+
+    <!-- Enrollment Status Breakdown Card -->
+    <div class="bg-surface-card rounded-lg p-5 shadow-sm border border-border-grid">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h2 class="font-headline-sm text-headline-sm text-text-primary">Enrollment Status</h2>
+          <p class="font-body-sm text-body-sm text-text-muted">Active operational qualification track</p>
+        </div>
+        <span class="font-code-technical text-code-technical text-text-primary font-bold px-2 py-0.5 bg-surface-muted rounded border border-border-grid">
+          86 TOTAL
+        </span>
+      </div>
+      <div class="w-full h-3 bg-surface-container rounded-sm overflow-hidden flex my-3">
+        <div class="bg-success-industrial h-full transition-all" style="width: 60%;" title="Completed: 60%"></div>
+        <div class="bg-primary h-full transition-all" style="width: 25%;" title="In Progress: 25%"></div>
+        <div class="bg-border-strong h-full transition-all" style="width: 15%;" title="Not Started: 15%"></div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mt-4">
+        <div class="p-2.5 bg-surface-muted rounded text-left border border-border-grid">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-success-industrial"></span>
+            <span class="font-label-sm text-[11px] uppercase tracking-wider text-text-muted">Completed</span>
+          </div>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="font-headline-sm text-[16px] text-text-primary font-bold">52</span>
+            <span class="font-code-technical text-[10px] text-text-muted">(60%)</span>
+          </div>
+        </div>
+        <div class="p-2.5 bg-surface-muted rounded text-left border border-border-grid">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            <span class="font-label-sm text-[11px] uppercase tracking-wider text-text-muted">In Progress</span>
+          </div>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="font-headline-sm text-[16px] text-text-primary font-bold">21</span>
+            <span class="font-code-technical text-[10px] text-text-muted">(25%)</span>
+          </div>
+        </div>
+        <div class="p-2.5 bg-surface-muted rounded text-left border border-border-grid">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-border-strong"></span>
+            <span class="font-label-sm text-[11px] uppercase tracking-wider text-text-muted">Not Started</span>
+          </div>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="font-headline-sm text-[16px] text-text-primary font-bold">13</span>
+            <span class="font-code-technical text-[10px] text-text-muted">(15%)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+</div></main></div>
+
+</body></html>

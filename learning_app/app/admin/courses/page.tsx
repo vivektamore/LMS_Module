@@ -13,7 +13,8 @@ export default async function CoursesPage() {
       c.id, c.title, c.created_at,
       cat.name AS category_name,
       (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS moduleCount,
-      (SELECT COUNT(*) FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = c.id) AS lessonCount
+      (SELECT COUNT(*) FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = c.id) AS lessonCount,
+      (SELECT COALESCE(SUM(l.duration_seconds), 0) FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = c.id) AS totalDurationSeconds
     FROM courses c
     LEFT JOIN categories cat ON c.category_id = cat.id
     WHERE c.created_by = ?
@@ -26,6 +27,7 @@ export default async function CoursesPage() {
     category: c.category_name || 'Uncategorized',
     modules: Number(c.moduleCount || 0),
     lessons: Number(c.lessonCount || 0),
+    totalDurationSeconds: Number(c.totalDurationSeconds || 0),
     status: 'Published',
   }));
 

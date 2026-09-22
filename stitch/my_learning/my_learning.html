@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Jolly Clamps - Technical Training Portal</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-card": "#FFFFFF", "tertiary-fixed": "#d5e3fd", "surface-container-high": "#e6e8ea", "on-tertiary-container": "#dae7ff", "tertiary": "#425065", "surface-dim": "#d8dadc", "error-container": "#ffdad6", "on-error": "#ffffff", "tertiary-fixed-dim": "#b9c7e0", "on-primary-fixed": "#410003", "on-background": "#191c1e", "surface-container-lowest": "#ffffff", "surface-container": "#eceef0", "outline": "#8f706c", "on-secondary": "#ffffff", "surface": "#f7f9fb", "on-primary": "#ffffff", "on-tertiary": "#ffffff", "brand-crimson": "#EF2E50", "on-error-container": "#93000a", "on-surface-variant": "#5b403d", "tertiary-container": "#5a687e", "error": "#ba1a1a", "on-primary-fixed-variant": "#93000e", "primary-container": "#c62828", "on-secondary-container": "#5c647a", "primary-fixed-dim": "#ffb4ac", "inverse-surface": "#2d3133", "on-primary-container": "#ffe0dd", "border-grid": "#E2E8F0", "primary-fixed": "#ffdad6", "secondary": "#565e74", "on-tertiary-fixed": "#0d1c2f", "inverse-on-surface": "#eff1f3", "warning-caution": "#D97706", "surface-container-highest": "#e0e3e5", "on-surface": "#191c1e", "outline-variant": "#e4beba", "on-secondary-fixed-variant": "#3f465c", "background": "#f7f9fb", "text-primary": "#0F172A", "on-secondary-fixed": "#131b2e", "surface-muted": "#F1F5F9", "surface-variant": "#e0e3e5", "secondary-container": "#dae2fd", "surface-bright": "#f7f9fb", "success-industrial": "#16A34A", "primary": "#a20513", "surface-tint": "#b91d20", "secondary-fixed": "#dae2fd", "border-strong": "#CBD5E1", "surface-container-low": "#f2f4f6", "inverse-primary": "#ffb4ac", "text-muted": "#64748B", "secondary-fixed-dim": "#bec6e0", "on-tertiary-fixed-variant": "#3a485c" }, borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, spacing: { "space-lg": "1.5rem", "space-xl": "2.25rem", "margin-sm": "1rem", "space-md": "1rem", "margin": "2rem", "space-sm": "0.5rem", "margin-lg": "3rem", "gutter-sm": "0.75rem", "gutter-lg": "1.75rem", "gutter": "1.25rem", "space-xs": "0.25rem" }, fontFamily: { "code-technical": ["IBM Plex Sans"], "body-md": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["IBM Plex Sans"], "body-lg": ["Inter"], "label-md": ["IBM Plex Sans"], "label-sm": ["IBM Plex Sans"], "headline-xl-mobile": ["IBM Plex Sans"], "headline-md": ["IBM Plex Sans"], "headline-sm": ["IBM Plex Sans"], "headline-xl": ["IBM Plex Sans"], "headline-lg-mobile": ["IBM Plex Sans"] }, fontSize: { "code-technical": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "500" }], "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }], "body-sm": ["12px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "400" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }], "body-lg": ["16px", { lineHeight: "26px", letterSpacing: "0em", fontWeight: "400" }], "label-md": ["13px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.06em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }], "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "600" }], "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-lg-mobile": ["22px", { lineHeight: "30px", letterSpacing: "0em", fontWeight: "600" }] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-card border-b border-border-grid shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-[68px] max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Jolly Clamps Technical Training Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vp2qBnT_VBfU24Im0X7v6kx06n0SS0e0rF7H5ucpxiH3ftfrcGQ_7HJESmQimz4yp0Ryy-sxZA0TflLyLkfytITN9Frs1ggv_XTmZhKhW9tGBoqBOLjliRdc6_rp1Ag-84Hsj_udNn0wVsBmLNAXqVHuZSZm0nR4fBfaOP-80t5d7JOp3OJVEAlfvFy0dvoWd3ZLAuUj8w6z11btXNP1eWK2IgmXEKsF9owPslFK9K-d78v4cNq8Acbw"/><div class="flex flex-col border-l border-border-grid pl-space-md"><span class="font-headline-sm text-headline-sm uppercase tracking-tight text-on-surface leading-tight">Jolly Clamps</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Technical Training LMS</span></div></div><nav class="flex items-center gap-space-sm" data-active-classes="bg-surface-container text-primary font-bold rounded-lg border-b-2 border-primary"><a class="px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="courses" href="#">All Courses</a><a aria-current="page" class="px-space-md py-space-sm transition-colors bg-surface-container text-primary font-bold rounded-lg border-b-2 border-primary" data-path="my-learning" href="#">My Learning</a></nav><div class="flex items-center gap-space-md"><nav class="flex items-center gap-space-xs" data-active-classes="bg-surface-container text-primary font-bold rounded-lg border-b-2 border-primary"><a class="px-space-sm py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="dashboard" href="#">Dashboard</a><a class="px-space-sm py-space-xs font-label-md text-label-md text-secondary hover:text-on-surface hover:bg-surface-container transition-colors flex items-center gap-1 border border-border-grid rounded" data-path="admin" href="#"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Admin Panel</a></nav><div class="h-6 w-px bg-border-grid mx-space-xs"></div><div class="flex items-center gap-space-sm"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-border-strong" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAPP0rF3ycgLQEW1o1otCnlvtDqe9l_jLght92Gzxc9OX4MwcfOtSqrUY6Fje5qymh1BIyumkcOn7DxI3zeGhLhdxxQOjX0rrZi81hOp6_WaVyf_RvRAIrnJz0AHEcVYDWVk6XiMLM3Uumwxt_B9elSKATG1r-vKb3MtS73uV2YS1U8AoQ6WJo_pQHf1PtKyL0_SBUyHIymbMFURIDs4lNZHNIhCSWQV6HR6-blfMjOmECOT_d-_OX"/><a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors uppercase tracking-wider" data-path="login" href="#">Sign Out</a></div></div></div></header><main class="w-full pt-[68px] bg-background min-h-screen"><div class="max-w-7xl mx-auto px-6 lg:px-12 py-space-lg"><div class="flex flex-col w-full">
+<!-- Blueprint Precision Grid Top Bar -->
+<div class="w-full flex flex-col md:flex-row md:items-end justify-between gap-space-md pb-space-lg mb-space-lg shadow-sm bg-surface-card p-6 rounded-lg">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-code-technical text-code-technical uppercase tracking-widest text-primary font-bold">OPERATIONAL DOSSIER // EMP-4091</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-code-technical text-code-technical text-text-muted">STATUS: SHOP-FLOOR ACTIVE</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-text-primary tracking-tight">My Learning</h1>
+<p class="font-body-md text-body-md text-text-muted max-w-2xl">
+        Track your active, completed, and assigned technical training modules. Calibrated for mechanical engineering and clamp manufacturing standards.
+      </p>
+</div>
+<!-- Summary Mini-metrics Ribbon -->
+<div class="flex items-center gap-3 bg-surface-muted p-2 rounded-lg">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-card rounded shadow-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-code-technical text-code-technical text-text-primary font-semibold">2 Active</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-card rounded shadow-sm">
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-code-technical text-code-technical text-text-primary font-semibold">4 Completed</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-card rounded shadow-sm">
+<span class="w-2 h-2 rounded-full bg-border-strong"></span>
+<span class="font-code-technical text-code-technical text-text-muted">2 Not Started</span>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1.5 bg-primary-container text-on-primary-container rounded">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="font-code-technical text-code-technical font-bold">12.5 hrs Logged</span>
+</div>
+</div>
+</div>
+<!-- Operational Filter Strip & Quick Telemetry -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md mb-space-lg">
+<!-- Filter Tabs -->
+<div class="flex items-center gap-2 bg-surface-container p-1 rounded-lg">
+<button class="filter-btn px-4 py-1.5 rounded font-label-md text-label-md text-text-muted hover:text-text-primary transition-all" onclick="setFilter('all', this)">
+        All (8)
+      </button>
+<button class="filter-btn active-filter px-4 py-1.5 rounded font-label-md text-label-md bg-primary-container text-on-primary font-bold shadow-sm transition-all" onclick="setFilter('in-progress', this)">
+        In Progress (2)
+      </button>
+<button class="filter-btn px-4 py-1.5 rounded font-label-md text-label-md text-text-muted hover:text-text-primary transition-all" onclick="setFilter('completed', this)">
+        Completed (4)
+      </button>
+<button class="filter-btn px-4 py-1.5 rounded font-label-md text-label-md text-text-muted hover:text-text-primary transition-all" onclick="setFilter('not-started', this)">
+        Not Started (2)
+      </button>
+</div>
+<!-- Telemetry Gauge Pill -->
+<div class="flex items-center gap-3 bg-surface-card px-4 py-2 rounded shadow-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Overall Syllabus Completion</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">62.5% ISO-9001 Compliance Track</span>
+</div>
+<div class="w-24 h-2 bg-surface-muted rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[62.5%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- In-Progress Training Section -->
+<section class="course-group flex flex-col gap-space-md mb-space-xl" id="section-in-progress">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-xl">precision_manufacturing</span>
+<h2 class="font-headline-md text-headline-md text-text-primary tracking-tight">Active Curriculum</h2>
+<span class="font-code-technical text-code-technical text-text-muted bg-surface-container px-2 py-0.5 rounded">RUNNING SESSIONS</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-muted">Showing 3 active mechanical modules</span>
+</div>
+<!-- Active Course Cards Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+<!-- Course Card 1 -->
+<div class="bg-surface-card rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden relative group">
+<div class="h-1.5 w-full bg-primary-container"></div>
+<div class="p-5 flex flex-col gap-4">
+<!-- Card Header & Badge -->
+<div class="flex items-start justify-between gap-2">
+<div>
+<span class="font-code-technical text-code-technical text-primary font-bold tracking-wider uppercase">MACHINE MAINTENANCE</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary group-hover:text-primary transition-colors leading-snug mt-1">
+                Machine Maintenance Fundamentals
+              </h3>
+</div>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm uppercase tracking-wider bg-secondary-container text-on-secondary-fixed font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+              In Progress
+            </span>
+</div>
+<!-- Technical Metrics Grid -->
+<div class="bg-surface-muted p-3 rounded flex items-center justify-between text-left">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Modules</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">8 / 12 (72%)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Time Spent</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">2h 25m <span class="text-text-muted font-normal">/ 3h 20m</span></span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Last Active</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">Today, 10:45 AM</span>
+</div>
+</div>
+<!-- Progress Track -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="font-label-sm text-label-sm uppercase text-text-muted">Target Syllabus</span>
+<span class="font-code-technical text-code-technical font-bold text-primary">72% Completed</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded overflow-hidden">
+<div class="h-full bg-primary-container rounded" style="width: 72%;"></div>
+</div>
+</div>
+<!-- Next Milestone Drawer -->
+<div class="bg-surface p-3 rounded flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-lg mt-0.5">arrow_forward</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Next Sequential Step</span>
+<span class="font-body-sm text-body-sm font-semibold text-text-primary line-clamp-1">
+                Module 09: Hydraulic Pressure Relief &amp; Filter Replacement
+              </span>
+</div>
+</div>
+</div>
+<!-- Footer CTA Strip -->
+<div class="bg-surface px-5 py-3 flex items-center justify-between">
+<span class="font-code-technical text-code-technical text-text-muted flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">verified</span> Standard SOP-402
+          </span>
+<button class="px-4 py-2 bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md rounded flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+<span>Continue Learning</span>
+<span class="material-symbols-outlined text-base">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Course Card 2 -->
+<div class="bg-surface-card rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden relative group">
+<div class="h-1.5 w-full bg-primary-container"></div>
+<div class="p-5 flex flex-col gap-4">
+<!-- Card Header & Badge -->
+<div class="flex items-start justify-between gap-2">
+<div>
+<span class="font-code-technical text-code-technical text-primary font-bold tracking-wider uppercase">QUALITY</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary group-hover:text-primary transition-colors leading-snug mt-1">
+                Quality Control &amp; Inspection Standards
+              </h3>
+</div>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm uppercase tracking-wider bg-secondary-container text-on-secondary-fixed font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+              In Progress
+            </span>
+</div>
+<!-- Technical Metrics Grid -->
+<div class="bg-surface-muted p-3 rounded flex items-center justify-between text-left">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Modules</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">4 / 8 (45%)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Time Spent</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">58m <span class="text-text-muted font-normal">/ 2h 10m</span></span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Last Active</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">Yesterday, 3:30 PM</span>
+</div>
+</div>
+<!-- Progress Track -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="font-label-sm text-label-sm uppercase text-text-muted">Target Syllabus</span>
+<span class="font-code-technical text-code-technical font-bold text-primary">45% Completed</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded overflow-hidden">
+<div class="h-full bg-primary-container rounded" style="width: 45%;"></div>
+</div>
+</div>
+<!-- Next Milestone Drawer -->
+<div class="bg-surface p-3 rounded flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-lg mt-0.5">arrow_forward</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Next Sequential Step</span>
+<span class="font-body-sm text-body-sm font-semibold text-text-primary line-clamp-1">
+                Module 05: Micrometer Calibration &amp; Zero-Error Check
+              </span>
+</div>
+</div>
+</div>
+<!-- Footer CTA Strip -->
+<div class="bg-surface px-5 py-3 flex items-center justify-between">
+<span class="font-code-technical text-code-technical text-text-muted flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">tune</span> QC-TOLERANCE-01
+          </span>
+<button class="px-4 py-2 bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md rounded flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+<span>Continue Learning</span>
+<span class="material-symbols-outlined text-base">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Course Card 3 -->
+<div class="bg-surface-card rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden relative group">
+<div class="h-1.5 w-full bg-primary-container"></div>
+<div class="p-5 flex flex-col gap-4">
+<!-- Card Header & Badge -->
+<div class="flex items-start justify-between gap-2">
+<div>
+<span class="font-code-technical text-code-technical text-primary font-bold tracking-wider uppercase">ENGINEERING</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary group-hover:text-primary transition-colors leading-snug mt-1">
+                Engineering Standards &amp; Best Practices
+              </h3>
+</div>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm uppercase tracking-wider bg-secondary-container text-on-secondary-fixed font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+              In Progress
+            </span>
+</div>
+<!-- Technical Metrics Grid -->
+<div class="bg-surface-muted p-3 rounded flex items-center justify-between text-left">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Modules</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">2 / 7 (35%)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Time Spent</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">40m <span class="text-text-muted font-normal">/ 1h 50m</span></span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted block">Last Active</span>
+<span class="font-code-technical text-code-technical font-bold text-text-primary">3 days ago</span>
+</div>
+</div>
+<!-- Progress Track -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="font-label-sm text-label-sm uppercase text-text-muted">Target Syllabus</span>
+<span class="font-code-technical text-code-technical font-bold text-primary">35% Completed</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded overflow-hidden">
+<div class="h-full bg-primary-container rounded" style="width: 35%;"></div>
+</div>
+</div>
+<!-- Next Milestone Drawer -->
+<div class="bg-surface p-3 rounded flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-lg mt-0.5">arrow_forward</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Next Sequential Step</span>
+<span class="font-body-sm text-body-sm font-semibold text-text-primary line-clamp-1">
+                Module 03: Torque Loading Calculations &amp; Clamping Rigidity
+              </span>
+</div>
+</div>
+</div>
+<!-- Footer CTA Strip -->
+<div class="bg-surface px-5 py-3 flex items-center justify-between">
+<span class="font-code-technical text-code-technical text-text-muted flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">gavel</span> ENG-SPEC-880
+          </span>
+<button class="px-4 py-2 bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md rounded flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+<span>Continue Learning</span>
+<span class="material-symbols-outlined text-base">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Completed Training Section -->
+<section class="course-group flex flex-col gap-space-md mb-space-xl" id="section-completed">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-1">
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-xl">fact_check</span>
+<h2 class="font-headline-md text-headline-md text-text-primary tracking-tight">Completed Courses (4)</h2>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">Successfully certified and verified by plant engineering supervisor.</p>
+</div>
+<span class="font-code-technical text-code-technical text-text-muted">ALL RECORDS ARCHIVED TO AUDIT REGISTRY</span>
+</div>
+<!-- Structured Industrial Audit Table / List Layout -->
+<div class="bg-surface-card rounded-lg shadow-sm overflow-hidden flex flex-col divide-y divide-surface-container">
+<!-- Item A -->
+<div class="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface-container-low transition-colors">
+<div class="flex items-start sm:items-center gap-4">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Industrial Safety &amp; Safe Work Practices</h3>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm uppercase bg-surface-container text-secondary font-semibold">100% Certified</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-text-muted">
+<span class="font-code-technical text-code-technical">10 / 10 Modules Passed</span>
+<span class="text-surface-container-high">•</span>
+<span class="font-body-sm text-body-sm">Completed on: <strong>18 September 2026</strong></span>
+<span class="text-surface-container-high">•</span>
+<span class="font-code-technical text-code-technical bg-surface-muted px-2 py-0.5 rounded text-secondary">Verified by: Plant Safety Cell</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 self-end md:self-center shrink-0">
+<span class="font-code-technical text-code-technical text-text-muted">CER-89410</span>
+<button class="px-3.5 py-1.5 bg-surface-muted hover:bg-surface-container text-text-primary font-label-md text-label-md rounded shadow-sm transition-colors flex items-center gap-1 cursor-pointer">
+<span>View Course</span>
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<!-- Item B -->
+<div class="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface-container-low transition-colors">
+<div class="flex items-start sm:items-center gap-4">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Clamp Metallurgy &amp; Corrosion Resistance</h3>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm uppercase bg-surface-container text-secondary font-semibold">100% Certified</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-text-muted">
+<span class="font-code-technical text-code-technical">6 / 6 Modules Passed</span>
+<span class="text-surface-container-high">•</span>
+<span class="font-body-sm text-body-sm">Completed on: <strong>04 August 2026</strong></span>
+<span class="text-surface-container-high">•</span>
+<span class="font-code-technical text-code-technical bg-surface-muted px-2 py-0.5 rounded text-secondary">Verified by: Met Lab Division</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 self-end md:self-center shrink-0">
+<span class="font-code-technical text-code-technical text-text-muted">CER-77821</span>
+<button class="px-3.5 py-1.5 bg-surface-muted hover:bg-surface-container text-text-primary font-label-md text-label-md rounded shadow-sm transition-colors flex items-center gap-1 cursor-pointer">
+<span>View Course</span>
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<!-- Item C -->
+<div class="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface-container-low transition-colors">
+<div class="flex items-start sm:items-center gap-4">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Standard Operating Procedures: Press Line #2</h3>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm uppercase bg-surface-container text-secondary font-semibold">100% Certified</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-text-muted">
+<span class="font-code-technical text-code-technical">5 / 5 Modules Passed</span>
+<span class="text-surface-container-high">•</span>
+<span class="font-body-sm text-body-sm">Completed on: <strong>12 July 2026</strong></span>
+<span class="text-surface-container-high">•</span>
+<span class="font-code-technical text-code-technical bg-surface-muted px-2 py-0.5 rounded text-secondary">Verified by: Plant Sup. G. Patil</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 self-end md:self-center shrink-0">
+<span class="font-code-technical text-code-technical text-text-muted">CER-63209</span>
+<button class="px-3.5 py-1.5 bg-surface-muted hover:bg-surface-container text-text-primary font-label-md text-label-md rounded shadow-sm transition-colors flex items-center gap-1 cursor-pointer">
+<span>View Course</span>
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<!-- Item D -->
+<div class="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface-container-low transition-colors">
+<div class="flex items-start sm:items-center gap-4">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Basic Metrology &amp; Shop Floor Gauges</h3>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm uppercase bg-surface-container text-secondary font-semibold">100% Certified</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-text-muted">
+<span class="font-code-technical text-code-technical">8 / 8 Modules Passed</span>
+<span class="text-surface-container-high">•</span>
+<span class="font-body-sm text-body-sm">Completed on: <strong>28 May 2026</strong></span>
+<span class="text-surface-container-high">•</span>
+<span class="font-code-technical text-code-technical bg-surface-muted px-2 py-0.5 rounded text-secondary">Verified by: Calibration Bureau</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 self-end md:self-center shrink-0">
+<span class="font-code-technical text-code-technical text-text-muted">CER-50499</span>
+<button class="px-3.5 py-1.5 bg-surface-muted hover:bg-surface-container text-text-primary font-label-md text-label-md rounded shadow-sm transition-colors flex items-center gap-1 cursor-pointer">
+<span>View Course</span>
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Not Started Section (Controlled by Filter) -->
+<section class="course-group hidden flex-col gap-space-md mb-space-xl" id="section-not-started">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-xl">pending_actions</span>
+<h2 class="font-headline-md text-headline-md text-text-primary tracking-tight">Assigned / Not Started (2)</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Unstarted 1 -->
+<div class="bg-surface-card p-5 rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex flex-col gap-2">
+<span class="font-code-technical text-code-technical text-text-muted uppercase">ASSEMBLY LINES</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Hydraulic Clamp Pressure Testing Protocols</h3>
+<p class="font-body-sm text-body-sm text-text-muted">Covers safety isolation, dead-weight testers, and sensor logging protocols.</p>
+</div>
+<div class="mt-4 flex items-center justify-between pt-4 bg-surface-muted -mx-5 -mb-5 p-4 rounded-b-lg">
+<span class="font-code-technical text-code-technical text-text-muted">EST. 1h 45m</span>
+<button class="px-4 py-2 bg-primary-container text-on-primary font-label-md text-label-md rounded hover:bg-primary transition-colors">Start Course</button>
+</div>
+</div>
+<!-- Unstarted 2 -->
+<div class="bg-surface-card p-5 rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex flex-col gap-2">
+<span class="font-code-technical text-code-technical text-text-muted uppercase">COMPLIANCE</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">ISO 14001 Waste Stream Sorting</h3>
+<p class="font-body-sm text-body-sm text-text-muted">Standard shop-floor segregation for metal swarf, coolant, and oily rags.</p>
+</div>
+<div class="mt-4 flex items-center justify-between pt-4 bg-surface-muted -mx-5 -mb-5 p-4 rounded-b-lg">
+<span class="font-code-technical text-code-technical text-text-muted">EST. 45m</span>
+<button class="px-4 py-2 bg-primary-container text-on-primary font-label-md text-label-md rounded hover:bg-primary transition-colors">Start Course</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Technical Blueprint Empty State Component (Hidden by default, used when filter yields zero results) -->
+<div class="hidden flex-col items-center justify-center p-12 bg-surface-card rounded-lg shadow-sm text-center my-6" id="blueprint-empty-state">
+<div class="relative w-24 h-24 mb-4 flex items-center justify-center">
+<!-- Precision Crosshairs Drawing -->
+<svg class="w-full h-full text-border-strong" fill="none" viewbox="0 0 100 100">
+<circle cx="50" cy="50" r="40" stroke="currentColor" stroke-dasharray="4 4" stroke-width="1.5"></circle>
+<circle cx="50" cy="50" r="20" stroke="currentColor" stroke-width="1"></circle>
+<line stroke="currentColor" stroke-width="1.5" x1="50" x2="50" y1="0" y2="100"></line>
+<line stroke="currentColor" stroke-width="1.5" x1="0" x2="100" y1="50" y2="50"></line>
+<rect fill="currentColor" fill-opacity="0.3" height="8" width="8" x="46" y="46"></rect>
+</svg>
+<span class="material-symbols-outlined absolute text-secondary text-2xl">search_off</span>
+</div>
+<span class="font-code-technical text-code-technical uppercase tracking-widest text-primary font-bold">CALIBRATION RETRIEVAL // ZERO RECORDS</span>
+<h3 class="font-headline-md text-headline-md text-text-primary mt-1">No Active Modules In This Filter</h3>
+<p class="font-body-md text-body-md text-text-muted max-w-md mt-1 mb-6">
+      There are currently no training units matching this operational state. Re-adjust your filter criteria to inspect assigned coursework.
+    </p>
+<button class="px-4 py-2 bg-surface-muted hover:bg-surface-container text-text-primary font-label-md text-label-md rounded shadow-sm transition-colors cursor-pointer" onclick="setFilter('all', document.querySelectorAll('.filter-btn')[0])">
+      Reset Filter to All
+    </button>
+</div>
+<!-- Operational Field Support Footer Bar -->
+<div class="mt-space-md p-4 bg-surface-muted rounded-lg flex flex-col sm:flex-row items-center justify-between gap-space-sm text-text-muted">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">support_agent</span>
+<span class="font-body-sm text-body-sm">Assigned modules missing? Contact <strong>Plant Technical Supervisor (Shift-A)</strong> or submit calibration re-enrollment request.</span>
+</div>
+<span class="font-code-technical text-code-technical text-xs">LOG ID: JC-LMS-2026.09</span>
+</div>
+</div>
+<script>
+  function setFilter(filterType, element) {
+    // Update button states
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active-filter', 'bg-primary-container', 'text-on-primary', 'font-bold', 'shadow-sm');
+      btn.classList.add('text-text-muted');
+    });
+    element.classList.remove('text-text-muted');
+    element.classList.add('active-filter', 'bg-primary-container', 'text-on-primary', 'font-bold', 'shadow-sm');
+
+    const inProgress = document.getElementById('section-in-progress');
+    const completed = document.getElementById('section-completed');
+    const notStarted = document.getElementById('section-not-started');
+    const emptyState = document.getElementById('blueprint-empty-state');
+
+    // Reset visibility
+    inProgress.classList.add('hidden');
+    completed.classList.add('hidden');
+    notStarted.classList.add('hidden');
+    emptyState.classList.add('hidden');
+
+    if (filterType === 'all') {
+      inProgress.classList.remove('hidden');
+      completed.classList.remove('hidden');
+      notStarted.classList.remove('hidden');
+    } else if (filterType === 'in-progress') {
+      inProgress.classList.remove('hidden');
+    } else if (filterType === 'completed') {
+      completed.classList.remove('hidden');
+    } else if (filterType === 'not-started') {
+      notStarted.classList.remove('hidden');
+    }
+  }
+</script></div></main><footer class="w-full bg-surface-card border-t border-border-grid py-space-lg"><div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-space-md text-on-surface-variant"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm uppercase tracking-tight text-on-surface">Jolly Clamps Pvt. Ltd.</span><span class="text-border-strong">|</span><span class="font-code-technical text-code-technical text-text-muted">PRECISION ENGINEERING DIVISION</span></div><div class="font-body-sm text-body-sm text-text-muted">© 2024 Jolly Clamps Pvt. Ltd. Mechanical Compliance &amp; Quality Technical Training.</div></div></footer></body></html>

@@ -212,40 +212,76 @@ export async function PUT(
       }
     }
 
-    // 3. Delete existing modules (CASCADE handles lessons & quizzes)
-    await connection.execute('DELETE FROM modules WHERE course_id = ?', [id]);
+    // 3. Differential module & lesson updates (preserves user_progress & video_watch_time)
+    // Fetch existing module IDs for this course
+    const [existingModuleRows] = await connection.execute<any[]>(
+      'SELECT id FROM modules WHERE course_id = ?',
+      [id]
+    );
+    const existingModuleIds = new Set(existingModuleRows.map((r: any) => r.id));
+    const keptModuleIds: string[] = [];
 
-    // 4. Re-insert modules + lessons + quizzes
     if (modules?.length) {
-      for (const mod of modules) {
-        const moduleId = randomUUID();
-        await connection.execute(
-          'INSERT INTO modules (id, course_id, title, order_index) VALUES (?, ?, ?, ?)',
-          [moduleId, id, mod.title, mod.order_index || 0]
+      for (let mi = 0; mi < modules.length; mi++) {
+        const mod = modules[mi];
+        const modOrder = mod.order_index ?? mi;
+        let moduleId = mod.id;
+
+        if (moduleId && existingModuleIds.has(moduleId)) {
+          // Update existing module in-place
+          await connection.execute(
+            'UPDATE modules SET title = ?, order_index = ? WHERE id = ?',
+            [mod.title, modOrder, moduleId]
+          );
+        } else {
+          // Insert new module
+          moduleId = (moduleId && !moduleId.startsWith('temp-') && !moduleId.startsWith('mod-')) ? moduleId : randomUUID();
+          await connection.execute(
+            'INSERT INTO modules (id, course_id, title, order_index) VALUES (?, ?, ?, ?)',
+            [moduleId, id, mod.title, modOrder]
+          );
+        }
+        keptModuleIds.push(moduleId);
+
+        // Fetch existing lesson IDs for this module
+        const [existingLessonRows] = await connection.execute<any[]>(
+          'SELECT id FROM lessons WHERE module_id = ?',
+          [moduleId]
         );
+        const existingLessonIds = new Set(existingLessonRows.map((r: any) => r.id));
+        const keptLessonIds: string[] = [];
 
         if (mod.lessons?.length) {
-          for (const lesson of mod.lessons) {
-            const lessonId = randomUUID();
+          for (let li = 0; li < mod.lessons.length; li++) {
+            const lesson = mod.lessons[li];
+            const lessonOrder = lesson.order_index ?? li;
+            let lessonId = lesson.id;
             const lessonType = lesson.type || 'single';
             const videoUrl = lessonType === 'single' ? (lesson.video_url || null) : null;
             const playlistUrlsJson = lessonType === 'playlist' && lesson.playlist_urls ? JSON.stringify(lesson.playlist_urls) : null;
+            const durationSec = Number(lesson.duration_seconds) || 0;
 
-            await connection.execute(
-              `INSERT INTO lessons (id, module_id, title, type, video_url, playlist_urls, order_index, duration_seconds)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-              [
-                lessonId,
-                moduleId,
-                lesson.title,
-                lessonType,
-                videoUrl,
-                playlistUrlsJson,
-                lesson.order_index || 0,
-                lesson.duration_seconds || 0,
-              ]
-            );
+            if (lessonId && existingLessonIds.has(lessonId)) {
+              // In-place update preserving user progress and watch time
+              await connection.execute(
+                `UPDATE lessons 
+                 SET title = ?, type = ?, video_url = ?, playlist_urls = ?, order_index = ?, duration_seconds = ?
+                 WHERE id = ?`,
+                [lesson.title, lessonType, videoUrl, playlistUrlsJson, lessonOrder, durationSec, lessonId]
+              );
+            } else {
+              // Insert new lesson
+              lessonId = (lessonId && !lessonId.startsWith('temp-') && !lessonId.startsWith('les-')) ? lessonId : randomUUID();
+              await connection.execute(
+                `INSERT INTO lessons (id, module_id, title, type, video_url, playlist_urls, order_index, duration_seconds)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [lessonId, moduleId, lesson.title, lessonType, videoUrl, playlistUrlsJson, lessonOrder, durationSec]
+              );
+            }
+            keptLessonIds.push(lessonId);
 
+            // Re-sync quizzes for this lesson
+            await connection.execute('DELETE FROM lesson_quizzes WHERE lesson_id = ?', [lessonId]);
             if (lesson.quizzes?.length) {
               for (const q of lesson.quizzes) {
                 const quizId = randomUUID();
@@ -265,7 +301,29 @@ export async function PUT(
             }
           }
         }
+
+        // Delete only removed lessons for this module
+        if (keptLessonIds.length > 0) {
+          const placeholders = keptLessonIds.map(() => '?').join(',');
+          await connection.execute(
+            `DELETE FROM lessons WHERE module_id = ? AND id NOT IN (${placeholders})`,
+            [moduleId, ...keptLessonIds]
+          );
+        } else {
+          await connection.execute('DELETE FROM lessons WHERE module_id = ?', [moduleId]);
+        }
       }
+    }
+
+    // Delete only removed modules for this course
+    if (keptModuleIds.length > 0) {
+      const placeholders = keptModuleIds.map(() => '?').join(',');
+      await connection.execute(
+        `DELETE FROM modules WHERE course_id = ? AND id NOT IN (${placeholders})`,
+        [id, ...keptModuleIds]
+      );
+    } else {
+      await connection.execute('DELETE FROM modules WHERE course_id = ?', [id]);
     }
 
     await connection.commit();
