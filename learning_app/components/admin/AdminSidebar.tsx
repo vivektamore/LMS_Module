@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Video, Users, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Video, Users, UserCheck, Settings, LogOut } from 'lucide-react';
 import { signout } from '@/app/login/actions';
 
 export default function AdminSidebar() {
@@ -11,7 +11,8 @@ export default function AdminSidebar() {
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Courses', href: '/admin/courses', icon: Video },
-    { name: 'Enrollments', href: '/admin/users', icon: Users },
+    { name: 'Enrollments', href: '/admin/enrollments', icon: UserCheck },
+    { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 
