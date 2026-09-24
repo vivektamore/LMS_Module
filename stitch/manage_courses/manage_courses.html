@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-highest":"#e0e3e5","primary-container":"#c62828","inverse-primary":"#ffb4ac","surface-container-low":"#f2f4f6","on-primary-container":"#ffe0dd","tertiary":"#425065","border-grid":"#E2E8F0","on-error-container":"#93000a","on-tertiary-fixed-variant":"#3a485c","on-primary-fixed":"#410003","outline":"#8f706c","on-secondary-fixed-variant":"#3f465c","outline-variant":"#e4beba","on-tertiary":"#ffffff","on-surface-variant":"#5b403d","tertiary-fixed":"#d5e3fd","primary-fixed-dim":"#ffb4ac","on-surface":"#191c1e","surface-dim":"#d8dadc","background":"#f7f9fb","border-strong":"#CBD5E1","error":"#ba1a1a","surface":"#f7f9fb","tertiary-fixed-dim":"#b9c7e0","inverse-on-surface":"#eff1f3","secondary-fixed":"#dae2fd","secondary":"#565e74","text-muted":"#64748B","on-tertiary-fixed":"#0d1c2f","warning-caution":"#D97706","on-secondary-container":"#5c647a","primary":"#a20513","tertiary-container":"#5a687e","on-primary-fixed-variant":"#93000e","error-container":"#ffdad6","on-tertiary-container":"#dae7ff","on-error":"#ffffff","surface-container":"#eceef0","on-background":"#191c1e","brand-crimson":"#EF2E50","surface-bright":"#f7f9fb","surface-card":"#FFFFFF","surface-container-lowest":"#ffffff","on-primary":"#ffffff","surface-muted":"#F1F5F9","text-primary":"#0F172A","secondary-fixed-dim":"#bec6e0","primary-fixed":"#ffdad6","inverse-surface":"#2d3133","success-industrial":"#16A34A","on-secondary-fixed":"#131b2e","secondary-container":"#dae2fd","on-secondary":"#ffffff","surface-variant":"#e0e3e5","surface-container-high":"#e6e8ea","surface-tint":"#b91d20"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","space-xl":"2.25rem","space-md":"1rem","space-lg":"1.5rem","margin-sm":"1rem","gutter-sm":"0.75rem","margin":"2rem","margin-lg":"3rem","gutter-lg":"1.75rem","space-xs":"0.25rem","gutter":"1.25rem"},fontFamily:{"code-technical":["IBM Plex Sans"],"body-md":["Inter"],"body-sm":["Inter"],"headline-md":["IBM Plex Sans"],"headline-sm":["IBM Plex Sans"],"body-lg":["Inter"],"headline-xl":["IBM Plex Sans"],"headline-xl-mobile":["IBM Plex Sans"],"headline-lg":["IBM Plex Sans"],"headline-lg-mobile":["IBM Plex Sans"],"label-sm":["IBM Plex Sans"],"label-md":["IBM Plex Sans"]},fontSize:{"code-technical":["12px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"500"}],"body-md":["14px",{lineHeight:"22px",letterSpacing:"0em",fontWeight:"400"}],"body-sm":["12px",{lineHeight:"18px",letterSpacing:"0.01em",fontWeight:"400"}],"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-sm":["16px",{lineHeight:"24px",letterSpacing:"0em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"26px",letterSpacing:"0em",fontWeight:"400"}],"headline-xl":["36px",{lineHeight:"44px",letterSpacing:"-0.02em",fontWeight:"700"}],"headline-xl-mobile":["28px",{lineHeight:"36px",letterSpacing:"-0.01em",fontWeight:"700"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-lg-mobile":["22px",{lineHeight:"30px",letterSpacing:"0em",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"700"}],"label-md":["13px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"600"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[220px] bg-surface-card border-r border-border-grid z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-16 px-space-md border-b border-border-grid flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #c62828
+- Font: ibmPlexSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VG9WgSwFLva2rRrGOH8dQlvsQi1huaNk3b3CzeqAZbshX0kCFr_aW_83L5yBKhnXmx5sArlacv2xZI03qwgHDO8cBqmNvz3hLvsCf3IP9YNcN_q8P5L3E5KYNG4ohvGJgw5FECMKcbytIIaWzH8aDX7d9yuQ6Y0mTMSPERQ5WEHwX0w4kQoyXC8AZxd4IcEnckNZ-HEv2COu8n9C9x8mRRivMW5FFV19lzG-UbC9GDwYa8zc8lbLqOKEI"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-text-primary leading-none tracking-tight">Jolly Clamps</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold mt-space-xs">Technical Training Admin Panel</span></div></div><div class="px-space-md py-space-sm"><span class="font-code-technical text-code-technical uppercase text-text-muted tracking-wider">Navigation Rail</span></div><nav class="px-space-xs flex flex-col gap-space-xs" data-active-classes="bg-primary-container text-on-primary font-semibold"><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-label-md text-label-md">Dashboard</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg transition-colors bg-primary-container text-on-primary font-semibold" data-path="courses" href="#"><span class="material-symbols-outlined text-[18px]">menu_book</span><span class="font-label-md text-label-md">Courses</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="enrollments" href="#"><span class="material-symbols-outlined text-[18px]">school</span><span class="font-label-md text-label-md">Enrollments</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="users" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span class="font-label-md text-label-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-md text-label-md">Settings</span></a></nav></div><div class="p-space-sm border-t border-border-grid"><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-error hover:bg-error-container hover:text-on-error-container transition-colors w-full" data-path="logout" href="#"><span class="material-symbols-outlined text-[18px]">logout</span><span class="font-label-md text-label-md font-semibold">Logout</span></a></div></aside><div class="pl-[220px]"><header class="fixed top-0 left-[220px] right-0 h-16 bg-surface-card border-b border-border-grid z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Jolly Clamps Technical Training LMS</span></div><div class="flex items-center gap-space-md"><button class="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg border border-border-strong text-text-primary hover:bg-surface-muted transition-colors font-label-md text-label-md" title="Sync System Telemetry" type="button"><span class="material-symbols-outlined text-[16px] text-primary">sync</span><span>Sync</span></button><div class="h-6 w-px bg-border-grid"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right"><span class="font-label-md text-label-md text-text-primary font-semibold leading-tight">R. Vance</span><span class="font-body-sm text-body-sm text-text-muted leading-tight">Plant Supervisor</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-border-grid" src="https://lh3.googleusercontent.com/aida/AEtjO1VK2SE9JJ-ZArCRUtn5yyMueXpVfzrDTeXQV-Y1f37l_qDEZpeB7oYZ85_SpiylSF4ngpxLq8SNDP1KgrNH9t94mYkG5oekNtBYO9GVx-BX_TCMbDdEjCEMnYs2NFQaG-9wDFklqRg1902kvgXT1jt-I9qGy5R6vK1nfuVHylYvM5eH4OZFASWelgIbqpS0Jy7x1mGXdBYpOURHRlaiuJ-Lzn1ltCqNnEV0uGpbBWsVKQf8SlO8IpoGJWw"/></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Interactive Course List Container -->
+<div class="p-space-lg max-w-[1400px] w-full mx-auto flex flex-col gap-space-lg" id="courseDirectoryRoot">
+<!-- Top Bar: Header & Primary CTA -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md"><div class="flex flex-col"><h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">Manage Courses</h1><p class="font-body-md text-body-md text-text-muted mt-space-xs">Create, update and manage technical training courses.</p></div><div class="flex items-center gap-space-sm"><button class="h-10 px-space-md bg-primary-container hover:bg-primary text-on-primary rounded-lg font-label-md text-label-md tracking-wide transition-all shadow-sm flex items-center gap-space-xs active:translate-y-px" id="openCreateCourseModal" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>Create Course</span></button></div></div>
+<!-- Telemetry Metric Row -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-md"><div class="bg-surface-card border border-border-grid rounded-xl p-space-md flex flex-col justify-between shadow-sm"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Courses</span><span class="material-symbols-outlined text-[18px] text-tertiary">menu_book</span></div><div class="flex items-baseline gap-space-sm mt-space-sm"><span class="font-headline-xl text-headline-xl text-text-primary">6</span><span class="font-body-sm text-body-sm text-text-muted">total</span></div></div><div class="bg-surface-card border border-border-grid rounded-xl p-space-md flex flex-col justify-between shadow-sm"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Published</span><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span></div><div class="flex items-baseline gap-space-sm mt-space-sm"><span class="font-headline-xl text-headline-xl text-text-primary">4</span><span class="font-body-sm text-body-sm text-emerald-700 font-medium">active</span></div></div><div class="bg-surface-card border border-border-grid rounded-xl p-space-md flex flex-col justify-between shadow-sm"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Draft</span><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span></div><div class="flex items-baseline gap-space-sm mt-space-sm"><span class="font-headline-xl text-headline-xl text-text-primary">1</span><span class="font-body-sm text-body-sm text-amber-800 font-medium">in progress</span></div></div><div class="bg-surface-card border border-border-grid rounded-xl p-space-md flex flex-col justify-between shadow-sm"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Archived</span><span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span></div><div class="flex items-baseline gap-space-sm mt-space-sm"><span class="font-headline-xl text-headline-xl text-text-primary">1</span><span class="font-body-sm text-body-sm text-text-muted font-medium">inactive</span></div></div></div>
+<!-- Filter & Search Controls Toolbar -->
+<div class="bg-surface-card border border-border-grid rounded-xl p-space-sm md:p-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md shadow-sm">
+<!-- Status Pills Segment -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-1 md:pb-0" id="statusFilterGroup">
+<button class="filter-tab active-tab px-3 py-1.5 rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors bg-primary-container text-on-primary" data-filter="all" type="button">
+<span>All</span>
+<span class="text-xs px-1.5 py-0.2 rounded-full bg-white/20 font-code-technical">6</span>
+</button>
+<button class="filter-tab px-3 py-1.5 rounded-lg font-label-md text-label-md text-text-muted hover:bg-surface-muted hover:text-text-primary flex items-center gap-space-xs transition-colors" data-filter="published" type="button">
+<span>Published</span>
+<span class="text-xs px-1.5 py-0.2 rounded-full bg-surface-container font-code-technical text-text-muted">4</span>
+</button>
+<button class="filter-tab px-3 py-1.5 rounded-lg font-label-md text-label-md text-text-muted hover:bg-surface-muted hover:text-text-primary flex items-center gap-space-xs transition-colors" data-filter="draft" type="button">
+<span>Draft</span>
+<span class="text-xs px-1.5 py-0.2 rounded-full bg-surface-container font-code-technical text-text-muted">1</span>
+</button>
+<button class="filter-tab px-3 py-1.5 rounded-lg font-label-md text-label-md text-text-muted hover:bg-surface-muted hover:text-text-primary flex items-center gap-space-xs transition-colors" data-filter="archived" type="button">
+<span>Archived</span>
+<span class="text-xs px-1.5 py-0.2 rounded-full bg-surface-container font-code-technical text-text-muted">1</span>
+</button>
+</div>
+<!-- Search & Category Filters -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-space-sm w-full md:w-auto">
+<!-- Search Field -->
+<div class="relative flex-1 sm:w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-tertiary text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-3 rounded-lg border border-border-strong bg-surface focus:bg-surface-card text-text-primary font-body-md text-body-md placeholder-text-muted focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" id="courseSearchInput" placeholder="Search courses, course code..." type="text"/>
+<button class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary" id="clearSearchBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- Category Dropdown Filter -->
+<div class="relative">
+<select class="w-full sm:w-auto h-10 appearance-none pl-3 pr-8 rounded-lg border border-border-strong bg-surface text-text-primary font-label-md text-label-md focus:outline-none focus:border-primary-container focus:bg-surface-card transition-all cursor-pointer" id="categoryFilter">
+<option value="all">All Categories</option>
+<option value="Machine Maintenance">Machine Maintenance</option>
+<option value="Safety">Industrial Safety</option>
+<option value="Quality">Quality Control</option>
+<option value="Manufacturing">Manufacturing</option>
+<option value="Engineering">Engineering Standards</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-tertiary text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- High-Density Course Directory Table -->
+<div class="bg-surface-card border border-border-grid rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left border-collapse min-w-[1020px]" id="coursesTable">
+<thead>
+<tr class="bg-surface-container-low border-b border-border-strong text-text-muted font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-3 px-space-md w-[38%]" scope="col">Course Title &amp; Specification</th>
+<th class="py-3 px-space-md w-[14%]" scope="col">Category</th>
+<th class="py-3 px-space-md text-center w-[9%]" scope="col">Modules</th>
+<th class="py-3 px-space-md text-center w-[9%]" scope="col">Lessons</th>
+<th class="py-3 px-space-md text-center w-[11%]" scope="col">Enrollments</th>
+<th class="py-3 px-space-md w-[10%]" scope="col">Status</th>
+<th class="py-3 px-space-md w-[9%]" scope="col">Updated</th>
+<th class="py-3 px-space-md text-right w-[10%]" scope="col">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-grid font-body-md text-body-md" id="courseTableBody"><tr class="course-row hover:bg-surface-container-low/60 transition-colors group" data-category="Machine Maintenance" data-status="published" data-title="machine maintenance video series mec-trn-101"><td class="py-3.5 px-space-md"><div class="flex items-center gap-space-sm"><div class="relative w-14 h-11 rounded-lg overflow-hidden border border-border-grid flex-shrink-0 bg-surface-container"><img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqFm8K9TDETxrdcFtwgts29CsD7gz36SiSdLsTCNDeWXn-xC3u6ZBzUO0HG3JG7-8grq1Jo_aPUe-c0Q8aESolK72_wLZpl-V3vbWW8bzv27WAGn9jneGjj3v7nbqGIGkAAEm56fNphRkNhP5Icg4eHphPSgjyvNj9fyWYh-j-EgdKIXcni-U8Czja9azGViAEVpq1XrBL3BWd3OwW0da1LufqaUEq62sK1nB-62PRe4WehMCguJ_b"/><div class="absolute inset-0 bg-primary/10 mix-blend-multiply pointer-events-none"></div></div><div class="flex flex-col min-w-0"><a class="font-headline-sm text-[15px] font-semibold text-text-primary hover:text-primary transition-colors truncate" href="#">Machine Maintenance Video Series</a><span class="font-code-technical text-code-technical text-text-muted font-medium mt-0.5">MEC-TRN-101</span></div></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center px-2 py-0.5 rounded font-code-technical text-[11px] font-medium bg-surface-container text-tertiary border border-border-strong">Machine Maintenance</span></td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary font-medium">1</td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary">1 lesson · 2 video parts</td><td class="py-3.5 px-space-md text-center"><div class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-primary">group</span><span class="font-code-technical text-[13px] font-semibold text-text-primary">24</span></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Published</span></td><td class="py-3.5 px-space-md font-code-technical text-[12px] text-text-muted">20 Sep 2026</td><td class="py-3.5 px-space-md text-right"><div class="flex items-center justify-end gap-1"><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Edit" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Preview" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Duplicate" type="button"><span class="material-symbols-outlined text-[18px]">content_copy</span></button><button class="archive-trigger-btn p-1 rounded text-text-muted hover:text-error hover:bg-error-container/30 transition-colors" data-title="Machine Maintenance Video Series" title="Archive" type="button"><span class="material-symbols-outlined text-[18px]">archive</span></button></div></td></tr><tr class="course-row hover:bg-surface-container-low/60 transition-colors group" data-category="Safety" data-status="published" data-title="industrial safety safe work practices saf-ind-201"><td class="py-3.5 px-space-md"><div class="flex items-center gap-space-sm"><div class="relative w-14 h-11 rounded-lg overflow-hidden border border-border-grid flex-shrink-0 bg-surface-container"><img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxs2S3jZ52KjNU6vY1RG2WwUwd83yD_A5z7gJIiqNmXD5pY7Wjo9TMemxZJh3ck9kNCdQHFQvJKAsHo01IxMPfMbDy16-wFBUtaAyoY8LR-FxrqNKJZ2Ztd4qNxdySof7_OSBYw9nDKLPFT5_MFuZ3p5ICZRY0m-3xWsGkRn7r_mJQhp8Z20YatZBLj1JRr6Aj278-DA-gTUeDtn9v3gai9-JX2y756RYOI1BYztts6JugS3VmtBac"/><div class="absolute inset-0 bg-primary/10 mix-blend-multiply pointer-events-none"></div></div><div class="flex flex-col min-w-0"><a class="font-headline-sm text-[15px] font-semibold text-text-primary hover:text-primary transition-colors truncate" href="#">Industrial Safety &amp; Safe Work Practices</a><span class="font-code-technical text-code-technical text-text-muted font-medium mt-0.5">SAF-IND-201</span></div></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center px-2 py-0.5 rounded font-code-technical text-[11px] font-medium bg-red-50 text-red-700 border border-red-200">Safety</span></td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary font-medium">3</td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary">8 lessons</td><td class="py-3.5 px-space-md text-center"><div class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-primary">group</span><span class="font-code-technical text-[13px] font-semibold text-text-primary">32</span></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Published</span></td><td class="py-3.5 px-space-md font-code-technical text-[12px] text-text-muted">18 Sep 2026</td><td class="py-3.5 px-space-md text-right"><div class="flex items-center justify-end gap-1"><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Edit" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Preview" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Duplicate" type="button"><span class="material-symbols-outlined text-[18px]">content_copy</span></button><button class="archive-trigger-btn p-1 rounded text-text-muted hover:text-error hover:bg-error-container/30 transition-colors" data-title="Industrial Safety &amp; Safe Work Practices" title="Archive" type="button"><span class="material-symbols-outlined text-[18px]">archive</span></button></div></td></tr><tr class="course-row hover:bg-surface-container-low/60 transition-colors group" data-category="Quality Control" data-status="published" data-title="quality control precision inspection qc-ver-301"><td class="py-3.5 px-space-md"><div class="flex items-center gap-space-sm"><div class="relative w-14 h-11 rounded-lg overflow-hidden border border-border-grid flex-shrink-0 bg-surface-container"><img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB72xd5SxTwnjm77Vbz5rsEOaWO4FRsc2vP6iS4l6kz5v7mI55Js9Q4uBRTJsHj4A98SNkP1ACPLPNwnfrbzm46XxFt8IH8oFIwvf33UQYe_uE6V-E7-bRNMIwzRVXG0mXhJDlJt5OHKgGzDK_UnOWBUiciBwLxh7inR38nhV3qPxjhSxGjwwsbDGjnD4uvOvMF-hqaE7QzhO1Ql4NYtJ0Q-5mDaaL1KNw5hdc85gE73-2nfuJnyypE"/><div class="absolute inset-0 bg-primary/10 mix-blend-multiply pointer-events-none"></div></div><div class="flex flex-col min-w-0"><a class="font-headline-sm text-[15px] font-semibold text-text-primary hover:text-primary transition-colors truncate" href="#">Quality Control &amp; Precision Inspection</a><span class="font-code-technical text-code-technical text-text-muted font-medium mt-0.5">QC-VER-301</span></div></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center px-2 py-0.5 rounded font-code-technical text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">Quality Control</span></td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary font-medium">2</td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary">6 lessons</td><td class="py-3.5 px-space-md text-center"><div class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-primary">group</span><span class="font-code-technical text-[13px] font-semibold text-text-primary">18</span></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Published</span></td><td class="py-3.5 px-space-md font-code-technical text-[12px] text-text-muted">14 Sep 2026</td><td class="py-3.5 px-space-md text-right"><div class="flex items-center justify-end gap-1"><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Edit" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Preview" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Duplicate" type="button"><span class="material-symbols-outlined text-[18px]">content_copy</span></button><button class="archive-trigger-btn p-1 rounded text-text-muted hover:text-error hover:bg-error-container/30 transition-colors" data-title="Quality Control &amp; Precision Inspection" title="Archive" type="button"><span class="material-symbols-outlined text-[18px]">archive</span></button></div></td></tr><tr class="course-row hover:bg-surface-container-low/60 transition-colors group" data-category="Manufacturing" data-status="published" data-title="hose clamp assembly torque calibration mfg-hc-401"><td class="py-3.5 px-space-md"><div class="flex items-center gap-space-sm"><div class="relative w-14 h-11 rounded-lg overflow-hidden border border-border-grid flex-shrink-0 bg-surface-container"><img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnqWosrSW2dt5KARs08tZ7nTjCkuJzRxeLwoGoSimlGBkdTqM95lkIi5LLtweDEDy2jvEpAPi4CmpevDKX_F9aP4CP9ClnQLFMxRlF61r9yFGVL1TWXCklHmKy9rxezPyVgkocfpSx2Bll4ehw47TU_63LK7yIwLPLFtLLYFS7zYeNLa2ZUdJ3Bz868mJwRuVbNX74RW7frgGUxcTSKtOMpsNX8abiWyTQ61NOsV-m9ObZEBj9ZKhP"/><div class="absolute inset-0 bg-primary/10 mix-blend-multiply pointer-events-none"></div></div><div class="flex flex-col min-w-0"><a class="font-headline-sm text-[15px] font-semibold text-text-primary hover:text-primary transition-colors truncate" href="#">Hose Clamp Assembly &amp; Torque Calibration</a><span class="font-code-technical text-code-technical text-text-muted font-medium mt-0.5">MFG-HC-401</span></div></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center px-2 py-0.5 rounded font-code-technical text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">Manufacturing</span></td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary font-medium">2</td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary">4 lessons</td><td class="py-3.5 px-space-md text-center"><div class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-primary">group</span><span class="font-code-technical text-[13px] font-semibold text-text-primary">12</span></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Published</span></td><td class="py-3.5 px-space-md font-code-technical text-[12px] text-text-muted">10 Sep 2026</td><td class="py-3.5 px-space-md text-right"><div class="flex items-center justify-end gap-1"><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Edit" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Preview" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Duplicate" type="button"><span class="material-symbols-outlined text-[18px]">content_copy</span></button><button class="archive-trigger-btn p-1 rounded text-text-muted hover:text-error hover:bg-error-container/30 transition-colors" data-title="Hose Clamp Assembly &amp; Torque Calibration" title="Archive" type="button"><span class="material-symbols-outlined text-[18px]">archive</span></button></div></td></tr><tr class="course-row hover:bg-surface-container-low/60 transition-colors group" data-category="Engineering" data-status="draft" data-title="engineering standards din 3017 gd&amp;t eng-din-501"><td class="py-3.5 px-space-md"><div class="flex items-center gap-space-sm"><div class="relative w-14 h-11 rounded-lg overflow-hidden border border-border-grid flex-shrink-0 bg-surface-container"><img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKtY1VDJmDRirbTCUWSoSYrIpFpoZLDRSGlDf3FR80Hm9N56K-AtmNcwhQZW1VyMYlzqXIKoaptpMKhbaa0dtJ21aFY4-bNmTG-ZiCl_O0pfdAw8ipCt3u-zg_MrSCzOcgmI06nMPUl3eMiz9zmrdN6mzvz_plIqBwnhtfcVOJKSn3QYbSFeuiBO8WxaC0H8XjzTcEsPfOBUsaWVU7WObw1MkPd2mZV9FPn7XtyNTl6c3seBAx4fts"/><div class="absolute inset-0 bg-secondary/15 mix-blend-multiply pointer-events-none"></div></div><div class="flex flex-col min-w-0"><a class="font-headline-sm text-[15px] font-semibold text-text-primary hover:text-primary transition-colors truncate" href="#">Engineering Standards &amp; DIN 3017 GD&amp;T</a><span class="font-code-technical text-code-technical text-text-muted font-medium mt-0.5">ENG-DIN-501</span></div></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center px-2 py-0.5 rounded font-code-technical text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">Engineering</span></td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary font-medium">2</td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-primary">5 lessons</td><td class="py-3.5 px-space-md text-center"><div class="inline-flex items-center gap-1.5 text-text-muted"><span class="material-symbols-outlined text-[15px]">group</span><span class="font-code-technical text-[13px]">0</span></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Draft</span></td><td class="py-3.5 px-space-md font-code-technical text-[12px] text-text-muted">21 Sep 2026</td><td class="py-3.5 px-space-md text-right"><div class="flex items-center justify-end gap-1"><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Edit" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Preview" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Duplicate" type="button"><span class="material-symbols-outlined text-[18px]">content_copy</span></button><button class="archive-trigger-btn p-1 rounded text-text-muted hover:text-error hover:bg-error-container/30 transition-colors" data-title="Engineering Standards &amp; DIN 3017 GD&amp;T" title="Archive" type="button"><span class="material-symbols-outlined text-[18px]">archive</span></button></div></td></tr><tr class="course-row bg-surface-container-low/30 hover:bg-surface-container-low/70 transition-colors group opacity-85" data-category="Machine Maintenance" data-status="archived" data-title="hydraulic pneumatic burst testing hyd-tst-601"><td class="py-3.5 px-space-md"><div class="flex items-center gap-space-sm"><div class="relative w-14 h-11 rounded-lg overflow-hidden border border-border-grid flex-shrink-0 bg-surface-dim grayscale"><img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIIXI3erdWk7GM3EJb0TtETZMIfkhkFnB48HdZprRe6PivhPv83slU1kZNJLSkjwmlXWMFxLC9-crgGzM-ZU_69zKIEbcn0np-TN6ZeF_FdWBLdLrUNpuaY0f-2TrkSEPx-RSJwavAHzOI8zHONSkRBU4RbpFXhIoh32zaWJ-mqxo1iPxC0-3SvVFp1EPT9fZkSjRLuGW_74X4Fgx8A98Nd015n9sMaVBv37n_6jkhur5hf1PQlpsJ"/></div><div class="flex flex-col min-w-0"><a class="font-headline-sm text-[15px] font-semibold text-tertiary hover:text-text-primary transition-colors truncate" href="#">Hydraulic &amp; Pneumatic Burst Testing</a><span class="font-code-technical text-code-technical text-text-muted font-medium mt-0.5">HYD-TST-601</span></div></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center px-2 py-0.5 rounded font-code-technical text-[11px] font-medium bg-surface-container text-tertiary border border-border-strong">Machine Maintenance</span></td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-muted">1</td><td class="py-3.5 px-space-md text-center font-code-technical text-[13px] text-text-muted">3 lessons</td><td class="py-3.5 px-space-md text-center"><div class="inline-flex items-center gap-1.5 text-text-muted"><span class="material-symbols-outlined text-[15px]">group</span><span class="font-code-technical text-[13px]">15</span></div></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300"><span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>Archived</span></td><td class="py-3.5 px-space-md font-code-technical text-[12px] text-text-muted">05 Aug 2026</td><td class="py-3.5 px-space-md text-right"><div class="flex items-center justify-end gap-1"><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Edit" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Preview" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-container transition-colors" title="Duplicate" type="button"><span class="material-symbols-outlined text-[18px]">content_copy</span></button><button class="restore-trigger-btn p-1 rounded text-text-muted hover:text-success-industrial hover:bg-surface-container transition-colors" data-title="Hydraulic &amp; Pneumatic Burst Testing" title="Restore" type="button"><span class="material-symbols-outlined text-[18px]">unarchive</span></button></div></td></tr></tbody>
+</table>
+</div>
+<!-- No Match State (Hidden by default) -->
+<div class="hidden py-12 px-space-md flex-col items-center justify-center text-center" id="noResultsState">
+<span class="material-symbols-outlined text-[42px] text-text-muted mb-2">search_off</span>
+<h4 class="font-headline-sm text-headline-sm text-text-primary">No matching courses found</h4>
+<p class="font-body-md text-body-md text-text-muted mt-1 max-w-sm">No curriculum specifications match your active query. Adjust your search or clear filters.</p>
+<button class="mt-4 px-3 py-1.5 text-xs font-label-md bg-surface-muted border border-border-strong text-text-primary rounded hover:bg-surface-container-high transition-colors" id="resetFiltersBtn" type="button">
+          Reset All Filters
+        </button>
+</div>
+<!-- Table Footer & Decoupled Categorization Notice -->
+<div class="bg-surface-container-low border-t border-border-grid p-space-md flex flex-col sm:flex-row items-center justify-between gap-space-sm text-text-muted">
+<!-- Quick Sub-link to Category Settings -->
+<div class="flex items-center gap-space-xs font-body-sm text-body-sm"><span class="material-symbols-outlined text-[16px] text-tertiary">info</span><span>Course categories are managed under</span><a class="text-primary hover:underline font-medium inline-flex items-center gap-0.5" href="#">Settings → Course Categories</a>.</div>
+<!-- Pagination Controls -->
+<div class="flex items-center gap-space-md font-body-sm text-body-sm">
+<span class="font-code-technical text-code-technical" id="showingCountText">Showing 1–6 of 6 courses</span>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded border border-border-grid bg-surface opacity-40 cursor-not-allowed" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="h-6 min-w-[24px] px-1 text-center font-code-technical text-xs font-semibold bg-primary-container text-on-primary rounded" type="button">1</button>
+<button class="p-1 rounded border border-border-grid bg-surface opacity-40 cursor-not-allowed" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Confirmation Modal: Archive Safety Dialog (Decoupled & Fast) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-200" id="archiveModal">
+<div class="bg-surface-card border border-border-strong rounded-xl max-w-md w-full p-space-lg shadow-xl flex flex-col gap-space-md scale-95 transition-transform duration-200" id="archiveModalBox">
+<div class="flex items-start gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-error-container text-on-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">archive</span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-text-primary leading-snug">Archive Course Curriculum?</h3>
+<p class="font-code-technical text-[11px] text-text-muted mt-0.5" id="archiveTargetCode">TARGET: SPECIFICATION</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-tertiary">
+        Are you sure you want to archive <strong class="text-text-primary font-semibold" id="archiveTargetTitle"></strong>?
+      </p>
+<div class="bg-surface-muted border-l-2 border-primary-container p-space-sm rounded text-xs text-text-muted font-body-sm leading-relaxed">
+<strong>Operational Impact:</strong> Enrolled learners will retain read-only certification access until their current compliance term ends, but new enrollments will be locked immediately.
+      </div>
+<div class="flex items-center justify-end gap-space-sm mt-space-xs">
+<button class="px-4 py-2 border border-border-strong rounded-lg text-text-primary font-label-md text-label-md hover:bg-surface-muted transition-colors" id="cancelArchiveBtn" type="button">
+          Cancel
+        </button>
+<button class="px-4 py-2 bg-error text-on-error rounded-lg font-label-md text-label-md hover:bg-red-700 transition-colors shadow-sm" id="confirmArchiveBtn" type="button">
+          Confirm Archive
+        </button>
+</div>
+</div>
+</div>
+<!-- Create Course Flyout / Simplified Modal Dialog -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-200" id="createCourseModal">
+<div class="bg-surface-card border border-border-strong rounded-xl max-w-lg w-full p-space-lg shadow-xl flex flex-col gap-space-md scale-95 transition-transform duration-200" id="createCourseModalBox">
+<div class="flex items-center justify-between pb-space-xs border-b border-border-grid">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">post_add</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Create New Course</h3>
+</div>
+<button class="text-text-muted hover:text-text-primary" id="closeCreateModal" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm uppercase text-text-muted">Course Title</label>
+<input class="h-10 px-3 rounded-lg border border-border-strong bg-surface font-body-md text-text-primary focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="e.g. Stainless Steel Clamp Metallurgy &amp; Stress" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm uppercase text-text-muted">Course Code / SOP ID</label>
+<input class="h-10 px-3 rounded-lg border border-border-strong bg-surface font-code-technical text-code-technical text-text-primary focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="e.g. MEC-MET-502" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm uppercase text-text-muted">Target Category</label>
+<select class="h-10 px-3 rounded-lg border border-border-strong bg-surface font-body-md text-text-primary focus:outline-none focus:border-primary-container">
+<option>Machine Maintenance</option>
+<option>Industrial Safety</option>
+<option>Quality Control</option>
+<option>Manufacturing</option>
+<option>Engineering Standards</option>
+</select>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm uppercase text-text-muted">Brief Description &amp; Objectives</label>
+<textarea class="p-3 rounded-lg border border-border-strong bg-surface font-body-md text-text-primary focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Outline standard operational expectations, prerequisite training, and pass threshold..." rows="3"></textarea>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border-grid mt-space-xs">
+<span class="font-code-technical text-[11px] text-text-muted">Directs to Curriculum Builder after creation</span>
+<div class="flex items-center gap-space-sm">
+<button class="px-4 py-2 border border-border-strong rounded-lg text-text-primary font-label-md text-label-md hover:bg-surface-muted transition-colors" id="cancelCreateBtn" type="button">
+            Cancel
+          </button>
+<button class="px-4 py-2 bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary transition-colors shadow-sm" type="button">
+            Save &amp; Continue
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Client-side Controller Script for Filter, Search, and Archive Modals -->
+<script>
+    (function initCourseDirectory() {
+      const searchInput = document.getElementById('courseSearchInput');
+      const clearSearchBtn = document.getElementById('clearSearchBtn');
+      const categoryFilter = document.getElementById('categoryFilter');
+      const filterTabs = document.querySelectorAll('.filter-tab');
+      const rows = document.querySelectorAll('.course-row');
+      const noResults = document.getElementById('noResultsState');
+      const showingCountText = document.getElementById('showingCountText');
+      const resetBtn = document.getElementById('resetFiltersBtn');
+
+      let currentStatus = 'all';
+
+      function applyFilters() {
+        const query = searchInput.value.trim().toLowerCase();
+        const selectedCat = categoryFilter.value;
+        let visibleCount = 0;
+
+        if (query.length > 0) {
+          clearSearchBtn.classList.remove('hidden');
+        } else {
+          clearSearchBtn.classList.add('hidden');
+        }
+
+        rows.forEach(row => {
+          const rowStatus = row.dataset.status;
+          const rowCategory = row.dataset.category;
+          const rowSearchText = row.dataset.title;
+
+          const matchStatus = (currentStatus === 'all') || (rowStatus === currentStatus);
+          const matchCategory = (selectedCat === 'all') || (rowCategory === selectedCat);
+          const matchQuery = !query || rowSearchText.includes(query);
+
+          if (matchStatus && matchCategory && matchQuery) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        if (visibleCount === 0) {
+          noResults.classList.remove('hidden');
+          noResults.classList.add('flex');
+        } else {
+          noResults.classList.add('hidden');
+          noResults.classList.remove('flex');
+        }
+
+        showingCountText.textContent = `Showing 1–${visibleCount} of ${visibleCount} courses`;
+      }
+
+      filterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          filterTabs.forEach(t => {
+            t.classList.remove('bg-primary-container', 'text-on-primary', 'active-tab');
+            t.classList.add('text-text-muted');
+          });
+          tab.classList.add('bg-primary-container', 'text-on-primary', 'active-tab');
+          tab.classList.remove('text-text-muted');
+          currentStatus = tab.dataset.filter;
+          applyFilters();
+        });
+      });
+
+      searchInput.addEventListener('input', applyFilters);
+      categoryFilter.addEventListener('change', applyFilters);
+
+      clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        applyFilters();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        categoryFilter.value = 'all';
+        currentStatus = 'all';
+        filterTabs.forEach((t, i) => {
+          if (i === 0) {
+            t.classList.add('bg-primary-container', 'text-on-primary', 'active-tab');
+            t.classList.remove('text-text-muted');
+          } else {
+            t.classList.remove('bg-primary-container', 'text-on-primary', 'active-tab');
+            t.classList.add('text-text-muted');
+          }
+        });
+        applyFilters();
+      });
+
+      // Archive Confirmation Modal Controls
+      const archiveModal = document.getElementById('archiveModal');
+      const archiveModalBox = document.getElementById('archiveModalBox');
+      const archiveTargetTitle = document.getElementById('archiveTargetTitle');
+      const archiveTargetCode = document.getElementById('archiveTargetCode');
+      const cancelArchiveBtn = document.getElementById('cancelArchiveBtn');
+      const confirmArchiveBtn = document.getElementById('confirmArchiveBtn');
+      let pendingArchiveRow = null;
+
+      document.querySelectorAll('.archive-trigger-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const title = btn.getAttribute('data-title');
+          archiveTargetTitle.textContent = title;
+          archiveTargetCode.textContent = "SPEC: " + title.replace(/[^A-Z0-9]/gi, '_').toUpperCase();
+          pendingArchiveRow = btn.closest('.course-row');
+          archiveModal.classList.remove('opacity-0', 'pointer-events-none');
+          archiveModalBox.classList.remove('scale-95');
+        });
+      });
+
+      function closeArchiveModal() {
+        archiveModal.classList.add('opacity-0', 'pointer-events-none');
+        archiveModalBox.classList.add('scale-95');
+        pendingArchiveRow = null;
+      }
+
+      cancelArchiveBtn.addEventListener('click', closeArchiveModal);
+      archiveModal.addEventListener('click', (e) => {
+        if (e.target === archiveModal) closeArchiveModal();
+      });
+
+      confirmArchiveBtn.addEventListener('click', () => {
+        if (pendingArchiveRow) {
+          pendingArchiveRow.dataset.status = 'archived';
+          const statusCell = pendingArchiveRow.querySelector('td:nth-child(6)');
+          if (statusCell) {
+            statusCell.innerHTML = `
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                Archived
+              </span>
+            `;
+          }
+          applyFilters();
+        }
+        closeArchiveModal();
+      });
+
+      // Restore Action Micro-interaction
+      document.querySelectorAll('.restore-trigger-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const row = btn.closest('.course-row');
+          if (row) {
+            row.dataset.status = 'published';
+            row.classList.remove('opacity-85', 'bg-surface-container-low/30');
+            const titleLink = row.querySelector('td:first-child a');
+            if (titleLink) titleLink.classList.remove('line-through', 'text-tertiary');
+            const statusCell = row.querySelector('td:nth-child(6)');
+            if (statusCell) {
+              statusCell.innerHTML = `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  Published
+                </span>
+              `;
+            }
+            applyFilters();
+          }
+        });
+      });
+
+      // Create Course Modal Controls
+      const createModal = document.getElementById('createCourseModal');
+      const createModalBox = document.getElementById('createCourseModalBox');
+      const openCreateBtn = document.getElementById('openCreateCourseModal');
+      const closeCreateBtn = document.getElementById('closeCreateModal');
+      const cancelCreateBtn = document.getElementById('cancelCreateBtn');
+
+      function openCreate() {
+        createModal.classList.remove('opacity-0', 'pointer-events-none');
+        createModalBox.classList.remove('scale-95');
+      }
+
+      function closeCreate() {
+        createModal.classList.add('opacity-0', 'pointer-events-none');
+        createModalBox.classList.add('scale-95');
+      }
+
+      openCreateBtn.addEventListener('click', openCreate);
+      closeCreateBtn.addEventListener('click', closeCreate);
+      cancelCreateBtn.addEventListener('click', closeCreate);
+      createModal.addEventListener('click', (e) => {
+        if (e.target === createModal) closeCreate();
+      });
+
+    })();
+  </script>
+</div></main></div></body></html>

@@ -5,20 +5,30 @@ import {
   GripVertical, UploadCloud, Trash2, Video, ListVideo,
   Plus, Loader2, CheckCircle2, AlertCircle, X, Film,
   Award, Users, Lock, Image as ImageIcon, Link2, Sparkles,
-  ChevronUp, ChevronDown, FileVideo, RefreshCw, Check
+  ChevronUp, ChevronDown, RefreshCw, Check, ArrowLeft,
+  Clock, HelpCircle, Eye, Save, Send, FileVideo
 } from 'lucide-react';
+import Link from 'next/link';
 
 const ALL_DEPARTMENTS = [
-  'HR','SAFETY','MAINTENANCE','PRODUCTION','QUALITY',
-  'DESIGN','DEVELOPMENT','IT','AI',
-  'CENTRAL_PROCESSING_ENGINEERING','STORE','DISPATCH'
+  'HR', 'SAFETY', 'MAINTENANCE', 'PRODUCTION', 'QUALITY',
+  'DESIGN', 'DEVELOPMENT', 'IT', 'AI',
+  'CENTRAL_PROCESSING_ENGINEERING', 'STORE', 'DISPATCH'
 ] as const;
 
 const DEPT_LABELS: Record<string, string> = {
-  HR: 'HR', SAFETY: 'Safety', MAINTENANCE: 'Maintenance',
-  PRODUCTION: 'Production', QUALITY: 'Quality', DESIGN: 'Design',
-  DEVELOPMENT: 'Development', IT: 'IT', AI: 'AI',
-  CENTRAL_PROCESSING_ENGINEERING: 'CPE', STORE: 'Store', DISPATCH: 'Dispatch',
+  HR: 'HR',
+  SAFETY: 'Safety',
+  MAINTENANCE: 'Maintenance',
+  PRODUCTION: 'Production',
+  QUALITY: 'Quality',
+  DESIGN: 'Design',
+  DEVELOPMENT: 'Development',
+  IT: 'IT',
+  AI: 'AI',
+  CENTRAL_PROCESSING_ENGINEERING: 'CPE',
+  STORE: 'Store',
+  DISPATCH: 'Dispatch',
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -119,17 +129,36 @@ function probeVideoDuration(fileOrUrl: File | string): Promise<number> {
   });
 }
 
+function formatSeconds(sec: number) {
+  if (!sec || sec <= 0) return '0s';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m > 0 && s > 0) return `${m}m ${s}s`;
+  if (m > 0) return `${m}m`;
+  return `${s}s`;
+}
+
 function makeLesson(): Lesson {
   return {
-    id: uid(), title: '', type: 'single', duration_seconds: 0,
-    singleFile: null, singleUrl: null, singleUploading: false, singleError: null,
+    id: uid(),
+    title: '',
+    type: 'single',
+    duration_seconds: 0,
+    singleFile: null,
+    singleUrl: null,
+    singleUploading: false,
+    singleError: null,
     segments: [],
     quizzes: [],
   };
 }
 
-function makeModule(): Module {
-  return { id: uid(), title: 'New Module', lessons: [makeLesson()] };
+function makeModule(index: number = 1): Module {
+  return {
+    id: uid(),
+    title: `Module ${index}`,
+    lessons: [makeLesson()],
+  };
 }
 
 function makeSegment(title = '', file: File | null = null, fileName = '', fileSize?: number): PlaylistSegment {
@@ -147,10 +176,11 @@ function makeSegment(title = '', file: File | null = null, fileName = '', fileSi
   };
 }
 
-// ─── Single video uploader cell ───────────────────────────────────────────────
+// ─── Single Video Uploader ───────────────────────────────────────────────────
 
 function SingleVideoUploader({
-  lesson, onUpdate,
+  lesson,
+  onUpdate,
 }: {
   lesson: Lesson;
   onUpdate: (patch: Partial<Lesson>) => void;
@@ -161,7 +191,7 @@ function SingleVideoUploader({
   const [uploadPercent, setUploadPercent] = useState<number>(0);
 
   async function handleFile(file: File) {
-    if (file.type !== 'video/mp4') {
+    if (file.type !== 'video/mp4' && !file.name.toLowerCase().endsWith('.mp4')) {
       onUpdate({ singleError: 'Only .mp4 files are supported.' });
       return;
     }
@@ -217,31 +247,39 @@ function SingleVideoUploader({
 
   async function handleUrlSave() {
     const url = urlInput.trim();
-    if (!url) { onUpdate({ singleError: 'Please enter a video URL.' }); return; }
+    if (!url) {
+      onUpdate({ singleError: 'Please enter a video URL.' });
+      return;
+    }
     const duration = await probeVideoDuration(url);
     onUpdate({ singleUrl: url, duration_seconds: duration, singleError: null });
   }
 
-  // Already has a URL set
+  // Video ready state
   if (lesson.singleUrl) {
-    const min = Math.floor((lesson.duration_seconds || 0) / 60);
-    const sec = (lesson.duration_seconds || 0) % 60;
-    const durStr = lesson.duration_seconds ? ` • ${min}m ${sec}s` : '';
-
+    const durStr = lesson.duration_seconds ? ` • ${formatSeconds(lesson.duration_seconds)}` : '';
     return (
-      <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg animate-in fade-in">
-        <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-green-800 truncate">
-            {lesson.singleFile?.name ?? lesson.singleUrl}
-          </p>
-          <p className="text-xs text-green-600">Video ready ✓{durStr}</p>
+      <div className="flex items-center justify-between gap-3 p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-emerald-900 truncate">
+              {lesson.singleFile?.name ?? lesson.singleUrl}
+            </p>
+            <p className="text-[11px] text-emerald-700">Video attached{durStr}</p>
+          </div>
         </div>
         <button
-          onClick={() => { onUpdate({ singleFile: null, singleUrl: null, duration_seconds: 0 }); setUrlInput(''); }}
-          className="p-1 text-gray-400 hover:text-red-500 transition"
+          type="button"
+          onClick={() => {
+            onUpdate({ singleFile: null, singleUrl: null, duration_seconds: 0 });
+            setUrlInput('');
+          }}
+          className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-red-700 hover:bg-red-50 rounded border border-slate-200 bg-white transition cursor-pointer"
         >
-          <X className="w-4 h-4" />
+          Replace
         </button>
       </div>
     );
@@ -249,115 +287,114 @@ function SingleVideoUploader({
 
   if (lesson.singleUploading) {
     return (
-      <div className="p-4 border-2 border-dashed border-indigo-400 rounded-xl bg-indigo-50/80 space-y-2.5 animate-in fade-in">
-        <div className="flex items-center justify-between text-xs font-semibold">
-          <div className="flex items-center gap-2 text-indigo-900">
-            <Loader2 className="w-4 h-4 text-indigo-600 animate-spin shrink-0" />
-            <span className="truncate max-w-[260px] sm:max-w-sm">
-              Uploading {lesson.singleFile?.name || 'video.mp4'}…
-            </span>
-          </div>
-          <span className="px-2 py-0.5 bg-white text-indigo-700 rounded-full font-bold border border-indigo-200 shadow-sm">
+      <div className="p-3 bg-red-50/60 border border-red-200 rounded-lg space-y-2">
+        <div className="flex items-center justify-between text-xs font-medium text-slate-800">
+          <span className="flex items-center gap-2 truncate">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#c62828] shrink-0" />
+            Uploading {lesson.singleFile?.name || 'video.mp4'}…
+          </span>
+          <span className="font-mono font-bold text-[#c62828] bg-white px-2 py-0.5 rounded border border-red-200">
             {uploadPercent}%
           </span>
         </div>
-        {/* Animated Progress Bar */}
-        <div className="w-full bg-indigo-200/70 rounded-full h-2.5 overflow-hidden relative">
+        <div className="w-full bg-red-200/80 rounded-full h-2 overflow-hidden">
           <div
-            className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full transition-all duration-300 ease-out shadow-sm"
+            className="bg-[#c62828] h-full rounded-full transition-all duration-300"
             style={{ width: `${Math.max(5, uploadPercent)}%` }}
           />
         </div>
-        <p className="text-[11px] text-indigo-600/90 flex items-center justify-between">
-          <span>Uploading directly to server storage</span>
-          <span>{uploadPercent < 100 ? 'In progress…' : 'Processing final video…'}</span>
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {/* Mode toggle */}
-      <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg w-max text-xs">
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg w-max text-xs">
         <button
+          type="button"
           onClick={() => setMode('upload')}
-          className={`px-3 py-1.5 rounded-md font-medium transition ${
-            mode === 'upload' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+          className={`px-3 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+            mode === 'upload' ? 'bg-white shadow-xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          📁 Upload File
+          Upload MP4
         </button>
         <button
+          type="button"
           onClick={() => setMode('url')}
-          className={`px-3 py-1.5 rounded-md font-medium transition ${
-            mode === 'url' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+          className={`px-3 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+            mode === 'url' ? 'bg-white shadow-xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          🔗 Paste URL
+          Direct URL
         </button>
       </div>
 
       {mode === 'upload' ? (
         <label
-          className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-400 transition cursor-pointer group"
+          className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-[#c62828] rounded-lg p-5 bg-[#f8fafc] hover:bg-red-50/20 transition cursor-pointer group"
           onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const f = e.dataTransfer.files[0];
+            if (f) handleFile(f);
+          }}
         >
-          <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-indigo-500 mb-2 transition" />
-          <span className="text-sm font-medium text-gray-600 group-hover:text-indigo-600">
-            Click or drag &amp; drop your .mp4 file
+          <UploadCloud className="w-7 h-7 text-slate-400 group-hover:text-[#c62828] mb-1.5 transition" />
+          <span className="text-xs font-semibold text-slate-700 group-hover:text-[#c62828]">
+            Click to upload, or drag &amp; drop video (.mp4)
           </span>
-          <span className="text-xs text-gray-400 mt-1">Max 500 MB</span>
+          <span className="text-[11px] text-slate-400 mt-0.5">Maximum file size 500 MB</span>
           <input
             ref={inputRef}
             type="file"
             accept="video/mp4"
             className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+            }}
           />
         </label>
       ) : (
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <input
-              type="url"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="https://example.com/video.mp4"
-              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 transition"
-            />
-            <button
-              onClick={handleUrlSave}
-              className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition whitespace-nowrap"
-            >
-              Use URL
-            </button>
-          </div>
-          <p className="text-xs text-gray-400">Paste a direct video URL (useful for testing with public MP4 links)</p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="https://example.com/shopfloor-lesson.mp4"
+            className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828]"
+          />
+          <button
+            type="button"
+            onClick={handleUrlSave}
+            className="px-3 py-1.5 bg-[#c62828] text-white text-xs font-semibold rounded-lg hover:bg-[#a20513] transition cursor-pointer"
+          >
+            Apply URL
+          </button>
         </div>
       )}
 
       {lesson.singleError && (
-        <div className="flex items-center gap-2 text-red-600 text-xs">
-          <AlertCircle className="w-4 h-4" />
+        <p className="text-xs text-red-600 flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           {lesson.singleError}
-        </div>
+        </p>
       )}
     </div>
   );
 }
 
-// ─── Playlist builder ─────────────────────────────────────────────────────────
+// ─── Multi-Part Video Builder (Playlist) ─────────────────────────────────────
 
 function PlaylistBuilder({
-  lesson, onUpdate,
+  lesson,
+  onUpdate,
 }: {
   lesson: Lesson;
   onUpdate: (patch: Partial<Lesson>) => void;
 }) {
   const [isBatchDragging, setIsBatchDragging] = useState(false);
-  const [activeDragSegId, setActiveDragSegId] = useState<string | null>(null);
   const batchFileInputRef = useRef<HTMLInputElement>(null);
 
   function updateSegment(segId: string, patch: Partial<PlaylistSegment>) {
@@ -384,8 +421,7 @@ function PlaylistBuilder({
 
     const duration = await probeVideoDuration(file);
     const titlePatch = customTitle ? { title: customTitle } : {};
-    
-    // Update segment with file and duration
+
     const currentSegments = lesson.segments.map((s) =>
       s.id === segId
         ? {
@@ -461,8 +497,9 @@ function PlaylistBuilder({
       return;
     }
 
-    // Sort files naturally by filename so "Part 1", "Part 2", "01", "02" are placed in logical order
-    mp4Files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    mp4Files.sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
 
     const newSegments: PlaylistSegment[] = [];
     for (const file of mp4Files) {
@@ -473,26 +510,34 @@ function PlaylistBuilder({
       newSegments.push(seg);
     }
 
-    // Append to existing segments
     const updatedSegments = [...lesson.segments, ...newSegments];
     const totalLessonDur = updatedSegments.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
     onUpdate({ segments: updatedSegments, duration_seconds: totalLessonDur });
 
-    // Initiate upload for each file
     newSegments.forEach((seg, idx) => {
       uploadFileForSegment(seg.id, mp4Files[idx]);
     });
   }
 
-  const uploadedCount = lesson.segments.filter((s) => !!s.uploadedUrl).length;
-
   return (
-    <div className="space-y-4">
-      {/* ── BATCH DRAG & DROP ZONE ── */}
+    <div className="space-y-3 pl-2 sm:pl-3 border-l-2 border-slate-200">
+      <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <span>Video Parts (Sequential Playback)</span>
+        <span className="font-mono text-slate-400">
+          {lesson.segments.length} {lesson.segments.length === 1 ? 'Part' : 'Parts'} Configured
+        </span>
+      </div>
+
+      {/* Batch Dropzone */}
       <div
-        onDragOver={(e) => { e.preventDefault(); setIsBatchDragging(true); }}
-        onDragEnter={(e) => { e.preventDefault(); setIsBatchDragging(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setIsBatchDragging(false); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsBatchDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setIsBatchDragging(false);
+        }}
         onDrop={(e) => {
           e.preventDefault();
           setIsBatchDragging(false);
@@ -501,10 +546,10 @@ function PlaylistBuilder({
           }
         }}
         onClick={() => batchFileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer group ${
+        className={`border-2 border-dashed rounded-lg p-3 text-center transition cursor-pointer ${
           isBatchDragging
-            ? 'border-indigo-500 bg-indigo-50/80 ring-4 ring-indigo-100 scale-[1.01]'
-            : 'border-indigo-200 hover:border-indigo-400 bg-gradient-to-b from-indigo-50/40 to-white'
+            ? 'border-[#c62828] bg-red-50/50'
+            : 'border-slate-300 hover:border-[#c62828] bg-[#f8fafc]'
         }`}
       >
         <input
@@ -520,80 +565,39 @@ function PlaylistBuilder({
             }
           }}
         />
-        <div className="flex flex-col items-center justify-center pointer-events-none">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-            <UploadCloud className="w-6 h-6" />
-          </div>
-          <p className="text-sm font-semibold text-gray-800">
-            Drag & Drop multiple .mp4 files here, or <span className="text-indigo-600 underline">browse</span>
-          </p>
-          <p className="text-xs text-gray-500 mt-1 max-w-md">
-            Drop all your series parts at once — we'll automatically create ordered segments with auto-generated titles and upload them seamlessly!
-          </p>
+        <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-700">
+          <UploadCloud className="w-4 h-4 text-[#c62828]" />
+          <span>Drag &amp; drop multiple MP4 files or click to browse</span>
         </div>
       </div>
 
-      {/* ── SEGMENT STATS BAR (when segments exist) ── */}
-      {lesson.segments.length > 0 && (
-        <div className="flex items-center justify-between text-xs text-gray-500 px-1">
-          <span className="font-semibold text-gray-700 flex items-center gap-1.5">
-            <ListVideo className="w-4 h-4 text-indigo-600" />
-            {lesson.segments.length} {lesson.segments.length === 1 ? 'Part' : 'Parts'} in Series
-          </span>
-          <span className="bg-indigo-50 text-indigo-700 font-medium px-2 py-0.5 rounded-full border border-indigo-100">
-            {uploadedCount} of {lesson.segments.length} videos ready
-          </span>
-        </div>
-      )}
-
-      {/* ── SEGMENTS LIST ── */}
-      <div className="space-y-3">
+      {/* Parts List */}
+      <div className="space-y-2">
         {lesson.segments.map((seg, idx) => {
-          const isCurrentDragging = activeDragSegId === seg.id;
           const displayFileName =
             seg.fileName ||
             seg.file?.name ||
-            (seg.uploadedUrl ? decodeURIComponent(seg.uploadedUrl.split('/').pop() || '').replace(/^\d+_/, '') : '');
+            (seg.uploadedUrl
+              ? decodeURIComponent(seg.uploadedUrl.split('/').pop() || '').replace(/^\d+_/, '')
+              : '');
 
           return (
             <div
               key={seg.id}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setActiveDragSegId(seg.id);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                if (activeDragSegId === seg.id) setActiveDragSegId(null);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setActiveDragSegId(null);
-                const file = e.dataTransfer.files?.[0];
-                if (file) {
-                  const newTitle = seg.title.trim() ? seg.title : cleanFileNameToTitle(file.name);
-                  uploadFileForSegment(seg.id, file, newTitle);
-                }
-              }}
-              className={`p-3.5 bg-white border rounded-xl shadow-sm transition-all ${
-                isCurrentDragging
-                  ? 'border-indigo-500 bg-indigo-50/60 ring-2 ring-indigo-200'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition shadow-xs"
             >
-              <div className="flex items-start gap-3">
-                {/* Reorder Buttons & Number Badge */}
-                <div className="flex flex-col items-center gap-1 shrink-0 pt-0.5">
-                  <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center text-xs font-bold shadow-xs">
-                    {idx + 1}
-                  </span>
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                {/* Reorder and Part Number */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[#c62828] font-bold font-mono text-[11px]">
+                    P{idx + 1}
+                  </div>
                   <div className="flex flex-col -space-y-1">
                     <button
                       type="button"
                       disabled={idx === 0}
                       onClick={() => moveSegment(idx, 'up')}
-                      title="Move part up"
-                      className="p-1 text-gray-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-gray-400 transition"
+                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
                     </button>
@@ -601,117 +605,78 @@ function PlaylistBuilder({
                       type="button"
                       disabled={idx === lesson.segments.length - 1}
                       onClick={() => moveSegment(idx, 'down')}
-                      title="Move part down"
-                      className="p-1 text-gray-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-gray-400 transition"
+                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Main Content Area */}
-                <div className="flex-1 space-y-2.5 min-w-0">
-                  {/* Segment Title Input */}
+                {/* Title & Status */}
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      placeholder={`e.g. Part ${idx + 1}: Preparation & Safety`}
                       value={seg.title}
                       onChange={(e) => updateSegment(seg.id, { title: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                      placeholder={`PART ${idx + 1}: Title`}
+                      className="font-semibold text-xs text-slate-900 border-b border-transparent focus:border-[#c62828] focus:outline-none bg-transparent w-full"
                     />
+                    {seg.durationSeconds ? (
+                      <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
+                        {formatSeconds(seg.durationSeconds)}
+                      </span>
+                    ) : null}
                   </div>
 
-                  {/* Video Attachment / Upload State */}
                   {seg.uploadedUrl ? (
-                    <div className="flex items-center justify-between gap-2 p-2 bg-emerald-50/70 border border-emerald-200/80 rounded-lg text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                          <Check className="w-3.5 h-3.5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-emerald-900 truncate">
-                            {displayFileName || 'Video attached'}
-                          </p>
-                          {seg.fileSize && (
-                            <p className="text-[10px] text-emerald-600 font-medium">
-                              {formatBytes(seg.fileSize)} • Ready to stream
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Replace video button */}
-                      <label className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-emerald-200 hover:border-emerald-300 text-emerald-800 rounded text-[11px] font-medium cursor-pointer transition shrink-0 hover:bg-emerald-50">
-                        <RefreshCw className="w-3 h-3 text-emerald-600" />
-                        Replace
-                        <input
-                          type="file"
-                          accept="video/mp4"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) uploadFileForSegment(seg.id, f);
-                            e.target.value = '';
-                          }}
-                        />
-                      </label>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-emerald-700">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="font-mono font-medium truncate">{displayFileName}</span>
+                      {seg.fileSize && <span>· {formatBytes(seg.fileSize)}</span>}
                     </div>
                   ) : seg.uploading ? (
-                    <div className="p-3 bg-indigo-50/80 border border-indigo-200 rounded-lg space-y-2 animate-in fade-in">
-                      <div className="flex items-center justify-between text-xs text-indigo-900 font-medium">
-                        <span className="flex items-center gap-2 truncate">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600 shrink-0" />
-                          Uploading {seg.fileName || 'video'}…
-                        </span>
-                        <span className="font-bold bg-white px-2 py-0.5 rounded border border-indigo-100 text-indigo-700 shrink-0">
-                          {seg.uploadPercent || 0}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-indigo-200/80 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-indigo-600 h-full rounded-full transition-all duration-300"
-                          style={{ width: `${Math.max(5, seg.uploadPercent || 0)}%` }}
-                        />
-                      </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Loader2 className="w-3 h-3 animate-spin text-[#c62828]" />
+                      <span className="text-[11px] text-[#c62828]">Uploading ({seg.uploadPercent}%)…</span>
                     </div>
                   ) : (
-                    /* Segment Dropzone if no video attached yet */
-                    <div className="flex items-center gap-2">
-                      <label className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50/60 hover:bg-indigo-50/40 rounded-lg cursor-pointer transition text-xs text-gray-600 hover:text-indigo-600">
-                        <UploadCloud className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />
-                        <span>Drag & drop video here or <strong className="underline text-indigo-600">browse .mp4</strong></span>
-                        <input
-                          type="file"
-                          accept="video/mp4"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) {
-                              const newTitle = seg.title.trim() ? seg.title : cleanFileNameToTitle(f.name);
-                              uploadFileForSegment(seg.id, f, newTitle);
-                            }
-                            e.target.value = '';
-                          }}
-                        />
-                      </label>
-                    </div>
-                  )}
-
-                  {seg.error && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      {seg.error}
-                    </p>
+                    <label className="inline-flex items-center gap-1 text-[11px] text-[#c62828] hover:underline cursor-pointer mt-0.5">
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>Select video file</span>
+                      <input
+                        type="file"
+                        accept="video/mp4"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadFileForSegment(seg.id, f);
+                        }}
+                      />
+                    </label>
                   )}
                 </div>
+              </div>
 
-                {/* Delete Segment Button */}
+              {/* Actions */}
+              <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                <label className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 border border-slate-300 rounded bg-white transition cursor-pointer shadow-xs">
+                  Replace
+                  <input
+                    type="file"
+                    accept="video/mp4"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadFileForSegment(seg.id, f);
+                    }}
+                  />
+                </label>
                 <button
                   type="button"
-                  title="Remove this segment"
                   onClick={() => onUpdate({ segments: lesson.segments.filter((s) => s.id !== seg.id) })}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0 mt-1"
+                  className="p-1 text-slate-400 hover:text-red-600 rounded transition cursor-pointer"
+                  title="Remove Part"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -721,48 +686,50 @@ function PlaylistBuilder({
         })}
       </div>
 
-      {/* ── ADD SEGMENT MANUALLY BUTTON ── */}
+      {/* Add Video Part Button */}
       <button
         type="button"
-        onClick={() => onUpdate({ segments: [...lesson.segments, makeSegment()] })}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg text-xs font-semibold transition"
+        onClick={() => onUpdate({ segments: [...lesson.segments, makeSegment(`Part ${lesson.segments.length + 1}`)] })}
+        className="w-full py-2 border border-dashed border-slate-300 hover:border-[#c62828] text-slate-600 hover:text-[#c62828] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-white hover:bg-red-50/20 transition cursor-pointer"
       >
-        <Plus className="w-3.5 h-3.5" /> Add Segment Manually
+        <Plus className="w-4 h-4" />
+        <span>+ Add Video Part</span>
       </button>
     </div>
   );
 }
 
-// ─── Quiz builder ───────────────────────────────────────────────────────────────
+// ─── In-Video Quiz Checkpoint Builder ─────────────────────────────────────────
 
 function QuizBuilder({
-  lesson, onUpdate,
+  lesson,
+  onUpdate,
 }: {
   lesson: Lesson;
   onUpdate: (patch: Partial<Lesson>) => void;
 }) {
+  const [expandedQuizId, setExpandedQuizId] = useState<string | null>(null);
+
   function addQuiz() {
-    onUpdate({
-      quizzes: [...lesson.quizzes, {
-        id: uid(),
-        timestampSec: 0,
-        question: '',
-        options: ['', '', '', ''],
-        correctIndex: 0
-      }]
-    });
+    const newQ: Quiz = {
+      id: uid(),
+      timestampSec: 60,
+      question: '',
+      options: ['', '', '', ''],
+      correctIndex: 0,
+    };
+    onUpdate({ quizzes: [...lesson.quizzes, newQ] });
+    setExpandedQuizId(newQ.id);
   }
 
   function updateQuiz(qId: string, patch: Partial<Quiz>) {
     onUpdate({
-      quizzes: lesson.quizzes.map((q) => (q.id === qId ? { ...q, ...patch } : q))
+      quizzes: lesson.quizzes.map((q) => (q.id === qId ? { ...q, ...patch } : q)),
     });
   }
 
   function removeQuiz(qId: string) {
-    onUpdate({
-      quizzes: lesson.quizzes.filter((q) => q.id !== qId)
-    });
+    onUpdate({ quizzes: lesson.quizzes.filter((q) => q.id !== qId) });
   }
 
   function parseTime(str: string) {
@@ -778,81 +745,137 @@ function QuizBuilder({
   }
 
   return (
-    <div className="mt-4 border-t border-indigo-100 pt-4">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-semibold text-gray-700">In-Video Quizzes</h4>
+    <div className="space-y-3 pt-3 border-t border-slate-200">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-amber-600" />
+          <span className="text-xs font-semibold text-slate-800">
+            In-Video Checkpoint Quizzes
+          </span>
+          <span className="text-[11px] text-slate-500 font-mono">
+            ({lesson.quizzes.length})
+          </span>
+        </div>
         <button
+          type="button"
           onClick={addQuiz}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center bg-indigo-50 px-2 py-1 rounded"
+          className="px-2.5 py-1 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-md transition cursor-pointer flex items-center gap-1"
         >
-          <Plus className="w-3 h-3 mr-1" /> Add Quiz
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Checkpoint</span>
         </button>
       </div>
 
-      <div className="space-y-4">
-        {lesson.quizzes.map((q, idx) => (
-          <div key={q.id} className="p-3 bg-white border border-gray-200 rounded-md shadow-sm relative">
-            <button onClick={() => removeQuiz(q.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500">
-              <X className="w-4 h-4" />
-            </button>
-            
-            <div className="flex items-center gap-2 mb-3 pr-6">
-              <span className="text-xs font-bold text-gray-400">#{idx + 1}</span>
-              <label className="text-xs text-gray-600">Timestamp (MM:SS):</label>
-              <input
-                type="text"
-                placeholder="01:30"
-                value={formatTime(q.timestampSec)}
-                onChange={(e) => updateQuiz(q.id, { timestampSec: parseTime(e.target.value) })}
-                className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:border-indigo-500 outline-none text-center"
-              />
-            </div>
-
-            <div className="mb-3">
-              <input
-                type="text"
-                placeholder="Question..."
-                value={q.question}
-                onChange={(e) => updateQuiz(q.id, { question: e.target.value })}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:border-indigo-500 outline-none font-medium"
-              />
-            </div>
-
-            <div className="space-y-2 pl-2 border-l-2 border-indigo-100">
-              {q.options.map((opt, optIdx) => (
-                <div key={optIdx} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`correct-${q.id}`}
-                    checked={q.correctIndex === optIdx}
-                    onChange={() => updateQuiz(q.id, { correctIndex: optIdx })}
-                    className="w-3.5 h-3.5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder={`Option ${optIdx + 1}`}
-                    value={opt}
-                    onChange={(e) => {
-                      const newOpts = [...q.options];
-                      newOpts[optIdx] = e.target.value;
-                      updateQuiz(q.id, { options: newOpts });
-                    }}
-                    className={`flex-1 px-2 py-1 text-sm border rounded outline-none transition ${q.correctIndex === optIdx ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}
-                  />
+      <div className="space-y-2.5">
+        {lesson.quizzes.map((q, qIdx) => {
+          const isExpanded = expandedQuizId === q.id || !q.question.trim();
+          return (
+            <div
+              key={q.id}
+              className="p-3 bg-amber-50/40 border border-amber-200 rounded-lg shadow-xs space-y-2.5"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-mono text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">
+                    Q{qIdx + 1}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-900 truncate">
+                    {q.question.trim() || 'Untitled Question'}
+                  </span>
                 </div>
-              ))}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedQuizId(isExpanded ? null : q.id)}
+                    className="px-2 py-0.5 text-[11px] font-semibold text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    {isExpanded ? 'Collapse' : 'Edit'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeQuiz(q.id)}
+                    className="p-1 text-slate-400 hover:text-red-600 rounded transition cursor-pointer"
+                    title="Remove Quiz"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {isExpanded && (
+                <div className="space-y-3 pt-2 border-t border-amber-200/70">
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-medium text-slate-700 shrink-0">
+                      Pause Timestamp:
+                    </label>
+                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded border border-slate-300">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={formatTime(q.timestampSec)}
+                        onChange={(e) => updateQuiz(q.id, { timestampSec: parseTime(e.target.value) })}
+                        placeholder="01:30"
+                        className="w-14 text-xs font-mono font-medium focus:outline-none"
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-500">(MM:SS)</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Question Prompt:
+                    </label>
+                    <input
+                      type="text"
+                      value={q.question}
+                      onChange={(e) => updateQuiz(q.id, { question: e.target.value })}
+                      placeholder="e.g. What is the required torque setting for DIN 3017 clamps?"
+                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#c62828]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 pl-2 border-l-2 border-amber-200">
+                    <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                      Multiple Choice Options (Select radio for correct answer)
+                    </label>
+                    {q.options.map((opt, optIdx) => (
+                      <div key={optIdx} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`quiz-correct-${q.id}`}
+                          checked={q.correctIndex === optIdx}
+                          onChange={() => updateQuiz(q.id, { correctIndex: optIdx })}
+                          className="w-3.5 h-3.5 text-[#c62828] focus:ring-[#c62828] cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const next = [...q.options];
+                            next[optIdx] = e.target.value;
+                            updateQuiz(q.id, { options: next });
+                          }}
+                          placeholder={`Option ${optIdx + 1}`}
+                          className={`flex-1 px-2.5 py-1 text-xs border rounded bg-white focus:outline-none ${
+                            q.correctIndex === optIdx
+                              ? 'border-emerald-500 bg-emerald-50/40 font-medium'
+                              : 'border-slate-300'
+                          }`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
-        {lesson.quizzes.length === 0 && (
-          <p className="text-xs text-gray-400 italic">No quizzes added yet.</p>
-        )}
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main CourseBuilder Component ─────────────────────────────────────────────
 
 export interface CourseBuilderProps {
   editingCourseId?: string | null;
@@ -861,97 +884,51 @@ export interface CourseBuilderProps {
 }
 
 export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: CourseBuilderProps) {
+  // 01 Basic Information
   const [courseTitle, setCourseTitle] = useState('');
+  const [courseCode, setCourseCode] = useState('JC-TRN-101');
   const [description, setDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [modules, setModules] = useState<Module[]>([makeModule()]);
-  const [visibility, setVisibility] = useState<'all' | 'specific'>('all');
-  const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
-  const [hasCertificate, setHasCertificate] = useState(false);
+
+  // Thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
-  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
-  const [thumbnailMode, setThumbnailMode] = useState<'upload' | 'url'>('upload');
-  const [thumbnailUrlInput, setThumbnailUrlInput] = useState('');
-  const [isDraggingThumbnail, setIsDraggingThumbnail] = useState(false);
   const [thumbnailUploadPercent, setThumbnailUploadPercent] = useState(0);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [customThumbnailUrl, setCustomThumbnailUrl] = useState('');
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+
+  // 02 Course Settings
+  const [skillLevel, setSkillLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
+  const [estimatedDuration, setEstimatedDuration] = useState('2h 30m');
+  const [classification, setClassification] = useState<'optional' | 'mandatory'>('mandatory');
+  const [visibility, setVisibility] = useState<'all' | 'specific'>('specific');
+  const [selectedDepts, setSelectedDepts] = useState<string[]>(['MAINTENANCE', 'PRODUCTION']);
+  const [hasCertificate, setHasCertificate] = useState(true);
+
+  // 03 Curriculum
+  const [modules, setModules] = useState<Module[]>([makeModule(1)]);
+
+  // Publish Status
   const [publishing, setPublishing] = useState(false);
-  const [publishStatus, setPublishStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [publishError, setPublishError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [savedCourseTitle, setSavedCourseTitle] = useState('');
   const [loadingEditData, setLoadingEditData] = useState(false);
 
-  async function uploadThumbnailFile(file: File) {
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const validExts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'jfif', 'avif', 'bmp', 'pjpeg', 'pjp', 'ico', 'tiff', 'tif'];
-    const isImage = (typeof file.type === 'string' && file.type.startsWith('image/')) || (ext && validExts.includes(ext));
+  // Load categories
+  useEffect(() => {
+    fetch('/api/categories')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.categories) setCategories(json.categories);
+      })
+      .catch(console.error);
+  }, []);
 
-    if (!isImage) {
-      setThumbnailError('Please select a valid image file (JPEG, PNG, WebP, SVG, GIF, AVIF).');
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      setThumbnailError('Image size exceeds 50 MB limit.');
-      return;
-    }
-
-    setThumbnailError(null);
-    setThumbnailFile(file);
-    setThumbnailUploading(true);
-    setThumbnailUploadPercent(0);
-
-    const fd = new FormData();
-    fd.append('file', file);
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload-thumbnail');
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const pct = Math.round((e.loaded / e.total) * 100);
-        setThumbnailUploadPercent(pct);
-      }
-    };
-
-    xhr.onload = () => {
-      setThumbnailUploading(false);
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const json = JSON.parse(xhr.responseText);
-          setThumbnailUrl(json.publicUrl);
-          setThumbnailUrlInput(json.publicUrl);
-          setThumbnailFile(null);
-          setThumbnailUploadPercent(100);
-        } catch {
-          setThumbnailError('Invalid response received from server.');
-        }
-      } else {
-        try {
-          const json = JSON.parse(xhr.responseText);
-          if (xhr.status === 401 || xhr.status === 403) {
-            setThumbnailError(json.error || 'Your session expired. Please sign in again to upload thumbnails.');
-          } else {
-            setThumbnailError(json.error || `Upload failed (${xhr.status})`);
-          }
-        } catch {
-          setThumbnailError(`Upload failed with status code ${xhr.status}`);
-        }
-      }
-    };
-
-    xhr.onerror = () => {
-      setThumbnailUploading(false);
-      setThumbnailError('Network error while uploading thumbnail image.');
-    };
-
-    xhr.send(fd);
-  }
-
-  // Fetch existing course data if editing
+  // Fetch existing course if editing
   useEffect(() => {
     if (!editingCourseId) return;
     setLoadingEditData(true);
@@ -967,13 +944,12 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
           setSelectedDepts(c.departments || []);
           setHasCertificate(!!c.has_certificate);
           setThumbnailUrl(c.thumbnail_url || null);
-          setThumbnailUrlInput(c.thumbnail_url || '');
-          setThumbnailFile(null);
+          setCustomThumbnailUrl(c.thumbnail_url || '');
 
           if (c.modules?.length) {
-            const loadedModules: Module[] = c.modules.map((m: any) => ({
+            const loadedModules: Module[] = c.modules.map((m: any, mIdx: number) => ({
               id: m.id || uid(),
-              title: m.title || 'Untitled Module',
+              title: m.title || `Module ${mIdx + 1}`,
               lessons: (m.lessons || []).map((l: any) => ({
                 id: l.id || uid(),
                 title: l.title || 'Untitled Lesson',
@@ -1016,23 +992,58 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
       .finally(() => setLoadingEditData(false));
   }, [editingCourseId]);
 
-  // Load (and reload) categories from DB
-  function loadCategories() {
-    fetch('/api/categories')
-      .then((r) => r.json())
-      .then((json) => { if (json.categories) setCategories(json.categories); })
-      .catch(console.error);
+  // Handle Thumbnail File Upload
+  async function uploadThumbnailFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setThumbnailError('Please select a valid image file (PNG, JPG, WebP).');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setThumbnailError('Image size exceeds 20MB.');
+      return;
+    }
+
+    setThumbnailError(null);
+    setThumbnailUploading(true);
+    setThumbnailUploadPercent(0);
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload-thumbnail');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        setThumbnailUploadPercent(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      setThumbnailUploading(false);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          setThumbnailUrl(json.publicUrl);
+          setCustomThumbnailUrl(json.publicUrl);
+        } catch {
+          setThumbnailError('Invalid response from server.');
+        }
+      } else {
+        setThumbnailError('Thumbnail upload failed.');
+      }
+    };
+
+    xhr.onerror = () => {
+      setThumbnailUploading(false);
+      setThumbnailError('Network error uploading thumbnail.');
+    };
+
+    xhr.send(fd);
   }
 
-  useEffect(() => {
-    loadCategories();
-    // Refresh when CategoryManager saves a new one
-    window.addEventListener('category-saved', loadCategories);
-    return () => window.removeEventListener('category-saved', loadCategories);
-  }, []);
-
-  // ── Module helpers ──────────────────────────────────────────────────────────
-
+  // Modules helpers
   function updateModule(modId: string, patch: Partial<Module>) {
     setModules((ms) => ms.map((m) => (m.id === modId ? { ...m, ...patch } : m)));
   }
@@ -1065,47 +1076,59 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
     );
   }
 
-  // ── Publish ─────────────────────────────────────────────────────────────────
-
+  // Publish / Save
   async function handlePublish() {
-    if (!courseTitle.trim()) { alert('Please enter a course title.'); return; }
-    if (!selectedCategoryId) { alert('Please select a category.'); return; }
-    if (visibility === 'specific' && selectedDepts.length === 0) {
-      alert('Please select at least one department under "Course Visibility" or switch to "All Employees".');
+    if (!courseTitle.trim()) {
+      alert('Please enter a course title.');
       return;
     }
-    if (!modules.length) { alert('Add at least one module.'); return; }
+    if (!selectedCategoryId) {
+      alert('Please select a category.');
+      return;
+    }
+    if (visibility === 'specific' && selectedDepts.length === 0) {
+      alert('Please select at least one department under "Department Access" or switch to "All Departments".');
+      return;
+    }
+    if (!modules.length) {
+      alert('Add at least one curriculum module.');
+      return;
+    }
 
-    // Validate all lessons have videos
+    // Validate lessons
     for (const mod of modules) {
       for (const lesson of mod.lessons) {
-        if (!lesson.title.trim()) { alert(`A lesson in "${mod.title}" has no title.`); return; }
+        if (!lesson.title.trim()) {
+          alert(`A lesson in "${mod.title}" has no title.`);
+          return;
+        }
         if (lesson.type === 'single' && !lesson.singleUrl) {
-          alert(`Lesson "${lesson.title}" has no uploaded video.`); return;
+          alert(`Lesson "${lesson.title}" needs a video upload or direct URL.`);
+          return;
         }
         if (lesson.type === 'playlist') {
           if (lesson.segments.length === 0) {
-            alert(`Playlist lesson "${lesson.title}" must have at least one video segment.`);
+            alert(`Multi-part lesson "${lesson.title}" must have at least one video part.`);
             return;
           }
           for (const seg of lesson.segments) {
-            if (!seg.uploadedUrl) { alert(`Playlist segment "${seg.title || 'Untitled'}" has no uploaded video.`); return; }
+            if (!seg.uploadedUrl) {
+              alert(`Video part "${seg.title || 'Untitled'}" is not yet uploaded.`);
+              return;
+            }
           }
         }
       }
     }
 
     setPublishing(true);
-    setPublishStatus('idle');
+    setPublishError('');
 
     try {
-      // thumbnail_url is already set (uploaded on file-select); just use it
-      const finalThumbnailUrl = thumbnailUrl;
-
       const body = {
         title: courseTitle,
         description,
-        thumbnail_url: finalThumbnailUrl,
+        thumbnail_url: thumbnailUrl,
         category_id: selectedCategoryId,
         created_by: null,
         visibility,
@@ -1150,630 +1173,729 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
       if (!res.ok) throw new Error(json.error || 'Failed to save course');
 
       const savedId = json.courseId || editingCourseId;
-      setPublishStatus('success');
       setSavedCourseTitle(courseTitle);
       setShowSuccessModal(true);
       if (onCourseSaved) onCourseSaved(savedId);
-
-      // Reset form if creating new
-      if (!editingCourseId) {
-        setTimeout(() => {
-          setCourseTitle(''); setDescription(''); setSelectedCategoryId('');
-          setVisibility('all'); setSelectedDepts([]); setHasCertificate(false);
-          setThumbnailUrl(null); setThumbnailFile(null); setThumbnailError(null);
-          setModules([makeModule()]); setPublishStatus('idle');
-        }, 3000);
-      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Publish failed';
       setPublishError(msg);
-      setPublishStatus('error');
+      alert(`Error saving course: ${msg}`);
     } finally {
       setPublishing(false);
     }
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
-
   return (
-    <div id="course-builder" className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 max-w-4xl mx-auto mt-8 relative z-10 w-full mb-10 overflow-hidden">
-
-      {/* ── Publishing Screen Animation Overlay ── */}
-      {publishing && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center flex flex-col items-center border border-indigo-100">
-            <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 relative">
-              <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
-              <Film className="w-7 h-7 text-indigo-600 animate-pulse" />
+    <div id="course-builder" className="w-full flex flex-col gap-6 font-sans text-slate-900">
+      {/* ── Top Command & Action Bar Header ── */}
+      <header className="sticky top-0 bg-white/95 backdrop-blur-md border border-slate-200 rounded-xl z-30 px-5 py-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left: Breadcrumb, Title & Status */}
+          <div className="flex flex-col gap-1">
+            {onCancelEdit && (
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="inline-flex items-center gap-1.5 text-slate-500 hover:text-[#c62828] transition-colors text-xs font-semibold cursor-pointer w-max"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Courses</span>
+              </button>
+            )}
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {editingCourseId ? 'Edit Course Curriculum' : 'Create Course'}
+              </h1>
+              <span className="bg-slate-100 text-slate-600 border border-slate-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider font-mono">
+                {editingCourseId ? 'Published' : 'Draft'}
+              </span>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">
-              {editingCourseId ? 'Updating Course…' : 'Publishing Tutorial…'}
-            </h3>
-            <p className="text-xs text-gray-500">
-              Saving curriculum, videos, and settings to the system...
-            </p>
           </div>
-        </div>
-      )}
 
-      {/* ── Success Celebration Modal ── */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center flex flex-col items-center border border-green-100 relative">
-            <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-4 shadow-inner">
-              <CheckCircle2 className="w-10 h-10 text-green-600 animate-bounce" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {editingCourseId ? 'Course Updated Successfully!' : '🎉 Tutorial Published Successfully!'}
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              "{savedCourseTitle}" has been saved and is immediately live on the dashboard for your selected departments.
-            </p>
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            {editingCourseId && (
+              <Link
+                href={`/courses/${editingCourseId}`}
+                target="_blank"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg text-xs font-semibold transition cursor-pointer"
+              >
+                <Eye className="w-4 h-4 text-slate-400" />
+                <span>Preview</span>
+              </Link>
+            )}
+
+            {onCancelEdit ? (
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg text-xs font-semibold transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setCourseTitle('');
+                  setDescription('');
+                  setSelectedCategoryId('');
+                  setThumbnailUrl(null);
+                  setModules([makeModule(1)]);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg text-xs font-semibold transition cursor-pointer"
+              >
+                Reset
+              </button>
+            )}
+
             <button
-              onClick={() => {
-                setShowSuccessModal(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2"
+              type="button"
+              onClick={handlePublish}
+              disabled={publishing}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#c62828] hover:bg-[#a20513] text-white rounded-lg text-xs font-semibold transition shadow-sm cursor-pointer disabled:opacity-60"
             >
-              <span>View in Courses Table</span>
-              <CheckCircle2 className="w-4 h-4" />
+              {publishing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{editingCourseId ? 'Updating…' : 'Publishing…'}</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{editingCourseId ? 'Update Course' : 'Publish Course'}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
-      )}
+      </header>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-4">
-            <Film className="w-5 h-5" />
+      {/* ── SECTION 01: BASIC INFORMATION ── */}
+      <section className="bg-white border border-slate-200 rounded-xl shadow-xs p-6 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#c62828]"></div>
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded bg-slate-100 text-[#c62828] font-mono text-xs font-bold flex items-center justify-center border border-slate-300">
+              01
+            </span>
+            <h2 className="text-base font-bold text-slate-900">Basic Information</h2>
           </div>
+          <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+            Metadata &amp; Identity
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-5">
+          {/* Thumbnail 16:9 Uploader */}
           <div>
-            <h2 className="text-xl font-bold text-gray-800">
-              {editingCourseId ? 'Edit Course' : 'Course Builder'}
-            </h2>
-            <p className="text-sm text-gray-500">
-              {editingCourseId ? 'Modify course content, videos, and quizzes' : 'Build and publish a video-based course'}
-            </p>
-          </div>
-        </div>
-        {editingCourseId && onCancelEdit && (
-          <button
-            onClick={onCancelEdit}
-            className="px-4 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition"
-          >
-            Cancel Edit
-          </button>
-        )}
-      </div>
-
-      {/* Success / Error Banner */}
-      {publishStatus === 'success' && (
-        <div className="flex items-center gap-3 mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 animate-in fade-in">
-          <CheckCircle2 className="w-5 h-5 shrink-0" />
-          <span className="font-medium">Course published successfully! The list above has updated.</span>
-        </div>
-      )}
-      {publishStatus === 'error' && (
-        <div className="flex items-center gap-3 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 animate-in fade-in">
-          <AlertCircle className="w-5 h-5 shrink-0" />
-          <span className="font-medium">{publishError}</span>
-        </div>
-      )}
-
-      {/* Course Meta */}
-      <div className="space-y-4 mb-8 pb-6 border-b border-gray-100">
-
-        {/* Thumbnail Upload */}
-        {/* Thumbnail Upload & URL selector */}
-        <div className="bg-gray-50/70 border border-gray-200 rounded-xl p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-            <label className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-              <ImageIcon className="w-4 h-4 text-indigo-600" /> Course Thumbnail
-              <span className="text-xs font-normal text-gray-500">(Shown on course catalog cards)</span>
+            <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+              Course Thumbnail{' '}
+              <span className="font-normal text-slate-500">
+                (Displayed across mobile, tablet, and shopfloor catalog cards)
+              </span>
             </label>
-
-            {/* Mode Switcher */}
-            <div className="flex items-center bg-gray-200/80 p-0.5 rounded-lg text-xs font-medium self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => { setThumbnailMode('upload'); setThumbnailError(null); }}
-                className={`px-3 py-1 rounded-md transition flex items-center gap-1 ${thumbnailMode === 'upload' ? 'bg-white text-indigo-700 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
-              >
-                <UploadCloud className="w-3.5 h-3.5" /> Upload File
-              </button>
-              <button
-                type="button"
-                onClick={() => { setThumbnailMode('url'); setThumbnailError(null); }}
-                className={`px-3 py-1 rounded-md transition flex items-center gap-1 ${thumbnailMode === 'url' ? 'bg-white text-indigo-700 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
-              >
-                <Link2 className="w-3.5 h-3.5" /> Image URL / Presets
-              </button>
-            </div>
-          </div>
-
-          {/* If thumbnail is active, show the rich preview card */}
-          {thumbnailUrl ? (
-            <div className="relative w-full rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm group">
-              <div className="h-48 w-full bg-gray-900 flex items-center justify-center overflow-hidden">
-                <img
-                  src={thumbnailUrl}
-                  alt="Thumbnail preview"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={() => setThumbnailError('Image could not be loaded from this URL. Please verify the link.')}
-                />
-              </div>
-              <div className="p-3 bg-white flex items-center justify-between gap-2 border-t border-gray-100">
-                <div className="min-w-0 flex-1">
-                  <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Active Thumbnail
-                  </span>
-                  <p className="text-xs text-gray-500 truncate mt-0.5" title={thumbnailUrl}>
-                    {thumbnailUrl}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (thumbnailMode === 'upload') {
-                        thumbnailInputRef.current?.click();
-                      } else {
-                        setThumbnailUrl(null);
-                      }
-                    }}
-                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition"
-                  >
-                    Replace
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setThumbnailUrl(null);
-                      setThumbnailFile(null);
-                      setThumbnailUrlInput('');
-                      setThumbnailError(null);
-                    }}
-                    className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-semibold transition"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : thumbnailUploading ? (
-            /* Uploading spinner */
-            <div className="w-full h-36 border-2 border-dashed border-indigo-400 rounded-xl flex flex-col items-center justify-center p-4 bg-indigo-50/70 space-y-2 animate-in fade-in">
-              <div className="flex items-center justify-between w-full max-w-xs text-xs font-semibold text-indigo-900">
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
-                  Uploading thumbnail…
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded-full border border-indigo-200 text-indigo-700 shadow-sm font-bold">
-                  {thumbnailUploadPercent}%
-                </span>
-              </div>
-              <div className="w-full max-w-xs bg-indigo-200/80 rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-indigo-600 h-full rounded-full transition-all duration-200"
-                  style={{ width: `${Math.max(5, thumbnailUploadPercent)}%` }}
-                />
-              </div>
-              <p className="text-[11px] text-indigo-500">Processing and saving thumbnail image…</p>
-            </div>
-          ) : thumbnailMode === 'upload' ? (
-            /* Drop zone / File selector */
-            <div
-              onDragOver={(e) => { e.preventDefault(); setIsDraggingThumbnail(true); }}
-              onDragLeave={(e) => { e.preventDefault(); setIsDraggingThumbnail(false); }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDraggingThumbnail(false);
-                const file = e.dataTransfer.files?.[0];
-                if (file) uploadThumbnailFile(file);
-              }}
-              onClick={() => thumbnailInputRef.current?.click()}
-              className={`w-full h-36 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                isDraggingThumbnail
-                  ? 'border-indigo-500 bg-indigo-100/50 scale-[0.99]'
-                  : 'border-gray-300 bg-white hover:border-indigo-400 hover:bg-indigo-50/30'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <UploadCloud className="w-5 h-5" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-semibold text-gray-700">
-                  {isDraggingThumbnail ? 'Drop image here to upload' : 'Click to browse or drag & drop'}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">Supports PNG, JPG, JPEG, WebP, SVG, GIF, AVIF (max 50 MB)</p>
-              </div>
-            </div>
-          ) : (
-            /* URL & Presets mode */
-            <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Direct Image URL or Public Path</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={thumbnailUrlInput}
-                    onChange={(e) => setThumbnailUrlInput(e.target.value)}
-                    placeholder="e.g. /jolly-clamps-logo.png or https://images.unsplash.com/..."
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-xs"
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-3 bg-[#f8fafc] border border-slate-200 rounded-xl">
+              {/* Preview Box */}
+              <div className="md:col-span-5 relative group overflow-hidden rounded-lg border border-slate-300 bg-white aspect-video flex items-center justify-center">
+                {thumbnailUrl ? (
+                  <img
+                    src={thumbnailUrl}
+                    alt="Course thumbnail preview"
+                    className="w-full h-full object-cover"
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = thumbnailUrlInput.trim();
-                      if (!url) {
-                        setThumbnailError('Please enter a valid image URL or path.');
-                        return;
-                      }
-                      setThumbnailError(null);
-                      setThumbnailUrl(url);
-                    }}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition shrink-0"
-                  >
-                    Apply Image
-                  </button>
-                </div>
-              </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-slate-400 p-4 text-center">
+                    <ImageIcon className="w-8 h-8 mb-1 text-slate-300" />
+                    <span className="text-xs font-medium">No thumbnail selected</span>
+                  </div>
+                )}
 
-              {/* Quick Presets */}
-              <div>
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1 mb-2">
-                  <Sparkles className="w-3 h-3 text-amber-500" /> Quick-pick category presets
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: '🛠️ Hydraulics', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80' },
-                    { label: '💨 Pneumatics', url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800&auto=format&fit=crop&q=80' },
-                    { label: '⚡ PLC Automation', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80' },
-                    { label: '🦺 Safety SOP', url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80' },
-                    { label: '🏷️ Jolly Clamps Logo', url: '/jolly-clamps-logo.png' },
-                  ].map((preset) => (
+                {thumbnailUrl && (
+                  <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white">
                     <button
-                      key={preset.label}
+                      type="button"
+                      onClick={() => thumbnailInputRef.current?.click()}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-900 rounded text-xs font-semibold cursor-pointer shadow-xs"
+                    >
+                      Replace
+                    </button>
+                    <button
                       type="button"
                       onClick={() => {
-                        setThumbnailError(null);
-                        setThumbnailUrl(preset.url);
-                        setThumbnailUrlInput(preset.url);
+                        setThumbnailUrl(null);
+                        setCustomThumbnailUrl('');
                       }}
-                      className="px-2.5 py-1 bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 text-xs rounded-md font-medium transition border border-gray-200"
+                      className="p-1 bg-white hover:bg-red-50 text-red-600 rounded cursor-pointer shadow-xs"
+                      title="Remove thumbnail"
                     >
-                      {preset.label}
+                      <Trash2 className="w-4 h-4" />
                     </button>
-                  ))}
+                  </div>
+                )}
+                <span className="absolute bottom-2 left-2 bg-slate-900/80 text-white text-[10px] font-mono px-1.5 py-0.5 rounded">
+                  16:9 Aspect Ratio
+                </span>
+              </div>
+
+              {/* Upload Dropzone */}
+              <div className="md:col-span-7 flex flex-col justify-between border-2 border-dashed border-slate-300 hover:border-[#c62828] rounded-lg p-4 text-center bg-white transition">
+                <div className="flex flex-col items-center justify-center py-2">
+                  <UploadCloud className="w-8 h-8 text-[#c62828] mb-1" />
+                  <p className="font-semibold text-xs text-slate-800 mb-0.5">
+                    Drag &amp; drop course thumbnail here, or click to browse
+                  </p>
+                  <p className="text-[11px] text-slate-500">Supports PNG, JPG, WebP (Max 20MB)</p>
+                  {thumbnailUploading && (
+                    <div className="w-full max-w-xs mt-2 space-y-1">
+                      <div className="flex justify-between text-[10px] font-mono text-[#c62828]">
+                        <span>Uploading...</span>
+                        <span>{thumbnailUploadPercent}%</span>
+                      </div>
+                      <div className="w-full bg-red-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-[#c62828] h-full transition-all duration-200"
+                          style={{ width: `${thumbnailUploadPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {thumbnailError && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">{thumbnailError}</p>
+                  )}
                 </div>
+
+                <div className="flex items-center justify-center gap-2 pt-2 border-t border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => thumbnailInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-slate-700 text-xs font-semibold cursor-pointer"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Browse Files</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowUrlInput((v) => !v)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-50 border border-slate-300 rounded text-slate-600 text-xs font-medium cursor-pointer"
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    <span>Image URL</span>
+                  </button>
+                </div>
+
+                {showUrlInput && (
+                  <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+                    <input
+                      type="url"
+                      value={customThumbnailUrl}
+                      onChange={(e) => setCustomThumbnailUrl(e.target.value)}
+                      placeholder="https://example.com/thumbnail.jpg"
+                      className="flex-1 px-2.5 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-[#c62828]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customThumbnailUrl.trim()) {
+                          setThumbnailUrl(customThumbnailUrl.trim());
+                          setShowUrlInput(false);
+                        }
+                      }}
+                      className="px-3 py-1 bg-[#c62828] text-white text-xs font-semibold rounded hover:bg-[#a20513] cursor-pointer"
+                    >
+                      Set URL
+                    </button>
+                  </div>
+                )}
+
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/*,.jpg,.jpeg,.png,.webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadThumbnailFile(f);
+                    e.target.value = '';
+                  }}
+                />
               </div>
             </div>
-          )}
-
-          {/* Hidden file input */}
-          <input
-            ref={thumbnailInputRef}
-            type="file"
-            accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.svg,.jfif,.avif,.bmp"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                uploadThumbnailFile(file);
-              }
-              // Safely reset input after file is handed off
-              setTimeout(() => {
-                if (e.target) e.target.value = '';
-              }, 100);
-            }}
-          />
-
-          {thumbnailError && (
-            <div className="mt-2 p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-1.5">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
-              <div>
-                <span className="font-semibold">Thumbnail Error:</span> {thumbnailError}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Course Title <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              value={courseTitle}
-              onChange={(e) => setCourseTitle(e.target.value)}
-              placeholder="e.g. Advanced PLC Programming"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-            />
           </div>
+
+          {/* Course Title & Code */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-8">
+              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+                Course Title <span className="text-[#c62828]">*</span>
+              </label>
+              <input
+                type="text"
+                value={courseTitle}
+                onChange={(e) => setCourseTitle(e.target.value)}
+                placeholder="e.g. Machine Maintenance Video Series"
+                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none"
+              />
+            </div>
+            <div className="md:col-span-4">
+              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+                Course Code / SOP ID <span className="text-[#c62828]">*</span>
+              </label>
+              <input
+                type="text"
+                value={courseCode}
+                onChange={(e) => setCourseCode(e.target.value)}
+                placeholder="e.g. MEC-TRN-101"
+                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg font-mono text-xs text-slate-900 uppercase tracking-wider focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Category Dropdown */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="font-semibold text-xs text-slate-900">
+                Category <span className="text-[#c62828]">*</span>
+              </label>
+            </div>
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none cursor-pointer"
             >
-              <option value="">— Select a category —</option>
+              <option value="">— Select Category —</option>
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
               ))}
             </select>
           </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <textarea
-            rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What will employees learn?"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-          />
-        </div>
 
-        {/* Visibility */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+          {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-              <Users className="w-4 h-4" /> Department Access
+            <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+              Description <span className="font-normal text-slate-500">(Curriculum syllabus overview)</span>
             </label>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setVisibility('all')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${
-                  visibility === 'all'
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
-                }`}
-              >
-                🌐 All Departments
-              </button>
-              <button
-                type="button"
-                onClick={() => setVisibility('specific')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${
-                  visibility === 'specific'
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
-                }`}
-              >
-                <Lock className="w-3 h-3 inline mr-1" /> Specific Depts
-              </button>
-            </div>
-            {visibility === 'specific' && (
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500 font-medium">Target Departments (Mandatory)</span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDepts([...ALL_DEPARTMENTS])}
-                      className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                    >
-                      Select All
-                    </button>
-                    <span className="text-gray-300">|</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDepts([])}
-                      className="text-xs text-gray-500 hover:text-gray-700"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Explain the machine operations, safety guidelines, and procedures covered in this course..."
+              className="w-full p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none resize-y"
+            />
+          </div>
+        </div>
+      </section>
 
-                {selectedDepts.length === 0 && (
-                  <div className="flex items-start gap-1.5 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs animate-pulse">
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <span>
-                      <strong>Action required:</strong> You must select at least one department when course visibility is set to &ldquo;Specific Depts&rdquo;.
-                    </span>
-                  </div>
-                )}
+      {/* ── SECTION 02: COURSE SETTINGS ── */}
+      <section className="bg-white border border-slate-200 rounded-xl shadow-xs p-6 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#475569]"></div>
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded bg-slate-100 text-[#475569] font-mono text-xs font-bold flex items-center justify-center border border-slate-300">
+              02
+            </span>
+            <h2 className="text-base font-bold text-slate-900">Course Settings</h2>
+          </div>
+          <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+            Access &amp; Rules
+          </span>
+        </div>
 
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {ALL_DEPARTMENTS.map(dept => (
-                    <button
-                      key={dept}
-                      type="button"
-                      onClick={() => setSelectedDepts(prev =>
-                        prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]
-                      )}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
-                        selectedDepts.includes(dept)
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-indigo-300'
-                      }`}
-                    >
-                      {DEPT_LABELS[dept]}
-                    </button>
-                  ))}
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column: Skill Level, Duration, Classification */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block font-semibold text-xs text-slate-900 mb-1.5">Skill Level</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['beginner', 'intermediate', 'advanced'] as const).map((lvl) => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setSkillLevel(lvl)}
+                    className={`py-2 px-3 rounded-lg text-xs font-semibold capitalize transition cursor-pointer ${
+                      skillLevel === lvl
+                        ? 'border border-[#c62828] bg-red-50 text-[#c62828] shadow-xs'
+                        : 'border border-slate-300 text-slate-600 hover:border-slate-400 bg-white'
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            <div>
+              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+                Estimated Duration
+              </label>
+              <div className="relative">
+                <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={estimatedDuration}
+                  onChange={(e) => setEstimatedDuration(e.target.value)}
+                  placeholder="e.g. 2h 30m"
+                  className="w-full h-10 pl-9 pr-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+                Course Classification
+              </label>
+              <div className="flex items-center gap-5 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 hover:text-slate-900">
+                  <input
+                    type="radio"
+                    name="classification"
+                    checked={classification === 'optional'}
+                    onChange={() => setClassification('optional')}
+                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
+                  />
+                  <span>Optional Training</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-900">
+                  <input
+                    type="radio"
+                    name="classification"
+                    checked={classification === 'mandatory'}
+                    onChange={() => setClassification('mandatory')}
+                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
+                  />
+                  <span className="inline-flex items-center gap-1.5">
+                    Mandatory Compliance
+                    <span className="bg-red-100 text-[#c62828] text-[10px] uppercase font-bold px-1.5 py-0.2 rounded border border-red-200">
+                      Required
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-              <Award className="w-4 h-4" /> Certification
-            </label>
-            <button
-              type="button"
-              onClick={() => setHasCertificate(p => !p)}
-              className={`w-full py-2 rounded-lg text-sm font-medium border transition ${
-                hasCertificate
-                  ? 'bg-green-600 text-white border-green-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'
-              }`}
-            >
-              {hasCertificate ? '✅ Certificate Enabled' : '🎓 Enable Certificate on Completion'}
-            </button>
+          {/* Right Column: Department Access & Certification */}
+          <div className="flex flex-col gap-4 border-t md:border-t-0 md:border-l border-slate-200 pt-4 md:pt-0 md:pl-6">
+            <div>
+              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+                Department Access
+              </label>
+              <div className="flex items-center gap-5 mb-2.5">
+                <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 hover:text-slate-900">
+                  <input
+                    type="radio"
+                    name="dept_mode"
+                    checked={visibility === 'all'}
+                    onChange={() => setVisibility('all')}
+                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
+                  />
+                  <span>All Departments</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-900">
+                  <input
+                    type="radio"
+                    name="dept_mode"
+                    checked={visibility === 'specific'}
+                    onChange={() => setVisibility('specific')}
+                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
+                  />
+                  <span>Specific Departments</span>
+                </label>
+              </div>
+
+              {visibility === 'specific' && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {ALL_DEPARTMENTS.map((dept) => {
+                    const isSelected = selectedDepts.includes(dept);
+                    return (
+                      <button
+                        key={dept}
+                        type="button"
+                        onClick={() =>
+                          setSelectedDepts((prev) =>
+                            prev.includes(dept) ? prev.filter((d) => d !== dept) : [...prev, dept]
+                          )
+                        }
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-red-50 text-[#c62828] border border-[#c62828]'
+                            : 'bg-white border border-slate-300 text-slate-600 hover:border-slate-400'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3" />}
+                        <span>{DEPT_LABELS[dept]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Certificate Checkbox */}
+            <div className="p-3 bg-[#f8fafc] border border-slate-200 rounded-lg mt-2">
+              <label className="inline-flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasCertificate}
+                  onChange={(e) => setHasCertificate(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 text-[#c62828] rounded border-slate-300 focus:ring-[#c62828]"
+                />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-emerald-600" />
+                    Enable Certificate on Completion
+                  </span>
+                  <span className="text-[11px] text-slate-500 mt-0.5">
+                    Requires passing score on lesson quizzes to issue verified certificate.
+                  </span>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Module Builder */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-800">Curriculum</h3>
+      {/* ── SECTION 03: CURRICULUM ── */}
+      <section className="bg-white border border-slate-200 rounded-xl shadow-xs p-6 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#c62828]"></div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 mb-5 gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded bg-slate-100 text-[#c62828] font-mono text-xs font-bold flex items-center justify-center border border-slate-300">
+              03
+            </span>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Curriculum</h2>
+              <p className="text-xs text-slate-500">
+                Course → Module → Lesson → Multi-Part Video → Checkpoint Quiz
+              </p>
+            </div>
+          </div>
           <button
-            onClick={() => setModules((ms) => [...ms, makeModule()])}
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center transition"
+            type="button"
+            onClick={() => setModules((ms) => [...ms, makeModule(ms.length + 1)])}
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
           >
-            <Plus className="w-4 h-4 mr-1" /> Add Module
+            <Plus className="w-4 h-4 text-[#c62828]" />
+            <span>Add Module</span>
           </button>
         </div>
 
-        {modules.map((mod, modIdx) => (
-          <div key={mod.id} className="border border-gray-200 rounded-xl overflow-hidden">
-
-            {/* Module Header */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-200">
-              <div className="flex items-center flex-1 gap-3">
-                <GripVertical className="w-5 h-5 text-gray-400 shrink-0" />
-                <input
-                  type="text"
-                  value={mod.title}
-                  onChange={(e) => updateModule(mod.id, { title: e.target.value })}
-                  className="flex-1 text-sm font-semibold text-gray-800 bg-transparent border-b border-transparent focus:border-indigo-400 focus:outline-none py-0.5 transition"
-                />
-                <span className="text-xs text-gray-400">Module {modIdx + 1}</span>
-              </div>
-              <div className="flex items-center gap-3 ml-4">
-                <button
-                  onClick={() => addLesson(mod.id)}
-                  className="text-xs font-medium text-indigo-600 hover:underline"
-                >
-                  + Add Lesson
-                </button>
-                {modules.length > 1 && (
-                  <button
-                    onClick={() => removeModule(mod.id)}
-                    className="text-xs font-medium text-red-500 hover:underline"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Lessons */}
-            <div className="p-4 space-y-4 bg-white">
-              {mod.lessons.map((lesson, lessonIdx) => (
-                <div key={lesson.id} className="border border-indigo-100 rounded-lg p-4 bg-indigo-50/30">
-
-                  {/* Lesson header row */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">
-                      Lesson {lessonIdx + 1}
-                    </span>
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={lesson.title}
-                        onChange={(e) => updateLesson(mod.id, lesson.id, { title: e.target.value })}
-                        placeholder="Lesson title…"
-                        className="w-full px-3 py-1.5 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:border-indigo-500 transition"
-                      />
-                    </div>
-                    {mod.lessons.length > 1 && (
-                      <button
-                        onClick={() => removeLesson(mod.id, lesson.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Type toggle */}
-                  <div className="flex items-center bg-gray-100 p-1 rounded-lg w-max mb-4">
-                    <button
-                      onClick={() => updateLesson(mod.id, lesson.id, { type: 'single' })}
-                      className={`px-4 py-1.5 text-sm font-medium transition-all rounded-md flex items-center ${
-                        lesson.type === 'single'
-                          ? 'bg-white shadow text-gray-900 border border-gray-200'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      <Video className="w-4 h-4 mr-2" /> Single Video
-                    </button>
-                    <button
-                      onClick={() => updateLesson(mod.id, lesson.id, { type: 'playlist' })}
-                      className={`px-4 py-1.5 text-sm font-medium transition-all rounded-md flex items-center ${
-                        lesson.type === 'playlist'
-                          ? 'bg-white shadow text-gray-900 border border-gray-200'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      <ListVideo className="w-4 h-4 mr-2" /> Playlist
-                    </button>
-                  </div>
-
-                  {/* Video content */}
-                  {lesson.type === 'single' ? (
-                    <SingleVideoUploader
-                      lesson={lesson}
-                      onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
-                    />
-                  ) : (
-                    <PlaylistBuilder
-                      lesson={lesson}
-                      onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
-                    />
-                  )}
-
-                  {/* Quizzes */}
-                  <QuizBuilder
-                    lesson={lesson}
-                    onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
+        {/* Modules List */}
+        <div className="flex flex-col gap-5">
+          {modules.map((mod, modIdx) => (
+            <div key={mod.id} className="border border-slate-200 rounded-xl bg-[#fafafa] overflow-hidden">
+              {/* Module Header */}
+              <div className="bg-white px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <GripVertical className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="font-mono text-[11px] font-bold uppercase text-[#c62828] bg-red-50 border border-red-200 px-2 py-0.5 rounded shrink-0">
+                    MODULE {modIdx + 1}
+                  </span>
+                  <input
+                    type="text"
+                    value={mod.title}
+                    onChange={(e) => updateModule(mod.id, { title: e.target.value })}
+                    className="font-bold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-[#c62828] focus:outline-none px-1 py-0.5 flex-1"
+                    placeholder="Module Title..."
                   />
+                  <span className="text-xs text-slate-500 font-medium shrink-0">
+                    ({mod.lessons.length} {mod.lessons.length === 1 ? 'Lesson' : 'Lessons'})
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
 
-      {/* Footer Actions */}
-      <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-200">
-        {editingCourseId && onCancelEdit ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => addLesson(mod.id)}
+                    className="text-xs font-semibold text-[#c62828] hover:underline cursor-pointer"
+                  >
+                    + Add Lesson
+                  </button>
+                  {modules.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeModule(mod.id)}
+                      className="p-1 text-slate-400 hover:text-red-600 rounded transition cursor-pointer"
+                      title="Delete Module"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Module Body: Lessons */}
+              <div className="p-4 flex flex-col gap-4">
+                {mod.lessons.map((lesson, lessonIdx) => (
+                  <div
+                    key={lesson.id}
+                    className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs space-y-4"
+                  >
+                    {/* Lesson Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
+                      <div className="flex items-center gap-2.5 flex-1">
+                        <span className="font-mono text-[11px] font-bold uppercase text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
+                          LESSON {lessonIdx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          value={lesson.title}
+                          onChange={(e) => updateLesson(mod.id, lesson.id, { title: e.target.value })}
+                          placeholder="Lesson Title (e.g. Safety Precautions & Tools)"
+                          className="font-semibold text-sm text-slate-900 bg-transparent hover:bg-slate-50 focus:bg-white px-2 py-1 rounded border border-transparent focus:border-slate-300 focus:outline-none w-full max-w-md"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* Content Type Selector */}
+                        <div className="inline-flex p-0.5 bg-slate-100 border border-slate-300 rounded-md text-xs font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => updateLesson(mod.id, lesson.id, { type: 'single' })}
+                            className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                              lesson.type === 'single'
+                                ? 'bg-white text-[#c62828] shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Single Video
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateLesson(mod.id, lesson.id, { type: 'playlist' })}
+                            className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                              lesson.type === 'playlist'
+                                ? 'bg-white text-[#c62828] shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Multi-Part Video
+                          </button>
+                        </div>
+
+                        {mod.lessons.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeLesson(mod.id, lesson.id)}
+                            className="p-1 text-slate-400 hover:text-red-600 transition cursor-pointer"
+                            title="Delete Lesson"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Lesson Content Video Uploader */}
+                    {lesson.type === 'single' ? (
+                      <SingleVideoUploader
+                        lesson={lesson}
+                        onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
+                      />
+                    ) : (
+                      <PlaylistBuilder
+                        lesson={lesson}
+                        onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
+                      />
+                    )}
+
+                    {/* In-Video Quizzes */}
+                    <QuizBuilder
+                      lesson={lesson}
+                      onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
+                    />
+
+                    {/* Lesson Summary Bar */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-500">
+                      <span className="font-mono text-slate-700 font-medium">
+                        Lesson Duration: {formatSeconds(lesson.duration_seconds || 0)}
+                      </span>
+                      <span>
+                        Type: {lesson.type === 'single' ? 'Single Video' : 'Multi-Part Sequential Video'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Footer Actions ── */}
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 pb-12">
+        {onCancelEdit ? (
           <button
+            type="button"
             onClick={onCancelEdit}
-            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+            className="px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
           >
             Cancel
           </button>
         ) : (
           <button
+            type="button"
             onClick={() => {
-              setModules([makeModule()]); setCourseTitle(''); setDescription('');
-              setSelectedCategoryId(''); setThumbnailUrl(null); setThumbnailFile(null); setThumbnailError(null);
+              setCourseTitle('');
+              setDescription('');
+              setSelectedCategoryId('');
+              setThumbnailUrl(null);
+              setModules([makeModule(1)]);
             }}
-            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+            className="px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
           >
-            Reset
+            Reset Form
           </button>
         )}
+
         <button
+          type="button"
           onClick={handlePublish}
           disabled={publishing}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-6 py-2.5 bg-[#c62828] hover:bg-[#a20513] text-white rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-60"
         >
           {publishing ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> {editingCourseId ? 'Updating…' : 'Publishing…'}</>
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{editingCourseId ? 'Updating Course…' : 'Publishing Course…'}</span>
+            </>
           ) : (
-            editingCourseId ? 'Update Course' : 'Publish Course'
+            <>
+              <Save className="w-4 h-4" />
+              <span>{editingCourseId ? 'Update Course' : 'Publish Course'}</span>
+            </>
           )}
         </button>
       </div>
+
+      {/* ── Success Celebration Modal ── */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center flex flex-col items-center border border-slate-200">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {editingCourseId ? 'Course Updated Successfully' : 'Course Published Successfully'}
+            </h3>
+            <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+              <strong>"{savedCourseTitle}"</strong> is now saved to the LMS repository and available to assigned departments.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSuccessModal(false);
+                if (onCancelEdit) onCancelEdit();
+              }}
+              className="w-full py-2.5 px-4 bg-[#c62828] hover:bg-[#a20513] text-white font-semibold rounded-lg text-xs transition cursor-pointer shadow-xs"
+            >
+              Return to Course Directory
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

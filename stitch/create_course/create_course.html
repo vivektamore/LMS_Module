@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="web_dashboard" name="shell-type"/>
+<title>Create Course — Jolly Clamps Technical Training Admin Panel</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-highest": "#e0e3e5",
+            "primary-container": "#c62828",
+            "inverse-primary": "#ffb4ac",
+            "surface-container-low": "#f8fafc",
+            "on-primary-container": "#ffe0dd",
+            "tertiary": "#334155",
+            "border-grid": "#e2e8f0",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#3a485c",
+            "on-primary-fixed": "#410003",
+            "outline": "#8f706c",
+            "on-secondary-fixed-variant": "#3f465c",
+            "outline-variant": "#e4beba",
+            "on-tertiary": "#ffffff",
+            "on-surface-variant": "#475569",
+            "tertiary-fixed": "#d5e3fd",
+            "primary-fixed-dim": "#ffb4ac",
+            "on-surface": "#0f172a",
+            "surface-dim": "#d8dadc",
+            "background": "#f8fafc",
+            "border-strong": "#cbd5e1",
+            "error": "#b91c1c",
+            "surface": "#f8fafc",
+            "tertiary-fixed-dim": "#b9c7e0",
+            "inverse-on-surface": "#eff1f3",
+            "secondary-fixed": "#dae2fd",
+            "secondary": "#475569",
+            "text-muted": "#64748b",
+            "on-tertiary-fixed": "#0d1c2f",
+            "warning-caution": "#d97706",
+            "on-secondary-container": "#5c647a",
+            "primary": "#c62828",
+            "tertiary-container": "#475569",
+            "on-primary-fixed-variant": "#93000e",
+            "error-container": "#fef2f2",
+            "on-tertiary-container": "#dae7ff",
+            "on-error": "#ffffff",
+            "surface-container": "#eceef0",
+            "on-background": "#0f172a",
+            "brand-crimson": "#c62828",
+            "surface-bright": "#f8fafc",
+            "surface-card": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "on-primary": "#ffffff",
+            "surface-muted": "#f1f5f9",
+            "text-primary": "#0f172a",
+            "secondary-fixed-dim": "#bec6e0",
+            "primary-fixed": "#ffdad6",
+            "inverse-surface": "#1e293b",
+            "success-industrial": "#15803d",
+            "on-secondary-fixed": "#131b2e",
+            "secondary-container": "#e2e8f0",
+            "on-secondary": "#ffffff",
+            "surface-variant": "#e2e8f0",
+            "surface-container-high": "#f1f5f9",
+            "surface-tint": "#c62828"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "none": "0",
+            "sm": "0.125rem",
+            "md": "0.25rem",
+            "lg": "0.25rem",
+            "xl": "0.375rem"
+          },
+          fontFamily: {
+            "headline": ["IBM Plex Sans", "sans-serif"],
+            "body": ["Inter", "sans-serif"],
+            "code-technical": ["IBM Plex Sans", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface font-body text-text-primary antialiased text-[14px]">
+<!-- Fixed Left Sidebar (220px) -->
+<aside class="fixed left-0 top-0 h-full w-[220px] bg-surface-card border-r border-border-grid z-50 flex flex-col justify-between select-none">
+<div class="flex flex-col">
+<!-- Brand Header -->
+<div class="h-16 px-4 border-b border-border-grid flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-[#c62828] flex items-center justify-center text-white font-headline font-bold text-base tracking-tighter shrink-0 shadow-xs">
+          JC
+        </div>
+<div class="flex flex-col overflow-hidden">
+<span class="font-headline font-bold text-[15px] text-text-primary tracking-tight leading-snug">Jolly Clamps</span>
+<span class="text-[10px] uppercase font-bold tracking-wider text-[#c62828] font-headline">Technical Training Admin Panel</span>
+</div>
+</div>
+<!-- Navigation Section -->
+<div class="px-4 pt-4 pb-2">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-text-muted font-headline">Menu</span>
+</div>
+<nav class="px-2 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-text-primary hover:bg-surface-muted transition-colors font-headline text-[13px] font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-text-muted">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded bg-[#c62828] text-white transition-colors font-headline text-[13px] font-semibold shadow-xs" href="#">
+<span class="material-symbols-outlined text-[19px]">menu_book</span>
+<span>Courses</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-text-primary hover:bg-surface-muted transition-colors font-headline text-[13px] font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-text-muted">school</span>
+<span>Enrollments</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-text-primary hover:bg-surface-muted transition-colors font-headline text-[13px] font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-text-muted">group</span>
+<span>Users</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-text-primary hover:bg-surface-muted transition-colors font-headline text-[13px] font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-text-muted">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+</div>
+<!-- Bottom Sidebar Section -->
+<div class="p-3 border-t border-border-grid">
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-error hover:bg-error-container transition-colors w-full font-headline text-[13px] font-semibold" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="pl-[220px] flex flex-col min-h-screen bg-surface">
+<!-- Top Command & Action Bar Header -->
+<header class="sticky top-0 bg-surface-card border-b border-border-grid z-40 px-8 py-3.5 shadow-xs">
+<div class="max-w-[1140px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<!-- Left: Breadcrumb, Title & Status -->
+<div class="flex flex-col gap-1">
+<a class="inline-flex items-center gap-1.5 text-text-muted hover:text-[#c62828] transition-colors text-[12px] font-medium" href="#">
+<span class="material-symbols-outlined text-[15px]">arrow_back</span>
+<span>Back to Courses</span>
+</a>
+<div class="flex items-center gap-3">
+<h1 class="font-headline text-[22px] font-bold text-text-primary tracking-tight leading-tight">Create Course</h1>
+<span class="bg-surface-muted text-text-muted border border-border-strong px-2 py-0.5 rounded text-[11px] font-headline uppercase font-semibold tracking-wider">Draft</span>
+</div>
+</div>
+<!-- Right: Action Buttons -->
+<div class="flex items-center gap-2.5">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-surface-card text-text-primary border border-border-strong hover:bg-surface-muted rounded text-[13px] font-headline font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px] text-text-muted">save</span>
+<span>Save Draft</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-surface-card text-text-primary border border-border-strong hover:bg-surface-muted rounded text-[13px] font-headline font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px] text-text-muted">visibility</span>
+<span>Preview Course</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#c62828] hover:bg-[#b71c1c] text-white rounded text-[13px] font-headline font-semibold transition-colors shadow-xs" type="button">
+<span class="material-symbols-outlined text-[17px]">publish</span>
+<span>Publish Course</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Form Body Container -->
+<main class="w-full max-w-[1140px] mx-auto px-6 py-8 flex flex-col gap-6">
+<!-- ========================================================= -->
+<!-- 01 BASIC INFORMATION -->
+<!-- ========================================================= -->
+<section class="bg-surface-card border border-border-grid rounded shadow-xs p-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-[#c62828]"></div>
+<div class="flex items-center justify-between border-b border-border-grid pb-3 mb-5">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-surface-muted text-[#c62828] font-code-technical text-[12px] font-bold flex items-center justify-center border border-border-strong">01</span>
+<h2 class="font-headline text-[17px] font-bold text-text-primary">Basic Information</h2>
+</div>
+<span class="text-[11px] font-headline uppercase font-semibold text-text-muted tracking-wider">Metadata &amp; Identity</span>
+</div>
+<div class="flex flex-col gap-5">
+<!-- Thumbnail (16:9 uploader with drag & drop, browse, preview, replace/remove) -->
+<div>
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5">
+              Course Thumbnail <span class="font-normal text-text-muted font-body text-[12px]">(Displayed across mobile and shopfloor catalog cards)</span>
+</label>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4 p-3 bg-surface-container-low border border-border-grid rounded">
+<!-- Preview Box (16:9) -->
+<div class="md:col-span-5 relative group overflow-hidden rounded border border-border-strong bg-surface-card aspect-video flex items-center justify-center">
+<img alt="Course thumbnail preview - shopfloor CNC machine" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArZrxBUdZMD-CNZXIhh-L3shfdLGTlrBHh5XRGeffaUC_vtuGpawhLdIj55s0NvxEGYw_NxK6tfdlnB8dLbXBIWq2072GT3Mgimt4O6Ayebwbw0iUlASjTA3ZY7xcUfv6VGnGgzFEUbptbSe5EHloSoEHQmeheqTyL1UpNLtnVkzz3lQxeCTqMOQq2zHTyGm2FnOlXe8Br4Xy8YNv9mhbyLH0CYj15bE9zGWsksv5t8snGUhstzq1V"/>
+<div class="absolute inset-0 bg-[#0f172a]/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white">
+<button class="px-2.5 py-1 bg-white hover:bg-gray-100 text-text-primary rounded text-[12px] font-headline font-semibold shadow-xs" type="button">Replace</button>
+<button class="p-1 bg-white hover:bg-error-container text-error rounded shadow-xs" title="Remove thumbnail" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+<span class="absolute bottom-2 left-2 bg-[#0f172a]/80 text-white text-[11px] font-code-technical px-1.5 py-0.5 rounded">16:9 • 1920×1080</span>
+</div>
+<!-- Upload Meta & Dropzone Area -->
+<div class="md:col-span-7 flex flex-col justify-between border-2 border-dashed border-border-strong hover:border-[#c62828] rounded p-4 text-center bg-surface-card transition-colors">
+<div class="flex flex-col items-center justify-center py-2">
+<span class="material-symbols-outlined text-[32px] text-[#c62828] mb-1">cloud_upload</span>
+<p class="font-headline font-semibold text-[13px] text-text-primary mb-0.5">Drag &amp; drop course thumbnail here, or click to browse</p>
+<p class="text-[12px] text-text-muted">Supports PNG, JPG, WebP (Max 20MB)</p>
+<span class="mt-2.5 inline-flex items-center gap-1 text-[11px] font-code-technical text-text-muted bg-surface-muted px-2 py-0.5 rounded border border-border-grid">
+<span class="material-symbols-outlined text-[13px]">aspect_ratio</span> 16:9 Aspect Ratio recommended
+                  </span>
+</div>
+<div class="flex items-center justify-center gap-2 pt-2 border-t border-border-grid">
+<button class="inline-flex items-center gap-1 px-3 py-1 bg-surface-muted hover:bg-surface-variant border border-border-strong rounded text-text-primary font-headline text-[12px] font-semibold" type="button">
+<span class="material-symbols-outlined text-[15px]">file_upload</span> Browse Files
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1 bg-surface-card hover:bg-surface-muted border border-border-strong rounded text-text-muted font-headline text-[12px] font-medium" type="button">
+<span class="material-symbols-outlined text-[15px]">link</span> Image URL
+                  </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Course Title & Course Code -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+<div class="md:col-span-8">
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5" for="course-title">
+                Course Title <span class="text-[#c62828]">*</span>
+</label>
+<input class="w-full h-10 px-3 bg-surface-card border border-border-strong rounded text-[14px] text-text-primary focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none" id="course-title" type="text" value="Machine Maintenance Video Series"/>
+</div>
+<div class="md:col-span-4">
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5" for="course-code">
+                Course Code <span class="text-[#c62828]">*</span>
+</label>
+<input class="w-full h-10 px-3 bg-surface-card border border-border-strong rounded font-code-technical text-[13px] text-text-primary uppercase tracking-wider focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none" id="course-code" type="text" value="MEC-TRN-101"/>
+</div>
+</div>
+<!-- Category (pointing to Settings -> Course Categories) -->
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="font-headline font-semibold text-[13px] text-text-primary" for="course-category">
+                Category <span class="text-[#c62828]">*</span>
+</label>
+<a class="text-[12px] font-headline font-medium text-[#c62828] hover:underline inline-flex items-center gap-0.5" href="#" title="Navigate to Settings → Course Categories">
+<span>Manage Categories</span>
+<span class="material-symbols-outlined text-[13px]">open_in_new</span>
+</a>
+</div>
+<div class="relative">
+<select class="w-full h-10 px-3 pr-8 bg-surface-card border border-border-strong rounded text-[14px] text-text-primary focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none appearance-none cursor-pointer" id="course-category">
+<option selected="">Machine Maintenance</option>
+<option>Precision Clamping Operations</option>
+<option>CNC &amp; Tooling Setup</option>
+<option>LOTO &amp; Electrical Safety</option>
+<option>Quality Assurance Metrology</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-text-muted text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Description -->
+<div>
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5" for="course-desc">
+              Description <span class="text-text-muted font-normal font-body text-[12px]">(Curriculum syllabus overview)</span>
+</label>
+<textarea class="w-full p-3 bg-surface-card border border-border-strong rounded text-[14px] text-text-primary focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none resize-y" id="course-desc" rows="3">Routine preventative maintenance, CNC tooling inspection, pneumatic clamp calibration, and shop-floor LOTO safety standards.</textarea>
+</div>
+</div>
+</section>
+<!-- ========================================================= -->
+<!-- 02 COURSE SETTINGS -->
+<!-- ========================================================= -->
+<section class="bg-surface-card border border-border-grid rounded shadow-xs p-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex items-center justify-between border-b border-border-grid pb-3 mb-5">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-surface-muted text-tertiary font-code-technical text-[12px] font-bold flex items-center justify-center border border-border-strong">02</span>
+<h2 class="font-headline text-[17px] font-bold text-text-primary">Course Settings</h2>
+</div>
+<span class="text-[11px] font-headline uppercase font-semibold text-text-muted tracking-wider">Access &amp; Rules</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Left Column: Skill, Duration, Classification -->
+<div class="flex flex-col gap-4">
+<div>
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5">Skill Level</label>
+<div class="grid grid-cols-3 gap-2">
+<label class="flex items-center justify-center py-2 px-3 rounded border border-border-strong text-text-muted hover:border-text-muted cursor-pointer font-headline text-[13px] transition-colors">
+<input class="sr-only" name="skill_level" type="radio" value="beginner"/>
+<span>Beginner</span>
+</label>
+<label class="flex items-center justify-center py-2 px-3 rounded border border-[#c62828] bg-red-50 text-[#c62828] font-headline text-[13px] font-semibold cursor-pointer shadow-xs">
+<input checked="" class="sr-only" name="skill_level" type="radio" value="intermediate"/>
+<span>Intermediate</span>
+</label>
+<label class="flex items-center justify-center py-2 px-3 rounded border border-border-strong text-text-muted hover:border-text-muted cursor-pointer font-headline text-[13px] transition-colors">
+<input class="sr-only" name="skill_level" type="radio" value="advanced"/>
+<span>Advanced</span>
+</label>
+</div>
+</div>
+<div>
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5" for="duration">Estimated Duration</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-text-muted text-[17px]">schedule</span>
+<input class="w-full h-10 pl-9 pr-3 bg-surface-card border border-border-strong rounded text-[14px] text-text-primary focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none" id="duration" type="text" value="2h 30m"/>
+</div>
+</div>
+<div>
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5">Course Classification</label>
+<div class="flex items-center gap-5 pt-1">
+<label class="flex items-center gap-2 cursor-pointer text-text-muted hover:text-text-primary text-[13px]">
+<input class="w-4 h-4 text-[#c62828] focus:ring-[#c62828] border-border-strong" name="course_classification" type="radio" value="optional"/>
+<span>Optional Training</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer font-semibold text-text-primary text-[13px]">
+<input checked="" class="w-4 h-4 text-[#c62828] focus:ring-[#c62828] border-border-strong" name="course_classification" type="radio" value="mandatory"/>
+<span class="inline-flex items-center gap-1.5">
+                    Mandatory Compliance
+                    <span class="bg-red-100 text-[#c62828] text-[10px] uppercase font-bold px-1.5 py-0.2 rounded border border-red-200">Required</span>
+</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Right Column: Department Access & Certification -->
+<div class="flex flex-col gap-4 border-t md:border-t-0 md:border-l border-border-grid pt-4 md:pt-0 md:pl-6">
+<div>
+<label class="block font-headline font-semibold text-[13px] text-text-primary mb-1.5">Department Access</label>
+<div class="flex items-center gap-5 mb-2.5">
+<label class="flex items-center gap-2 cursor-pointer text-text-muted hover:text-text-primary text-[13px]">
+<input class="w-4 h-4 text-[#c62828] focus:ring-[#c62828] border-border-strong" name="dept_mode" type="radio" value="all"/>
+<span>All Departments</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer font-semibold text-text-primary text-[13px]">
+<input checked="" class="w-4 h-4 text-[#c62828] focus:ring-[#c62828] border-border-strong" name="dept_mode" type="radio" value="specific"/>
+<span>Specific Departments</span>
+</label>
+</div>
+<!-- Department Selection Checkboxes -->
+<div class="flex flex-wrap gap-2 pt-1">
+<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-50/60 border border-[#c62828] text-text-primary text-[12px] font-medium cursor-pointer">
+<input checked="" class="w-3.5 h-3.5 text-[#c62828] rounded border-border-strong focus:ring-[#c62828]" type="checkbox"/>
+<span class="font-semibold text-[#c62828]">Maintenance</span>
+</label>
+<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-50/60 border border-[#c62828] text-text-primary text-[12px] font-medium cursor-pointer">
+<input checked="" class="w-3.5 h-3.5 text-[#c62828] rounded border-border-strong focus:ring-[#c62828]" type="checkbox"/>
+<span class="font-semibold text-[#c62828]">Production</span>
+</label>
+<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-card border border-border-strong text-text-muted hover:border-text-muted text-[12px] cursor-pointer">
+<input class="w-3.5 h-3.5 text-[#c62828] rounded border-border-strong focus:ring-[#c62828]" type="checkbox"/>
+<span>Quality</span>
+</label>
+<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-card border border-border-strong text-text-muted hover:border-text-muted text-[12px] cursor-pointer">
+<input class="w-3.5 h-3.5 text-[#c62828] rounded border-border-strong focus:ring-[#c62828]" type="checkbox"/>
+<span>Engineering</span>
+</label>
+<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-card border border-border-strong text-text-muted hover:border-text-muted text-[12px] cursor-pointer">
+<input class="w-3.5 h-3.5 text-[#c62828] rounded border-border-strong focus:ring-[#c62828]" type="checkbox"/>
+<span>Safety</span>
+</label>
+</div>
+</div>
+<!-- Certificate Checkbox -->
+<div class="p-3 bg-surface-container-low border border-border-grid rounded mt-2">
+<label class="inline-flex items-start gap-2.5 cursor-pointer">
+<input checked="" class="w-4 h-4 mt-0.5 text-[#c62828] rounded border-border-strong focus:ring-[#c62828]" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-headline font-semibold text-[13px] text-text-primary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-[#15803d]">workspace_premium</span>
+                    Enable Certificate on Completion
+                  </span>
+<span class="text-[12px] text-text-muted mt-0.5">Requires ≥ 70% passing score on final assessment.</span>
+</div>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================= -->
+<!-- 03 CURRICULUM (CRITICAL HIERARCHY) -->
+<!-- ========================================================= -->
+<section class="bg-surface-card border border-border-grid rounded shadow-xs p-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-[#c62828]"></div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border-grid pb-3 mb-5 gap-3">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-surface-muted text-[#c62828] font-code-technical text-[12px] font-bold flex items-center justify-center border border-border-strong">03</span>
+<div>
+<h2 class="font-headline text-[17px] font-bold text-text-primary">Curriculum</h2>
+<p class="text-[12px] text-text-muted font-body">Structured progression hierarchy: Course → Module → Lesson → Multi-Part Video → In-Video Quiz</p>
+</div>
+</div>
+<!-- Add Module Header Button -->
+<button class="inline-flex items-center gap-1 px-3 py-1.5 bg-surface-card hover:bg-surface-muted border border-border-strong text-text-primary rounded text-[12px] font-headline font-semibold shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#c62828]">add</span>
+<span>Add Module</span>
+</button>
+</div>
+<!-- MODULE 1 CONTAINER -->
+<div class="border border-border-grid rounded bg-[#fafafa] mb-5 overflow-hidden">
+<!-- Module Header -->
+<div class="bg-surface-card px-4 py-3 border-b border-border-grid flex flex-wrap items-center justify-between gap-3">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-text-muted cursor-grab text-[18px]" title="Reorder Module">drag_indicator</span>
+<span class="font-code-technical text-[11px] font-bold uppercase text-[#c62828] bg-red-50 border border-red-200 px-2 py-0.5 rounded">MODULE 1</span>
+<h3 class="font-headline text-[15px] font-bold text-text-primary">General Inspection</h3>
+<span class="text-text-muted text-[12px] font-body">(1 Lesson · 27 min)</span>
+</div>
+<!-- Module Actions -->
+<div class="flex items-center gap-1">
+<button class="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-muted rounded" title="Edit Module Title" type="button">
+<span class="material-symbols-outlined text-[17px]">edit</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-muted rounded" title="Duplicate Module" type="button">
+<span class="material-symbols-outlined text-[17px]">content_copy</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-error hover:bg-error-container rounded" title="Delete Module" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Module Body: Lessons List -->
+<div class="p-4 flex flex-col gap-4">
+<!-- LESSON 1 CARD -->
+<div class="bg-surface-card border border-border-grid rounded shadow-xs p-4">
+<!-- Lesson Header: Title and Content Type Selector -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border-grid pb-3 mb-4 gap-3">
+<div class="flex items-center gap-2.5">
+<span class="font-code-technical text-[11px] font-bold uppercase text-text-muted bg-surface-muted px-1.5 py-0.5 rounded border border-border-grid">LESSON 1</span>
+<input class="font-headline text-[15px] font-semibold text-text-primary bg-transparent hover:bg-surface-muted focus:bg-surface-card px-2 py-1 rounded border border-transparent focus:border-border-strong focus:outline-none w-full max-w-md" type="text" value="Multi-Part Maintenance Walkthrough"/>
+</div>
+<!-- Content Type Selector (DO NOT use the word 'Playlist') -->
+<div class="inline-flex p-0.5 bg-surface-muted border border-border-strong rounded">
+<button class="px-2.5 py-1 rounded text-[12px] font-headline text-text-muted hover:text-text-primary transition-colors" type="button">
+                    Single Video
+                  </button>
+<button class="px-2.5 py-1 rounded bg-surface-card text-[#c62828] font-headline font-bold text-[12px] shadow-xs border border-border-grid" type="button">
+                    Multi-Part Video
+                  </button>
+</div>
+</div>
+<!-- Indented Multi-Part Video Section -->
+<div class="flex flex-col gap-2.5 mb-4 pl-1 sm:pl-3 border-l-2 border-border-grid">
+<div class="flex items-center justify-between">
+<span class="font-headline text-[11px] font-bold uppercase tracking-wider text-text-muted">Video Parts (Sequential Playback)</span>
+<span class="text-[11px] font-code-technical text-text-muted">2 Parts Configured</span>
+</div>
+<!-- PART 1 -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-surface-container-low border border-border-grid rounded hover:border-border-strong transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted text-[17px] cursor-grab">drag_indicator</span>
+<div class="w-7 h-7 rounded bg-surface-card border border-border-strong flex items-center justify-center text-[#c62828] font-bold font-code-technical text-[11px]">
+                      P1
+                    </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline font-semibold text-[13px] text-text-primary">PART 1: Safety Precautions &amp; Tools</span>
+<span class="font-code-technical text-[11px] text-text-muted bg-surface-card px-1.5 py-0.5 rounded border border-border-grid">12:00</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-[12px] text-text-muted">
+<span class="material-symbols-outlined text-[14px] text-success-industrial">check_circle</span>
+<span class="font-code-technical text-text-primary font-medium">CNC_Shopfloor_Safety.mp4</span>
+<span>· 240 MB</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end md:self-auto">
+<button class="px-2.5 py-1 text-[12px] font-headline font-semibold text-text-primary hover:bg-surface-card border border-border-strong rounded bg-white shadow-xs" type="button">
+                      Replace Video
+                    </button>
+<button class="p-1 text-text-muted hover:text-error rounded" title="Remove Part" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+<!-- PART 2 -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-surface-container-low border border-border-grid rounded hover:border-border-strong transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted text-[17px] cursor-grab">drag_indicator</span>
+<div class="w-7 h-7 rounded bg-surface-card border border-border-strong flex items-center justify-center text-[#c62828] font-bold font-code-technical text-[11px]">
+                      P2
+                    </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline font-semibold text-[13px] text-text-primary">PART 2: Component Inspection &amp; Testing</span>
+<span class="font-code-technical text-[11px] text-text-muted bg-surface-card px-1.5 py-0.5 rounded border border-border-grid">15:00</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-[12px] text-text-muted">
+<span class="material-symbols-outlined text-[14px] text-success-industrial">check_circle</span>
+<span class="font-code-technical text-text-primary font-medium">Pneumatics_Testing_Walkthrough.mp4</span>
+<span>· 310 MB</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end md:self-auto">
+<button class="px-2.5 py-1 text-[12px] font-headline font-semibold text-text-primary hover:bg-surface-card border border-border-strong rounded bg-white shadow-xs" type="button">
+                      Replace Video
+                    </button>
+<button class="p-1 text-text-muted hover:text-error rounded" title="Remove Part" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+<!-- '+ Add Video Part' Button with compact input/uploader pattern preview -->
+<div class="mt-1">
+<button class="w-full py-2 border border-dashed border-border-strong hover:border-[#c62828] text-text-muted hover:text-[#c62828] rounded font-headline text-[12px] font-semibold flex items-center justify-center gap-1.5 bg-surface-card hover:bg-surface-muted transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px]">add_circle</span>
+<span>+ Add Video Part</span>
+</button>
+</div>
+</div>
+<!-- In-Video Quiz inside Lesson 1 -->
+<div class="p-3 bg-amber-50/60 border border-amber-200 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-amber-100 flex items-center justify-center text-amber-800 shrink-0">
+<span class="material-symbols-outlined text-[18px]">help_center</span>
+</div>
+<div>
+<span class="font-headline font-semibold text-[13px] text-text-primary">In-Video Checkpoint: Caliper Baseline Zeroing</span>
+<p class="text-[12px] text-text-muted">2 Questions · Passing Score: 80%</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 self-end sm:self-auto">
+<button class="px-2.5 py-1 bg-white hover:bg-surface-muted border border-border-strong rounded text-[12px] font-headline font-semibold text-text-primary shadow-xs" type="button">
+                    Edit Quiz
+                  </button>
+<button class="p-1 text-text-muted hover:text-error rounded" title="Remove Quiz" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Lesson Summary Bar -->
+<div class="flex items-center justify-between pt-2 border-t border-border-grid text-[12px] text-text-muted">
+<span class="font-code-technical text-text-primary font-medium">Total Lesson Duration: 27m 00s</span>
+<span class="text-text-muted">Lesson Type: Multi-Part Sequential Video</span>
+</div>
+</div>
+<!-- '+ Add Lesson to Module 1' Button -->
+<div class="flex justify-start">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-card hover:bg-surface-muted border border-border-strong rounded text-text-primary font-headline text-[12px] font-semibold shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#c62828]">add</span>
+<span>+ Add Lesson to Module 1</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Module Button with inline trigger pattern preview -->
+<button class="w-full py-2.5 border-2 border-dashed border-border-strong hover:border-[#c62828] text-text-primary hover:text-[#c62828] rounded font-headline text-[13px] font-semibold flex items-center justify-center gap-2 bg-surface hover:bg-surface-muted transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">add_box</span>
+<span>+ Add Module</span>
+</button>
+</section>
+<!-- ========================================================= -->
+<!-- 04 ASSESSMENTS (Final Course Assessment) -->
+<!-- ========================================================= -->
+<section class="bg-surface-card border border-border-grid rounded shadow-xs p-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex items-center justify-between border-b border-border-grid pb-3 mb-5">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-surface-muted text-tertiary font-code-technical text-[12px] font-bold flex items-center justify-center border border-border-strong">04</span>
+<div>
+<h2 class="font-headline text-[17px] font-bold text-text-primary">Assessments</h2>
+<p class="text-[12px] text-text-muted font-body">Final course assessment required for course certification (separate from in-video quiz checkpoints).</p>
+</div>
+</div>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 bg-surface-card hover:bg-surface-muted border border-border-strong text-text-primary rounded font-headline text-[12px] font-semibold shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#c62828]">add</span>
+<span>+ Add Assessment</span>
+</button>
+</div>
+<!-- Assessment Item Card -->
+<div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-surface-container-low border border-border-grid rounded gap-3">
+<div class="flex items-start gap-3">
+<div class="p-2 bg-surface-card border border-border-strong rounded text-[#c62828] mt-0.5">
+<span class="material-symbols-outlined text-[22px]">assignment_turned_in</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline font-semibold text-[14px] text-text-primary">Final Assessment: Machine Maintenance Standards</h3>
+</div>
+<div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[12px] text-text-muted font-body">
+<span>10 Questions</span>
+<span>·</span>
+<span>Passing Score: <strong class="text-text-primary font-semibold">70%</strong></span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end md:self-auto">
+<button class="px-3 py-1.5 bg-surface-card hover:bg-surface-muted border border-border-strong text-text-primary rounded font-headline text-[12px] font-semibold shadow-xs" type="button">
+              Edit Questions
+            </button>
+<button class="p-1.5 text-text-muted hover:text-error hover:bg-surface-muted rounded" title="Delete Assessment" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ========================================================= -->
+<!-- 05 SUPPORTING RESOURCES (Course-Level attachments) -->
+<!-- ========================================================= -->
+<section class="bg-surface-card border border-border-grid rounded shadow-xs p-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-slate-700"></div>
+<div class="flex items-center justify-between border-b border-border-grid pb-3 mb-5">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-surface-muted text-slate-700 font-code-technical text-[12px] font-bold flex items-center justify-center border border-border-strong">05</span>
+<div>
+<h2 class="font-headline text-[17px] font-bold text-text-primary">Supporting Resources</h2>
+<p class="text-[12px] text-text-muted font-body">Attach SOP documents, checklists, or technical diagrams for shopfloor reference.</p>
+</div>
+</div>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-card hover:bg-surface-muted border border-border-strong text-text-primary rounded font-headline text-[12px] font-semibold shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#c62828]">upload_file</span>
+<span>+ Upload SOP / Document</span>
+</button>
+</div>
+<!-- Resources List -->
+<div class="flex flex-col gap-2.5">
+<!-- Resource 1 -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-surface-container-low border border-border-grid rounded hover:border-border-strong transition-colors gap-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#c62828] text-[22px]">picture_as_pdf</span>
+<div>
+<span class="font-headline font-semibold text-[13px] text-text-primary">SOP-MEC-301-Inspection-Protocol.pdf</span>
+<div class="flex items-center gap-2 text-[12px] text-text-muted mt-0.5">
+<span class="font-code-technical">1.4 MB</span>
+<span>·</span>
+<span>Uploaded: 20 Sep 2026</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 self-end sm:self-auto">
+<button class="p-1.5 text-text-muted hover:text-text-primary rounded" title="Preview Document" type="button">
+<span class="material-symbols-outlined text-[17px]">visibility</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-text-primary rounded" title="Download Document" type="button">
+<span class="material-symbols-outlined text-[17px]">download</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-error rounded" title="Delete Document" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Resource 2 -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-surface-container-low border border-border-grid rounded hover:border-border-strong transition-colors gap-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#c62828] text-[22px]">picture_as_pdf</span>
+<div>
+<span class="font-headline font-semibold text-[13px] text-text-primary">Maintenance-Checklist-Rev4.pdf</span>
+<div class="flex items-center gap-2 text-[12px] text-text-muted mt-0.5">
+<span class="font-code-technical">850 KB</span>
+<span>·</span>
+<span>Uploaded: 20 Sep 2026</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 self-end sm:self-auto">
+<button class="p-1.5 text-text-muted hover:text-text-primary rounded" title="Preview Document" type="button">
+<span class="material-symbols-outlined text-[17px]">visibility</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-text-primary rounded" title="Download Document" type="button">
+<span class="material-symbols-outlined text-[17px]">download</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-error rounded" title="Delete Document" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================= -->
+<!-- 06 PUBLISHING & VALIDATION -->
+<!-- ========================================================= -->
+<section class="bg-surface-card border border-border-grid rounded shadow-xs p-6 relative overflow-hidden mb-8">
+<div class="absolute top-0 left-0 w-1 h-full bg-[#15803d]"></div>
+<div class="flex items-center justify-between border-b border-border-grid pb-3 mb-4">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-surface-muted text-[#15803d] font-code-technical text-[12px] font-bold flex items-center justify-center border border-border-strong">06</span>
+<div>
+<h2 class="font-headline text-[17px] font-bold text-text-primary">Publishing &amp; Validation</h2>
+<p class="text-[12px] text-text-muted font-body">System checks mandatory configuration fields before course deployment.</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[12px] text-text-muted font-headline">Status:</span>
+<span class="bg-surface-muted text-text-muted border border-border-strong px-2 py-0.5 rounded text-[11px] font-headline uppercase font-semibold">Draft</span>
+</div>
+</div>
+<!-- Real Validation Checklist -->
+<div class="bg-surface-container-low border border-border-grid rounded p-4 mb-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-[13px]">
+<div class="flex items-center gap-2 text-text-primary">
+<span class="material-symbols-outlined text-[#15803d] text-[18px]">check_circle</span>
+<span>Course title and code configured</span>
+</div>
+<div class="flex items-center gap-2 text-text-primary">
+<span class="material-symbols-outlined text-[#15803d] text-[18px]">check_circle</span>
+<span>Category selected</span>
+</div>
+<div class="flex items-center gap-2 text-text-primary">
+<span class="material-symbols-outlined text-[#15803d] text-[18px]">check_circle</span>
+<span>1 Module with 2 Video Parts configured</span>
+</div>
+<div class="flex items-center gap-2 text-text-primary">
+<span class="material-symbols-outlined text-[#15803d] text-[18px]">check_circle</span>
+<span>Department access rules set</span>
+</div>
+</div>
+</div>
+<!-- Helper Text -->
+<div class="flex items-center gap-1.5 text-text-muted text-[12px] mb-6">
+<span class="material-symbols-outlined text-[16px]">info</span>
+<span>Draft courses can be saved incomplete. Required fields must be completed before publishing.</span>
+</div>
+<!-- Action Bar at Bottom -->
+<div class="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-border-grid gap-3">
+<a class="text-text-muted hover:text-text-primary transition-colors text-[13px] inline-flex items-center gap-1 font-headline" href="#">
+<span class="material-symbols-outlined text-[16px]">close</span>
+<span>Discard Changes</span>
+</a>
+<div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+<button class="px-4 py-2 bg-surface-card text-text-primary border border-border-strong hover:bg-surface-muted rounded text-[13px] font-headline font-semibold transition-colors" type="button">
+              Save Draft
+            </button>
+<button class="px-4 py-2 bg-surface-card text-text-primary border border-border-strong hover:bg-surface-muted rounded text-[13px] font-headline font-semibold transition-colors" type="button">
+              Preview Course
+            </button>
+<button class="px-5 py-2 bg-[#c62828] hover:bg-[#b71c1c] text-white rounded text-[13px] font-headline font-bold transition-colors shadow-xs" type="button">
+              Publish Course
+            </button>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>
