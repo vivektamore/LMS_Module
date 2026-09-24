@@ -29,6 +29,20 @@ export default async function CoursesPage() {
     SELECT id, name, slug FROM categories ORDER BY name ASC
   `);
 
+  // Fetch assigned departments for each course
+  const courseIds = (rows || []).map((r) => r.id);
+  const deptMap: Record<string, string[]> = {};
+  if (courseIds.length > 0) {
+    const deptRows = await query<any[]>(
+      `SELECT course_id, department FROM course_departments WHERE course_id IN (${courseIds.map(() => '?').join(',')})`,
+      courseIds
+    );
+    for (const d of deptRows) {
+      if (!deptMap[d.course_id]) deptMap[d.course_id] = [];
+      deptMap[d.course_id].push(d.department);
+    }
+  }
+
   const liveCourses = (rows || []).map((c) => ({
     id: c.id,
     title: c.title,
@@ -36,6 +50,7 @@ export default async function CoursesPage() {
     thumbnail_url: c.thumbnail_url || null,
     category: c.category_name || 'Uncategorized',
     categoryId: c.category_id || '',
+    departments: deptMap[c.id] || [],
     modules: Number(c.moduleCount || 0),
     lessons: Number(c.lessonCount || 0),
     totalDurationSeconds: Number(c.totalDurationSeconds || 0),

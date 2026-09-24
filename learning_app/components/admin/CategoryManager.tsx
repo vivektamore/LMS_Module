@@ -10,6 +10,15 @@ interface Category {
   count?: number;
 }
 
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')     // remove special chars
+    .replace(/[\s_-]+/g, '-')     // replace spaces, underscores, multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, '');     // remove leading/trailing hyphens
+}
+
 export default function CategoryManager() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +51,8 @@ export default function CategoryManager() {
   }
 
   async function handleAdd() {
-    if (!newName.trim() || !newSlug.trim()) {
+    const finalSlug = slugify(newSlug.trim() || newName.trim());
+    if (!newName.trim() || !finalSlug) {
       setFormError('Category name and slug are required.');
       return;
     }
@@ -52,7 +62,7 @@ export default function CategoryManager() {
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName.trim(), slug: newSlug.trim() }),
+        body: JSON.stringify({ name: newName.trim(), slug: finalSlug }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to create category');
@@ -116,23 +126,29 @@ export default function CategoryManager() {
                 onChange={(e) => {
                   const val = e.target.value;
                   setNewName(val);
-                  setNewSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+                  setNewSlug(slugify(val));
                 }}
                 placeholder="e.g. Machine Maintenance"
                 className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#c62828]"
               />
             </div>
             <div>
-              <label className="text-xs text-slate-700 font-semibold mb-1 block">Category Slug <span className="text-[#c62828]">*</span></label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-slate-700 font-semibold block">Category Slug <span className="text-[#c62828]">*</span></label>
+                <span className="text-[10px] text-slate-400 font-normal">Auto-generated</span>
+              </div>
               <input
                 type="text"
                 value={newSlug}
-                onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, ''))}
+                onChange={(e) => setNewSlug(slugify(e.target.value))}
                 placeholder="e.g. machine-maintenance"
                 className="w-full px-3 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#c62828]"
               />
             </div>
           </div>
+          <p className="text-[11px] text-slate-500">
+            Slug is required for category identification (e.g. <span className="font-mono text-slate-700 font-medium">machine-maintenance</span>).
+          </p>
           {formError && (
             <div className="flex items-center gap-2 text-red-600 text-xs">
               <AlertCircle className="w-3.5 h-3.5" /> {formError}

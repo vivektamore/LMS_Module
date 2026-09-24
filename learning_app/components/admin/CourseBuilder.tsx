@@ -31,6 +31,47 @@ const DEPT_LABELS: Record<string, string> = {
   DISPATCH: 'Dispatch',
 };
 
+const DEPT_CODE_MAP: Record<string, string> = {
+  MAINTENANCE: 'MNT',
+  PRODUCTION: 'PRD',
+  QUALITY: 'QLT',
+  SAFETY: 'SAF',
+  HR: 'HR',
+  DESIGN: 'DSG',
+  DEVELOPMENT: 'DEV',
+  IT: 'IT',
+  AI: 'AI',
+  CENTRAL_PROCESSING_ENGINEERING: 'CPE',
+  STORE: 'STR',
+  DISPATCH: 'DSP',
+};
+
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')     // remove non-alphanumeric except space and hyphen
+    .replace(/[\s_-]+/g, '-')     // replace spaces, underscores, multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, '');     // remove leading/trailing hyphens
+}
+
+function generateCourseCode(departments: string[], categoryName?: string) {
+  let deptCode = 'GEN';
+  if (departments.length > 0) {
+    deptCode = DEPT_CODE_MAP[departments[0]] || departments[0].slice(0, 3).toUpperCase();
+  } else if (categoryName) {
+    const cat = categoryName.toUpperCase();
+    if (cat.includes('MAINT')) deptCode = 'MNT';
+    else if (cat.includes('PROD') || cat.includes('MANUF')) deptCode = 'PRD';
+    else if (cat.includes('SAFE')) deptCode = 'SAF';
+    else if (cat.includes('QUAL')) deptCode = 'QLT';
+    else if (cat.includes('ENG')) deptCode = 'ENG';
+    else if (cat.includes('TOOL') || cat.includes('CNC')) deptCode = 'CNC';
+    else deptCode = cat.replace(/[^A-Z]/g, '').slice(0, 3) || 'GEN';
+  }
+  return `JC-${deptCode}-001`;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PlaylistSegment {
@@ -912,9 +953,19 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
   const [newCatSlug, setNewCatSlug] = useState('');
   const [savingNewCat, setSavingNewCat] = useState(false);
   const [newCatError, setNewCatError] = useState('');
+  const [isManualCode, setIsManualCode] = useState(false);
 
   // 03 Curriculum
   const [modules, setModules] = useState<Module[]>([makeModule(1)]);
+
+  // Auto-generate course code based on selected department or category
+  useEffect(() => {
+    if (!editingCourseId && !isManualCode) {
+      const catObj = categories.find((c) => c.id === selectedCategoryId);
+      const depts = visibility === 'specific' ? selectedDepts : [];
+      setCourseCode(generateCourseCode(depts, catObj?.name));
+    }
+  }, [selectedDepts, visibility, selectedCategoryId, categories, editingCourseId, isManualCode]);
 
   // Publish Status
   const [publishing, setPublishing] = useState(false);
@@ -1050,7 +1101,8 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
 
   // Handle inline category creation
   async function handleCreateCategory() {
-    if (!newCatName.trim() || !newCatSlug.trim()) {
+    const finalSlug = slugify(newCatSlug.trim() || newCatName.trim());
+    if (!newCatName.trim() || !finalSlug) {
       setNewCatError('Category name and slug are required.');
       return;
     }
@@ -1060,7 +1112,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCatName.trim(), slug: newCatSlug.trim() }),
+        body: JSON.stringify({ name: newCatName.trim(), slug: finalSlug }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to create category');
@@ -1474,16 +1526,39 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               />
             </div>
             <div className="md:col-span-4">
-              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
-                Course Code / SOP ID <span className="text-[#c62828]">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="font-semibold text-xs text-slate-900">
+                  Course Code / SOP ID <span className="text-[#c62828]">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selectedCatName = categories.find((c) => c.id === selectedCategoryId)?.name;
+                    const depts = visibility === 'specific' ? selectedDepts : [];
+                    const code = generateCourseCode(depts, selectedCatName);
+                    setCourseCode(code);
+                    setIsManualCode(false);
+                  }}
+                  className="text-[11px] font-semibold text-[#c62828] hover:underline cursor-pointer flex items-center gap-1"
+                  title="Auto-generate course code based on selected department"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Auto: {generateCourseCode(visibility === 'specific' ? selectedDepts : [], categories.find((c) => c.id === selectedCategoryId)?.name)}</span>
+                </button>
+              </div>
               <input
                 type="text"
                 value={courseCode}
-                onChange={(e) => setCourseCode(e.target.value)}
-                placeholder="e.g. MEC-TRN-101"
+                onChange={(e) => {
+                  setCourseCode(e.target.value.toUpperCase());
+                  setIsManualCode(true);
+                }}
+                placeholder="e.g. JC-MNT-001"
                 className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg font-mono text-xs text-slate-900 uppercase tracking-wider focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none"
               />
+              <p className="mt-1 text-[11px] text-slate-500">
+                Auto-generated from Department (e.g. <span className="font-mono text-slate-700 font-semibold">JC-MNT-001</span>)
+              </p>
             </div>
           </div>
 
@@ -1545,25 +1620,31 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                       onChange={(e) => {
                         const val = e.target.value;
                         setNewCatName(val);
-                        setNewCatSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+                        setNewCatSlug(slugify(val));
                       }}
-                      placeholder="e.g. Hydraulics & Pneumatics"
+                      placeholder="e.g. Machine Maintenance"
                       className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded focus:border-[#c62828] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Category Slug <span className="text-[#c62828]">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-600">
+                        Category Slug <span className="text-[#c62828]">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-normal">Auto-generated</span>
+                    </div>
                     <input
                       type="text"
                       value={newCatSlug}
-                      onChange={(e) => setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, ''))}
-                      placeholder="e.g. hydraulics-pneumatics"
+                      onChange={(e) => setNewCatSlug(slugify(e.target.value))}
+                      placeholder="e.g. machine-maintenance"
                       className="w-full h-9 px-3 text-xs font-mono bg-white border border-slate-300 rounded focus:border-[#c62828] focus:outline-none"
                     />
                   </div>
                 </div>
+                <p className="text-[11px] text-slate-500">
+                  Slug is required for category URL routing (e.g. <span className="font-mono text-slate-700">machine-maintenance</span>).
+                </p>
                 {newCatError && (
                   <p className="text-xs text-red-600 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />

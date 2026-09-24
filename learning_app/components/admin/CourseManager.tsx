@@ -18,6 +18,7 @@ export interface CourseItem {
   thumbnail_url?: string | null;
   category?: string;
   categoryId?: string;
+  departments?: string[];
   modules: number;
   lessons: number;
   totalDurationSeconds?: number;
@@ -57,12 +58,46 @@ function formatDate(dateStr?: string) {
   }
 }
 
-// Generate deterministic SOP course code
+const DEPT_CODE_MAP: Record<string, string> = {
+  MAINTENANCE: 'MNT',
+  PRODUCTION: 'PRD',
+  QUALITY: 'QLT',
+  SAFETY: 'SAF',
+  HR: 'HR',
+  DESIGN: 'DSG',
+  DEVELOPMENT: 'DEV',
+  IT: 'IT',
+  AI: 'AI',
+  CENTRAL_PROCESSING_ENGINEERING: 'CPE',
+  STORE: 'STR',
+  DISPATCH: 'DSP',
+};
+
+// Generate deterministic department-based SOP course code e.g. JC-MNT-001
 function getCourseCode(course: CourseItem) {
-  if (!course.id) return 'JC-TRN-101';
-  const prefix = course.category ? course.category.slice(0, 3).toUpperCase() : 'TRN';
-  const hash = Math.abs(course.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 900 + 100;
-  return `${prefix}-${hash}`;
+  let deptCode = 'GEN';
+
+  if (course.departments && course.departments.length > 0) {
+    deptCode = DEPT_CODE_MAP[course.departments[0]] || course.departments[0].slice(0, 3).toUpperCase();
+  } else if (course.category) {
+    const cat = course.category.toUpperCase();
+    if (cat.includes('MAINT')) deptCode = 'MNT';
+    else if (cat.includes('PROD') || cat.includes('MANUF')) deptCode = 'PRD';
+    else if (cat.includes('SAFE')) deptCode = 'SAF';
+    else if (cat.includes('QUAL')) deptCode = 'QLT';
+    else if (cat.includes('ENG')) deptCode = 'ENG';
+    else if (cat.includes('TOOL') || cat.includes('CNC')) deptCode = 'CNC';
+    else deptCode = cat.replace(/[^A-Z]/g, '').slice(0, 3) || 'GEN';
+  }
+
+  let numStr = '001';
+  if (course.id) {
+    const sum = course.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const num = (sum % 90) + 1; // 1 to 90
+    numStr = String(num).padStart(3, '0');
+  }
+
+  return `JC-${deptCode}-${numStr}`;
 }
 
 export default function CourseManager({ initialCourses, initialCategories = [] }: CourseManagerProps) {
@@ -117,6 +152,7 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
             thumbnail_url: c.thumbnail_url || null,
             category: c.categories?.name || 'Uncategorized',
             categoryId: c.categories?.id || '',
+            departments: c.departments || [],
             modules: Number(c.module_count || 0),
             lessons: Number(c.lessons?.length || 0),
             totalDurationSeconds: Number(c.total_duration_seconds || 0),
