@@ -167,6 +167,10 @@ export default function AdminDashboard() {
       ]);
 
       if (!analyticsRes.ok) {
+        if (analyticsRes.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         if (analyticsRes.status === 403) throw new Error('Forbidden: Admin access required.');
         throw new Error('Failed to fetch admin analytics data.');
       }
