@@ -901,12 +901,17 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   // 02 Course Settings
-  const [skillLevel, setSkillLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
   const [estimatedDuration, setEstimatedDuration] = useState('2h 30m');
-  const [classification, setClassification] = useState<'optional' | 'mandatory'>('mandatory');
   const [visibility, setVisibility] = useState<'all' | 'specific'>('specific');
   const [selectedDepts, setSelectedDepts] = useState<string[]>(['MAINTENANCE', 'PRODUCTION']);
   const [hasCertificate, setHasCertificate] = useState(true);
+
+  // Category inline creation
+  const [showNewCategoryForm, setShowNewCategoryForm] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatSlug, setNewCatSlug] = useState('');
+  const [savingNewCat, setSavingNewCat] = useState(false);
+  const [newCatError, setNewCatError] = useState('');
 
   // 03 Curriculum
   const [modules, setModules] = useState<Module[]>([makeModule(1)]);
@@ -1041,6 +1046,37 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
     };
 
     xhr.send(fd);
+  }
+
+  // Handle inline category creation
+  async function handleCreateCategory() {
+    if (!newCatName.trim() || !newCatSlug.trim()) {
+      setNewCatError('Category name and slug are required.');
+      return;
+    }
+    setSavingNewCat(true);
+    setNewCatError('');
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCatName.trim(), slug: newCatSlug.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to create category');
+
+      const created = json.category;
+      setCategories((prev) => [...prev, created]);
+      setSelectedCategoryId(created.id);
+      setNewCatName('');
+      setNewCatSlug('');
+      setShowNewCategoryForm(false);
+      window.dispatchEvent(new Event('category-saved'));
+    } catch (err: unknown) {
+      setNewCatError(err instanceof Error ? err.message : 'Failed to create category');
+    } finally {
+      setSavingNewCat(false);
+    }
   }
 
   // Modules helpers
@@ -1451,12 +1487,20 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             </div>
           </div>
 
-          {/* Category Dropdown */}
+          {/* Category Dropdown & Inline Creator */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="font-semibold text-xs text-slate-900">
                 Category <span className="text-[#c62828]">*</span>
               </label>
+              <button
+                type="button"
+                onClick={() => setShowNewCategoryForm((v) => !v)}
+                className="text-xs font-semibold text-[#c62828] hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create Category</span>
+              </button>
             </div>
             <select
               value={selectedCategoryId}
@@ -1470,6 +1514,85 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 </option>
               ))}
             </select>
+
+            {/* Inline Category Creator Form */}
+            {showNewCategoryForm && (
+              <div className="mt-2.5 p-3.5 bg-slate-50 border border-slate-300 rounded-lg space-y-2.5 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5 text-[#c62828]" />
+                    New Course Category
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCategoryForm(false);
+                      setNewCatError('');
+                    }}
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Category Name <span className="text-[#c62828]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newCatName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewCatName(val);
+                        setNewCatSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+                      }}
+                      placeholder="e.g. Hydraulics & Pneumatics"
+                      className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded focus:border-[#c62828] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Category Slug <span className="text-[#c62828]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newCatSlug}
+                      onChange={(e) => setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, ''))}
+                      placeholder="e.g. hydraulics-pneumatics"
+                      className="w-full h-9 px-3 text-xs font-mono bg-white border border-slate-300 rounded focus:border-[#c62828] focus:outline-none"
+                    />
+                  </div>
+                </div>
+                {newCatError && (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {newCatError}
+                  </p>
+                )}
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCategoryForm(false);
+                      setNewCatError('');
+                    }}
+                    className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-200/60 rounded border border-slate-300 bg-white cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateCategory}
+                    disabled={savingNewCat}
+                    className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#c62828] hover:bg-[#a20513] rounded shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                  >
+                    {savingNewCat && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Save &amp; Select</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -1504,28 +1627,8 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column: Skill Level, Duration, Classification */}
+          {/* Left Column: Estimated Duration & Completion Certificate */}
           <div className="flex flex-col gap-4">
-            <div>
-              <label className="block font-semibold text-xs text-slate-900 mb-1.5">Skill Level</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['beginner', 'intermediate', 'advanced'] as const).map((lvl) => (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => setSkillLevel(lvl)}
-                    className={`py-2 px-3 rounded-lg text-xs font-semibold capitalize transition cursor-pointer ${
-                      skillLevel === lvl
-                        ? 'border border-[#c62828] bg-red-50 text-[#c62828] shadow-xs'
-                        : 'border border-slate-300 text-slate-600 hover:border-slate-400 bg-white'
-                    }`}
-                  >
-                    {lvl}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div>
               <label className="block font-semibold text-xs text-slate-900 mb-1.5">
                 Estimated Duration
@@ -1542,71 +1645,86 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
-                Course Classification
-              </label>
-              <div className="flex items-center gap-5 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 hover:text-slate-900">
-                  <input
-                    type="radio"
-                    name="classification"
-                    checked={classification === 'optional'}
-                    onChange={() => setClassification('optional')}
-                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
-                  />
-                  <span>Optional Training</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-900">
-                  <input
-                    type="radio"
-                    name="classification"
-                    checked={classification === 'mandatory'}
-                    onChange={() => setClassification('mandatory')}
-                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
-                  />
-                  <span className="inline-flex items-center gap-1.5">
-                    Mandatory Compliance
-                    <span className="bg-red-100 text-[#c62828] text-[10px] uppercase font-bold px-1.5 py-0.2 rounded border border-red-200">
-                      Required
-                    </span>
+            {/* Certificate Checkbox */}
+            <div className="p-3 bg-[#f8fafc] border border-slate-200 rounded-lg mt-1">
+              <label className="inline-flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasCertificate}
+                  onChange={(e) => setHasCertificate(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 text-[#c62828] rounded border-slate-300 focus:ring-[#c62828]"
+                />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-emerald-600" />
+                    Enable Certificate on Completion
                   </span>
-                </label>
-              </div>
+                  <span className="text-[11px] text-slate-500 mt-0.5">
+                    Requires passing score on lesson quizzes to issue verified certificate.
+                  </span>
+                </div>
+              </label>
             </div>
           </div>
 
-          {/* Right Column: Department Access & Certification */}
-          <div className="flex flex-col gap-4 border-t md:border-t-0 md:border-l border-slate-200 pt-4 md:pt-0 md:pl-6">
-            <div>
-              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
+          {/* Right Column: Department Access */}
+          <div className="flex flex-col gap-3 border-t md:border-t-0 md:border-l border-slate-200 pt-4 md:pt-0 md:pl-6">
+            <div className="flex items-center justify-between">
+              <label className="block font-semibold text-xs text-slate-900">
                 Department Access
               </label>
-              <div className="flex items-center gap-5 mb-2.5">
-                <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 hover:text-slate-900">
-                  <input
-                    type="radio"
-                    name="dept_mode"
-                    checked={visibility === 'all'}
-                    onChange={() => setVisibility('all')}
-                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
-                  />
-                  <span>All Departments</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-900">
-                  <input
-                    type="radio"
-                    name="dept_mode"
-                    checked={visibility === 'specific'}
-                    onChange={() => setVisibility('specific')}
-                    className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
-                  />
-                  <span>Specific Departments</span>
-                </label>
-              </div>
-
               {visibility === 'specific' && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
+                <div className="flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDepts([...ALL_DEPARTMENTS])}
+                    className="text-[#c62828] hover:underline font-semibold cursor-pointer"
+                  >
+                    Select All
+                  </button>
+                  <span className="text-slate-300">|</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDepts([])}
+                    className="text-slate-500 hover:text-slate-800 cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-5">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 hover:text-slate-900">
+                <input
+                  type="radio"
+                  name="dept_mode"
+                  checked={visibility === 'all'}
+                  onChange={() => setVisibility('all')}
+                  className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
+                />
+                <span>All Departments</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-900">
+                <input
+                  type="radio"
+                  name="dept_mode"
+                  checked={visibility === 'specific'}
+                  onChange={() => setVisibility('specific')}
+                  className="w-4 h-4 text-[#c62828] focus:ring-[#c62828]"
+                />
+                <span>Specific Departments</span>
+              </label>
+            </div>
+
+            {visibility === 'specific' && (
+              <div className="space-y-2 mt-1">
+                {selectedDepts.length === 0 && (
+                  <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
+                    Please select at least one department below.
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-1.5">
                   {ALL_DEPARTMENTS.map((dept) => {
                     const isSelected = selectedDepts.includes(dept);
                     return (
@@ -1630,29 +1748,8 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                     );
                   })}
                 </div>
-              )}
-            </div>
-
-            {/* Certificate Checkbox */}
-            <div className="p-3 bg-[#f8fafc] border border-slate-200 rounded-lg mt-2">
-              <label className="inline-flex items-start gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hasCertificate}
-                  onChange={(e) => setHasCertificate(e.target.checked)}
-                  className="w-4 h-4 mt-0.5 text-[#c62828] rounded border-slate-300 focus:ring-[#c62828]"
-                />
-                <div className="flex flex-col">
-                  <span className="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
-                    <Award className="w-4 h-4 text-emerald-600" />
-                    Enable Certificate on Completion
-                  </span>
-                  <span className="text-[11px] text-slate-500 mt-0.5">
-                    Requires passing score on lesson quizzes to issue verified certificate.
-                  </span>
-                </div>
-              </label>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

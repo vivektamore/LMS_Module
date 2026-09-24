@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Settings, Plus, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Settings, Plus, Trash2, Loader2, AlertCircle, Layers, Check } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -43,7 +43,7 @@ export default function CategoryManager() {
 
   async function handleAdd() {
     if (!newName.trim() || !newSlug.trim()) {
-      setFormError('Name and slug are required.');
+      setFormError('Category name and slug are required.');
       return;
     }
     setSaving(true);
@@ -57,7 +57,9 @@ export default function CategoryManager() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to create category');
       setCategories((prev) => [...prev, json.category]);
-      setNewName(''); setNewSlug(''); setShowForm(false);
+      setNewName('');
+      setNewSlug('');
+      setShowForm(false);
       // Notify CourseBuilder to refresh its dropdown
       window.dispatchEvent(new Event('category-saved'));
     } catch (err: unknown) {
@@ -73,56 +75,61 @@ export default function CategoryManager() {
       const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
       setCategories((prev) => prev.filter((c) => c.id !== id));
+      window.dispatchEvent(new Event('category-saved'));
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Delete failed');
     }
   }
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full mb-10 overflow-hidden">
+    <div className="bg-white p-6 rounded-xl border border-slate-200 w-full overflow-hidden shadow-xs">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-4">
-            <Settings className="w-5 h-5" />
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-red-50 text-[#c62828] flex items-center justify-center border border-red-200">
+            <Layers className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Category Management</h2>
-            <p className="text-sm text-gray-500">Add, or remove major learning categories</p>
+            <h2 className="text-base font-bold text-slate-900">Course Categories</h2>
+            <p className="text-xs text-slate-500">Create, organize, or remove technical training categories</p>
           </div>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium shadow-sm"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#c62828] hover:bg-[#a20513] text-white rounded-lg transition text-xs font-semibold shadow-xs cursor-pointer"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          New Category
+          <Plus className="w-3.5 h-3.5" />
+          <span>New Category</span>
         </button>
       </div>
 
       {/* Add form */}
       {showForm && (
-        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg space-y-3">
-          <h3 className="text-sm font-semibold text-indigo-800">Add New Category</h3>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="mb-5 p-4 bg-slate-50 border border-slate-300 rounded-lg space-y-3 animate-in fade-in">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Add New Category</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-600 font-medium mb-1 block">Name</label>
+              <label className="text-xs text-slate-700 font-semibold mb-1 block">Category Name <span className="text-[#c62828]">*</span></label>
               <input
                 type="text"
                 value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. Hydraulics"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewName(val);
+                  setNewSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+                }}
+                placeholder="e.g. Machine Maintenance"
+                className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#c62828]"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-600 font-medium mb-1 block">Slug</label>
+              <label className="text-xs text-slate-700 font-semibold mb-1 block">Category Slug <span className="text-[#c62828]">*</span></label>
               <input
                 type="text"
                 value={newSlug}
-                onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                placeholder="e.g. hydraulics"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500"
+                onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, ''))}
+                placeholder="e.g. machine-maintenance"
+                className="w-full px-3 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#c62828]"
               />
             </div>
           </div>
@@ -131,20 +138,20 @@ export default function CategoryManager() {
               <AlertCircle className="w-3.5 h-3.5" /> {formError}
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button
+              onClick={() => { setShowForm(false); setFormError(''); }}
+              className="px-3.5 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition cursor-pointer"
+            >
+              Cancel
+            </button>
             <button
               onClick={handleAdd}
               disabled={saving}
-              className="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition disabled:opacity-60 flex items-center gap-2"
+              className="px-4 py-1.5 bg-[#c62828] hover:bg-[#a20513] text-white text-xs font-semibold rounded-lg transition disabled:opacity-60 flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              Save Category
-            </button>
-            <button
-              onClick={() => { setShowForm(false); setFormError(''); }}
-              className="px-4 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition"
-            >
-              Cancel
+              <span>Save Category</span>
             </button>
           </div>
         </div>
@@ -153,39 +160,40 @@ export default function CategoryManager() {
       {/* Table */}
       <div className="overflow-x-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-12 text-gray-400">
-            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading categories…
+          <div className="flex items-center justify-center py-10 text-slate-400 text-xs">
+            <Loader2 className="w-4 h-4 animate-spin mr-2 text-[#c62828]" /> Loading categories…
           </div>
         ) : error ? (
-          <div className="flex items-center gap-2 text-red-600 py-6 text-sm">
+          <div className="flex items-center gap-2 text-red-600 py-4 text-xs font-medium">
             <AlertCircle className="w-4 h-4" /> {error}
           </div>
         ) : categories.length === 0 ? (
-          <p className="text-center text-gray-400 py-10 text-sm">No categories yet. Add your first one above.</p>
+          <p className="text-center text-slate-400 py-8 text-xs">No categories found. Click &quot;New Category&quot; to create one.</p>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/80 border-y border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
-                <th className="p-4 font-semibold">Category Name</th>
-                <th className="p-4 font-semibold">Slug</th>
-                <th className="p-4 font-semibold text-right">Actions</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] text-slate-500 uppercase tracking-wider font-semibold">
+                <th className="py-2.5 px-3">Category Name</th>
+                <th className="py-2.5 px-3">Slug</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="p-4">
-                    <span className="font-semibold text-gray-900">{cat.name}</span>
+                <tr key={cat.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-2.5 px-3 font-semibold text-slate-900">
+                    {cat.name}
                   </td>
-                  <td className="p-4">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-mono rounded">
+                  <td className="py-2.5 px-3">
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-mono rounded text-[11px]">
                       {cat.slug}
                     </span>
                   </td>
-                  <td className="p-4 flex items-center justify-end">
+                  <td className="py-2.5 px-3 text-right">
                     <button
                       onClick={() => handleDelete(cat.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                      className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition cursor-pointer"
+                      title="Delete Category"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
