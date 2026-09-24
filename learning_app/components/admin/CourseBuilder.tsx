@@ -963,7 +963,16 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
     if (!editingCourseId && !isManualCode) {
       const catObj = categories.find((c) => c.id === selectedCategoryId);
       const depts = visibility === 'specific' ? selectedDepts : [];
-      setCourseCode(generateCourseCode(depts, catObj?.name));
+      const deptParam = depts.join(',');
+      const catParam = encodeURIComponent(catObj?.name || '');
+      fetch(`/api/courses/next-code?department=${deptParam}&category=${catParam}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.code) setCourseCode(data.code);
+        })
+        .catch(() => {
+          setCourseCode(generateCourseCode(depts, catObj?.name));
+        });
     }
   }, [selectedDepts, visibility, selectedCategoryId, categories, editingCourseId, isManualCode]);
 
@@ -994,6 +1003,10 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
         if (json.course) {
           const c = json.course;
           setCourseTitle(c.title || '');
+          if (c.course_code) {
+            setCourseCode(c.course_code);
+            setIsManualCode(true);
+          }
           setDescription(c.description || '');
           setSelectedCategoryId(c.categories?.id || '');
           setVisibility(c.visibility || 'all');
@@ -1215,6 +1228,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
     try {
       const body = {
         title: courseTitle,
+        course_code: courseCode.trim(),
         description,
         thumbnail_url: thumbnailUrl,
         category_id: selectedCategoryId,
@@ -1532,18 +1546,25 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 </label>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const selectedCatName = categories.find((c) => c.id === selectedCategoryId)?.name;
                     const depts = visibility === 'specific' ? selectedDepts : [];
-                    const code = generateCourseCode(depts, selectedCatName);
-                    setCourseCode(code);
+                    const deptParam = depts.join(',');
+                    const catParam = encodeURIComponent(selectedCatName || '');
+                    try {
+                      const res = await fetch(`/api/courses/next-code?department=${deptParam}&category=${catParam}`);
+                      const data = await res.json();
+                      if (data.code) setCourseCode(data.code);
+                    } catch {
+                      setCourseCode(generateCourseCode(depts, selectedCatName));
+                    }
                     setIsManualCode(false);
                   }}
                   className="text-[11px] font-semibold text-[#c62828] hover:underline cursor-pointer flex items-center gap-1"
-                  title="Auto-generate course code based on selected department"
+                  title="Auto-generate next sequential course code based on selected department"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  <span>Auto: {generateCourseCode(visibility === 'specific' ? selectedDepts : [], categories.find((c) => c.id === selectedCategoryId)?.name)}</span>
+                  <span>Auto: {courseCode}</span>
                 </button>
               </div>
               <input

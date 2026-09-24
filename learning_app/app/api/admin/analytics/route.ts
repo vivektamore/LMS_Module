@@ -148,7 +148,7 @@ export async function GET() {
     const coursesList = adminId
       ? await query<any[]>(`
           SELECT 
-            c.id, c.title, c.created_at,
+            c.id, c.title, c.course_code, c.created_at,
             cat.name AS category_name, cat.slug AS category_slug,
             (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS module_count,
             (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS enrolled_count
@@ -159,7 +159,7 @@ export async function GET() {
         `, [adminId])
       : await query<any[]>(`
           SELECT 
-            c.id, c.title, c.created_at,
+            c.id, c.title, c.course_code, c.created_at,
             cat.name AS category_name, cat.slug AS category_slug,
             (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS module_count,
             (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS enrolled_count

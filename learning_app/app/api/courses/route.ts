@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, pool } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { getCurrentUser } from '@/lib/auth';
+import { getNextCourseCode } from './next-code/route';
 
 /**
  * POST /api/courses
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      title, description, thumbnail_url = null, category_id, created_by, modules,
+      title, course_code, courseCode, description, thumbnail_url = null, category_id, created_by, modules,
       visibility = 'all',
       departments = [],
       has_certificate = false,
@@ -32,12 +33,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let finalCourseCode = (course_code || courseCode || '').trim();
+    if (!finalCourseCode) {
+      let catName = '';
+      if (category_id) {
+        const [catRows] = await connection.execute<any[]>('SELECT name FROM categories WHERE id = ?', [category_id]);
+        if (catRows?.length) catName = catRows[0].name;
+      }
+      finalCourseCode = await getNextCourseCode(departments, catName);
+    }
+
     await connection.beginTransaction();
 
     const courseId = uuidv4();
     await connection.execute(
-      'INSERT INTO courses (id, title, description, thumbnail_url, category_id, created_by, visibility, has_certificate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [courseId, title, description || null, thumbnail_url || null, category_id, currentUser.id, visibility, has_certificate ? 1 : 0]
+      'INSERT INTO courses (id, title, course_code, description, thumbnail_url, category_id, created_by, visibility, has_certificate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [courseId, title, finalCourseCode, description || null, thumbnail_url || null, category_id, currentUser.id, visibility, has_certificate ? 1 : 0]
     );
 
     // Save department access if visibility = 'specific'
@@ -115,7 +126,7 @@ export async function GET(req: NextRequest) {
 
     let sql = `
       SELECT 
-        c.id, c.title, c.description, c.thumbnail_url, c.created_at,
+        c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at,
         c.visibility, c.has_certificate,
         cat.id AS category_id, cat.name AS category_name, cat.slug AS category_slug,
         (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS module_count,
@@ -188,6 +199,7 @@ export async function GET(req: NextRequest) {
     const courses = rows.map((r) => ({
       id: r.id,
       title: r.title,
+      course_code: r.course_code || '',
       description: r.description,
       thumbnail_url: r.thumbnail_url || null,
       created_at: r.created_at,

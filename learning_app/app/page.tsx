@@ -32,6 +32,7 @@ interface Category {
 interface Course {
   id: string;
   title: string;
+  course_code?: string;
   description: string | null;
   thumbnail_url: string | null;
   categories: Category | null;
@@ -67,6 +68,9 @@ function getCourseImage(course: Course): string {
 }
 
 function getCourseCode(course: Course): string {
+  if (course.course_code && course.course_code.trim()) {
+    return course.course_code.trim();
+  }
   const cat = (course.categories?.slug || 'JC').toUpperCase();
   const shortId = course.id.replace(/-/g, '').slice(0, 4).toUpperCase();
   if (cat.includes('SOP')) return `SOP-JC-${shortId}`;

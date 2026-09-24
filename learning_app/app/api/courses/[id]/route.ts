@@ -20,7 +20,7 @@ export async function GET(
 
     const courseRows = await query<any[]>(`
       SELECT 
-        c.id, c.title, c.description, c.thumbnail_url, c.created_at,
+        c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at,
         c.visibility, c.has_certificate,
         cat.id AS category_id, cat.name AS category_name, cat.slug AS category_slug
       FROM courses c
@@ -98,6 +98,7 @@ export async function GET(
       course: {
         id: course.id,
         title: course.title,
+        course_code: course.course_code || '',
         description: course.description,
         thumbnail_url: course.thumbnail_url || null,
         created_at: course.created_at,
@@ -183,7 +184,8 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { title, description, thumbnail_url, category_id, modules, visibility, departments, has_certificate } = body;
+    const { title, course_code, courseCode, description, thumbnail_url, category_id, modules, visibility, departments, has_certificate } = body;
+    const finalCourseCode = (course_code || courseCode || '').trim();
 
     if (!title || !category_id) {
       return NextResponse.json({ error: 'Title and category are required' }, { status: 400 });
@@ -194,10 +196,10 @@ export async function PUT(
     // 1. Update main course
     await connection.execute(
       `UPDATE courses 
-       SET title = ?, description = ?, thumbnail_url = ?, category_id = ?,
+       SET title = ?, course_code = COALESCE(?, course_code), description = ?, thumbnail_url = ?, category_id = ?,
            visibility = ?, has_certificate = ?, updated_at = NOW() 
        WHERE id = ?`,
-      [title, description || null, thumbnail_url || null, category_id,
+      [title, finalCourseCode || null, description || null, thumbnail_url || null, category_id,
        visibility || 'all', has_certificate ? 1 : 0, id]
     );
 

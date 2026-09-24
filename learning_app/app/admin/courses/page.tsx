@@ -11,7 +11,7 @@ export default async function CoursesPage() {
   const isAdmin = currentUser?.role === 'admin';
   const rows = await query<any[]>(`
     SELECT 
-      c.id, c.title, c.description, c.thumbnail_url, c.created_at, c.updated_at,
+      c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at, c.updated_at,
       c.visibility, c.has_certificate,
       cat.id AS category_id,
       cat.name AS category_name,
@@ -46,6 +46,7 @@ export default async function CoursesPage() {
   const liveCourses = (rows || []).map((c) => ({
     id: c.id,
     title: c.title,
+    course_code: c.course_code || '',
     description: c.description || '',
     thumbnail_url: c.thumbnail_url || null,
     category: c.category_name || 'Uncategorized',

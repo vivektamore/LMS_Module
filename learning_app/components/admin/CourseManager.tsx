@@ -14,6 +14,7 @@ import Link from 'next/link';
 export interface CourseItem {
   id: string;
   title: string;
+  course_code?: string;
   description?: string;
   thumbnail_url?: string | null;
   category?: string;
@@ -73,8 +74,12 @@ const DEPT_CODE_MAP: Record<string, string> = {
   DISPATCH: 'DSP',
 };
 
-// Generate deterministic department-based SOP course code e.g. JC-MNT-001
+// Return assigned course code or generate deterministic department-based SOP code e.g. JC-MNT-001
 function getCourseCode(course: CourseItem) {
+  if (course.course_code && course.course_code.trim()) {
+    return course.course_code.trim();
+  }
+
   let deptCode = 'GEN';
 
   if (course.departments && course.departments.length > 0) {
@@ -90,14 +95,7 @@ function getCourseCode(course: CourseItem) {
     else deptCode = cat.replace(/[^A-Z]/g, '').slice(0, 3) || 'GEN';
   }
 
-  let numStr = '001';
-  if (course.id) {
-    const sum = course.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const num = (sum % 90) + 1; // 1 to 90
-    numStr = String(num).padStart(3, '0');
-  }
-
-  return `JC-${deptCode}-${numStr}`;
+  return `JC-${deptCode}-001`;
 }
 
 export default function CourseManager({ initialCourses, initialCategories = [] }: CourseManagerProps) {
@@ -148,6 +146,7 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
           data.courses.map((c: any) => ({
             id: c.id,
             title: c.title,
+            course_code: c.course_code || '',
             description: c.description || '',
             thumbnail_url: c.thumbnail_url || null,
             category: c.categories?.name || 'Uncategorized',

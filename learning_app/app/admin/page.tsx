@@ -47,6 +47,7 @@ interface UserProgress {
 interface CourseOverviewItem {
   id: string;
   title: string;
+  course_code?: string;
   category_name?: string;
   category_slug?: string;
   module_count: number;
@@ -1077,8 +1078,8 @@ export default function AdminDashboard() {
                       <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-slate-900 leading-tight">{c.title}</div>
-                          <span className="text-[11px] text-slate-400 font-medium">
-                            SOP-JC-{c.id.slice(0, 8).toUpperCase()}
+                          <span className="text-[11px] font-mono font-medium text-slate-500 uppercase">
+                            {c.course_code || 'JC-GEN-001'}
                           </span>
                         </td>
                         <td className="py-3.5 px-3 whitespace-nowrap">
