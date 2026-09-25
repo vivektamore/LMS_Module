@@ -58,9 +58,16 @@ async function migrate() {
   }
 
   // 1. Users Table Columns
-  await ensureColumn('users', 'name', 'VARCHAR(255) NULL AFTER `email`');
-  await ensureColumn('users', 'employee_id', 'VARCHAR(50) NULL AFTER `name`');
-  await ensureColumn('users', 'created_by', 'VARCHAR(36) NULL AFTER `department`');
+  await ensureColumn('users', 'name', 'VARCHAR(255) NULL');
+  await ensureColumn('users', 'employee_id', 'VARCHAR(50) NULL');
+  await ensureColumn(
+    'users',
+    'department',
+    "ENUM('HR', 'SAFETY', 'MAINTENANCE', 'PRODUCTION', 'QUALITY', 'DESIGN', 'DEVELOPMENT', 'IT', 'AI', 'CENTRAL_PROCESSING_ENGINEERING', 'STORE', 'DISPATCH') NULL"
+  );
+  await ensureColumn('users', 'role', "ENUM('admin', 'employee', 'student') NOT NULL DEFAULT 'employee'");
+  await ensureColumn('users', 'created_by', 'VARCHAR(36) NULL');
+  await ensureColumn('users', 'last_sign_in_at', 'DATETIME NULL');
 
   // Backfill names from email if null
   await conn.query(`
@@ -69,14 +76,16 @@ async function migrate() {
       UPPER(SUBSTRING(SUBSTRING_INDEX(email, '@', 1), 1, 1)),
       LOWER(SUBSTRING(SUBSTRING_INDEX(email, '@', 1), 2))
     )
-    WHERE name IS NULL OR name = ''
+    WHERE (name IS NULL OR name = '') AND email IS NOT NULL
   `);
 
   // 2. Courses Table Columns
-  await ensureColumn('courses', 'course_code', 'VARCHAR(50) NULL AFTER `title`');
+  await ensureColumn('courses', 'course_code', 'VARCHAR(50) NULL');
+  await ensureColumn('courses', 'visibility', "ENUM('all', 'specific') NOT NULL DEFAULT 'all'");
+  await ensureColumn('courses', 'has_certificate', 'TINYINT(1) NOT NULL DEFAULT 0');
 
   // 3. Certificates Table Columns
-  await ensureColumn('certificates', 'recipient_name', 'VARCHAR(255) NULL AFTER `issued_at`');
+  await ensureColumn('certificates', 'recipient_name', 'VARCHAR(255) NULL');
 
   // 4. Ensure app_settings table exists
   await conn.query(`

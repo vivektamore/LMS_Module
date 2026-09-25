@@ -112,18 +112,23 @@ async function runDiagnostics() {
 
     // 4. User & Role Audit
     console.log(`\n${BOLD}[4/5] User & Security Status${RESET}`);
-    const [adminUsers] = await conn.query("SELECT email, department FROM users WHERE role = 'admin'");
-    const [empUsers] = await conn.query("SELECT email, department FROM users WHERE role = 'employee'");
+    try {
+      const [adminUsers] = await conn.query("SELECT email, department FROM users WHERE role = 'admin'");
+      const [empUsers] = await conn.query("SELECT email, department FROM users WHERE role = 'employee'");
 
-    if (adminUsers.length === 0) {
-      console.log(`  ${YELLOW}⚠ WARNING: No Admin accounts exist!${RESET}`);
-      console.log(`    Run: ${CYAN}node scripts/create-admin.js --email admin@jollyclamps.com --password YourPassword${RESET}`);
-    } else {
-      console.log(`  ${GREEN}✓${RESET} Active Admins (${adminUsers.length}):`);
-      adminUsers.forEach(a => console.log(`      • ${a.email} (${a.department || 'GLOBAL'})`));
+      if (adminUsers.length === 0) {
+        console.log(`  ${YELLOW}⚠ WARNING: No Admin accounts exist!${RESET}`);
+        console.log(`    Run: ${CYAN}node scripts/create-admin.js --email admin@jollyclamps.com --password YourPassword${RESET}`);
+      } else {
+        console.log(`  ${GREEN}✓${RESET} Active Admins (${adminUsers.length}):`);
+        adminUsers.forEach(a => console.log(`      • ${a.email} (${a.department || 'GLOBAL'})`));
+      }
+
+      console.log(`  ${GREEN}✓${RESET} Active Employees: ${empUsers.length}`);
+    } catch (userErr) {
+      console.log(`  ${RED}⚠ Missing columns in users table: ${userErr.message}${RESET}`);
+      console.log(`    ${YELLOW}👉 Run: ${CYAN}npm run migrate${YELLOW} to automatically fix missing columns!${RESET}`);
     }
-
-    console.log(`  ${GREEN}✓${RESET} Active Employees: ${empUsers.length}`);
 
     // 5. Training Content & Features Status
     console.log(`\n${BOLD}[5/5] Training Content & Features${RESET}`);
