@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, signToken } from '@/lib/auth';
 import { getNextEmployeeId } from './next-id/route';
 
 const DEPARTMENTS = [
@@ -224,7 +224,30 @@ export async function PUT(req: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+
+    // If the admin is updating their own account (email, name, dept),
+    // re-issue the auth token cookie so their session remains completely valid
+    if (id === currentUser.id) {
+      const updatedAuthUser = {
+        id,
+        email: email.trim(),
+        name: finalName || currentUser.name,
+        employee_id: finalEmpId || currentUser.employee_id,
+        role: (role || currentUser.role) as any,
+        department: department || currentUser.department,
+      };
+      const newToken = signToken(updatedAuthUser);
+      response.cookies.set('token', newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60,
+      });
+    }
+
+    return response;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });

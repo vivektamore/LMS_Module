@@ -1,123 +1,218 @@
 /**
- * User Creation Script
- * ─────────────────────────────────────────────────────────────────────────────
- * Usage (run from the learning_app folder):
- *
- *   node scripts/create-admin.js --email admin@company.com --password Secret123
- *   node scripts/create-admin.js --email emp@company.com --password Secret123 --role employee --department Maintenance
- *
- * ─────────────────────────────────────────────────────────────────────────────
+ * Terminal CLI Script: Create or Promote Super Admin (Developer / HR)
+ * 
+ * Usage Examples:
+ *   1. Interactive mode:
+ *      node scripts/create-admin.js
+ * 
+ *   2. Command-line flags mode:
+ *      node scripts/create-admin.js --email hr@jollyclamps.com --name "HR Director" --department HR --password "admin123"
+ *      node scripts/create-admin.js --email dev@jollyclamps.com --name "Lead Developer" --department IT --password "dev123"
  */
 
-const mysql  = require('mysql2/promise');
+const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const { randomUUID } = require('crypto');
+const readline = require('readline');
 const path = require('path');
-const fs   = require('fs');
+const fs = require('fs');
 
-// ── Load .env.local manually (no dotenv needed) ───────────────────────────────
-const envPath = path.join(__dirname, '../.env.local');
+// Load environment variables from .env.local if present
+const envPath = path.join(__dirname, '..', '.env.local');
 if (fs.existsSync(envPath)) {
-  fs.readFileSync(envPath, 'utf8')
-    .split('\n')
-    .forEach((line) => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) return;
-      const eqIdx = trimmed.indexOf('=');
-      if (eqIdx === -1) return;
-      const key = trimmed.slice(0, eqIdx).trim();
-      const val = trimmed.slice(eqIdx + 1).trim();
-      if (key && !process.env[key]) process.env[key] = val;
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const [k, ...v] = trimmed.split('=');
+      if (k && !process.env[k.trim()]) {
+        process.env[k.trim()] = v.join('=').trim();
+      }
+    }
+  });
+}
+
+const DEPT_CODE_MAP = {
+  HR: 'HR',
+  IT: 'IT',
+  DEV: 'DEV',
+  DEVELOPMENT: 'DEV',
+  AI: 'AI',
+  SAFETY: 'SAF',
+  MAINTENANCE: 'MNT',
+  PRODUCTION: 'PRD',
+  QUALITY: 'QLT',
+  DESIGN: 'DSG',
+  CENTRAL_PROCESSING_ENGINEERING: 'CPE',
+  STORE: 'STR',
+  DISPATCH: 'DSP',
+  GLOBAL: 'ADM',
+};
+
+async function parseArgs() {
+  const args = process.argv.slice(2);
+  const parsed = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--')) {
+      const key = arg.slice(2);
+      const next = args[i + 1];
+      if (next && !next.startsWith('--')) {
+        parsed[key] = next;
+        i++;
+      } else {
+        parsed[key] = true;
+      }
+    }
+  }
+  return parsed;
+}
+
+function prompt(rl, question, isPassword = false) {
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      resolve(answer.trim());
     });
+  });
 }
 
-// ── Valid Departments ────────────────────────────────────────────────────
-const DEPARTMENTS = [
-  'HR', 'SAFETY', 'MAINTENANCE', 'PRODUCTION', 'QUALITY',
-  'DESIGN', 'DEVELOPMENT', 'IT', 'AI',
-  'CENTRAL_PROCESSING_ENGINEERING', 'STORE', 'DISPATCH'
-];
+async function getNextEmployeeId(conn, department) {
+  const deptKey = (department || 'GLOBAL').toUpperCase().replace(/[\s-]/g, '_');
+  const code = DEPT_CODE_MAP[deptKey] || deptKey.slice(0, 3).toUpperCase();
+  const prefix = `JC-${code}-`;
 
-// ── Parse CLI args ────────────────────────────────────────────────────────────
-const args = process.argv.slice(2);
-function getArg(flag) {
-  const i = args.indexOf(flag);
-  return i !== -1 ? args[i + 1] : null;
+  const [rows] = await conn.query(
+    'SELECT employee_id FROM users WHERE employee_id LIKE ?',
+    [`${prefix}%`]
+  );
+
+  let maxNum = 0;
+  for (const row of rows) {
+    if (row.employee_id) {
+      const match = row.employee_id.match(new RegExp(`^${prefix}(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+  }
+
+  const nextNum = maxNum + 1;
+  return `${prefix}${String(nextNum).padStart(3, '0')}`;
 }
 
-const email      = getArg('--email');
-const password   = getArg('--password');
-const department = getArg('--department') ? getArg('--department').toUpperCase() : null;
-const role       = getArg('--role') || 'admin';
-
-// Show department list and exit
-if (args.includes('--list-departments')) {
-  console.log('\n🏢  Available Departments:\n');
-  DEPARTMENTS.forEach((d, i) => console.log(`   ${String(i + 1).padStart(2, ' ')}.  ${d}`));
-  console.log('\n   Usage example:');
-  console.log('   node scripts/create-admin.js --email x@y.com --password pass123 --department MAINTENANCE\n');
-  process.exit(0);
-}
-
-if (!email || !password) {
-  console.error('\n❌  Usage: node scripts/create-admin.js --email <email> --password <password> [--role admin|employee] [--department <name>]');
-  console.error('   Tip  : Run with --list-departments to see all valid department names\n');
-  process.exit(1);
-}
-
-if (!['admin', 'employee'].includes(role)) {
-  console.error('\n❌  --role must be either "admin" or "employee"\n');
-  process.exit(1);
-}
-
-if (department && !DEPARTMENTS.includes(department)) {
-  console.error(`\n❌  Unknown department: "${department}"`);
-  console.error('   Run with --list-departments to see all valid options\n');
-  process.exit(1);
-}
-
-if (password.length < 6) {
-  console.error('\n❌  Password must be at least 6 characters.\n');
-  process.exit(1);
-}
-
-// ── Connect & Insert ──────────────────────────────────────────────────────────
 async function main() {
-  const pool = mysql.createPool({
-    host     : process.env.MYSQL_HOST     || '127.0.0.1',
-    port     : Number(process.env.MYSQL_PORT) || 3306,
-    user     : process.env.MYSQL_USER     || 'root',
-    password : process.env.MYSQL_PASSWORD || '',
-    database : process.env.MYSQL_DATABASE || 'learning_app_db',
+  console.log('\n======================================================');
+  console.log('   Jolly Clamps LMS — Terminal Super Admin Provisioning');
+  console.log('======================================================\n');
+
+  const args = await parseArgs();
+
+  let email = args.email;
+  let name = args.name;
+  let department = args.department;
+  let password = args.password;
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
   });
 
   try {
-    const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
-    if (existing.length > 0) {
-      console.error(`\n❌  A user with email "${email}" already exists.\n`);
+    if (!email) {
+      email = await prompt(rl, 'Enter Admin Email (e.g. hr@jollyclamps.com / dev@jollyclamps.com): ');
+    }
+    if (!email || !email.includes('@')) {
+      console.error('Error: A valid email address is required.');
       process.exit(1);
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const adminId = randomUUID();
+    if (!name) {
+      name = await prompt(rl, 'Enter Full Name (e.g. HR Director / Lead Developer): ');
+    }
 
-    await pool.execute(
-      'INSERT INTO users (id, email, password_hash, role, department, created_by) VALUES (?, ?, ?, ?, ?, ?)',
-      [adminId, email, hashedPassword, role, department, adminId]
-    );
+    if (!department) {
+      department = await prompt(rl, 'Enter Department (HR, IT, MAINTENANCE, GLOBAL) [Default: HR]: ');
+      if (!department) department = 'HR';
+    }
+    department = department.toUpperCase();
 
-    console.log(`\n✅  User account created successfully!`);
-    console.log(`    Email      : ${email}`);
-    console.log(`    Role       : ${role}`);
-    console.log(`    Department : ${department || 'Not assigned'}`);
-    console.log(`    ID         : ${adminId}`);
-    console.log('\n   The user can now log in at /login\n');
+    if (!password) {
+      password = await prompt(rl, 'Enter Password / PIN [Default: 12345]: ');
+      if (!password) password = '12345';
+    }
 
+    const conn = await mysql.createConnection({
+      host: process.env.MYSQL_HOST || '127.0.0.1',
+      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT, 10) : 3306,
+      user: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || '12345',
+      database: process.env.MYSQL_DATABASE || 'learning_app_db',
+    });
+
+    console.log('\nConnecting to database...');
+
+    // Check if user already exists
+    const [existing] = await conn.query('SELECT * FROM users WHERE email = ?', [email]);
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    let employeeId;
+
+    if (existing.length > 0) {
+      const user = existing[0];
+      employeeId = user.employee_id || (await getNextEmployeeId(conn, department));
+      const finalName = name || user.name || email.split('@')[0];
+
+      await conn.query(
+        `UPDATE users 
+         SET role = 'admin',
+             name = ?,
+             department = ?,
+             employee_id = ?,
+             password_hash = ?
+         WHERE id = ?`,
+        [finalName, department, employeeId, passwordHash, user.id]
+      );
+
+      console.log('\n✅ Existing user upgraded to SUPER ADMIN:');
+      console.log(`   • ID:          ${user.id}`);
+      console.log(`   • Name:        ${finalName}`);
+      console.log(`   • Email:       ${email}`);
+      console.log(`   • Employee ID: ${employeeId}`);
+      console.log(`   • Role:        admin (Privileged)`);
+      console.log(`   • Department:  ${department}`);
+    } else {
+      const newId = randomUUID();
+      employeeId = await getNextEmployeeId(conn, department);
+      const finalName = name || email.split('@')[0];
+
+      await conn.query(
+        `INSERT INTO users (id, email, name, employee_id, password_hash, role, department)
+         VALUES (?, ?, ?, ?, ?, 'admin', ?)`,
+        [newId, email, finalName, employeeId, passwordHash, department]
+      );
+
+      console.log('\n✅ New SUPER ADMIN account registered successfully:');
+      console.log(`   • ID:          ${newId}`);
+      console.log(`   • Name:        ${finalName}`);
+      console.log(`   • Email:       ${email}`);
+      console.log(`   • Employee ID: ${employeeId}`);
+      console.log(`   • Role:        admin (Privileged)`);
+      console.log(`   • Department:  ${department}`);
+    }
+
+    console.log('\n------------------------------------------------------');
+    console.log('You can now log in at: http://localhost:3000/login');
+    console.log(`Login Email:    ${email}`);
+    console.log(`Password / PIN: ${password}`);
+    console.log('------------------------------------------------------\n');
+
+    await conn.end();
   } catch (err) {
-    console.error('\n❌  Error:', err.message, '\n');
+    console.error('\n❌ Error provisioning admin account:', err.message);
     process.exit(1);
   } finally {
-    await pool.end();
+    rl.close();
   }
 }
 
