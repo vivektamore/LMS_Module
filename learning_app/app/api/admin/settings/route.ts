@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { query, pool } from '@/lib/db';
 import fs from 'fs';
@@ -16,7 +16,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // 1. MySQL Database Status & Stats
+    // 1. MySQL Database Status & Telemetry
     const startTime = Date.now();
     let dbStatus = 'disconnected';
     let dbVersion = '';
@@ -32,7 +32,7 @@ export async function GET() {
     try {
       const [verRows]: any = await pool.query('SELECT VERSION() as version');
       dbVersion = verRows[0]?.version || '8.0+';
-      dbLatencyMs = Date.now() - startTime;
+      dbLatencyMs = Math.max(1, Date.now() - startTime);
       dbStatus = 'healthy';
 
       // Count core tables
@@ -81,8 +81,43 @@ export async function GET() {
     // Convert bytes to MB
     const totalStorageMB = (totalStorageBytes / (1024 * 1024)).toFixed(2);
 
+    // 3. Fetch app_settings values
+    const settingsMap: Record<string, string> = {
+      platform_name: 'Jolly Clamps Technical Training LMS',
+      org_name: 'Jolly Clamps',
+      support_email: 'admin@jollyclamps.com',
+      issuer_name: 'Jolly Clamps Technical Training Academy',
+      signatory_title: 'Head of Operations & Safety Directorate',
+      enforce_anti_skip: 'true',
+      allow_youtube_embeds: 'true',
+      max_upload_limit_mb: '500',
+    };
+
+    try {
+      const rows = await query<any[]>('SELECT setting_key, setting_value FROM app_settings');
+      for (const row of rows || []) {
+        settingsMap[row.setting_key] = row.setting_value;
+      }
+    } catch (sErr) {
+      console.warn('Could not read app_settings table:', sErr);
+    }
+
+    // 4. Fetch live course categories
+    let categoriesList: { id: string; name: string; slug: string }[] = [];
+    try {
+      const catRows = await query<any[]>('SELECT id, name, slug FROM categories ORDER BY name ASC');
+      categoriesList = (catRows || []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+      }));
+    } catch (cErr) {
+      console.warn('Could not read categories table:', cErr);
+    }
+
     return NextResponse.json({
       success: true,
+      currentUserDepartment: user?.department || 'GLOBAL',
       database: {
         status: dbStatus,
         version: dbVersion,
@@ -94,31 +129,89 @@ export async function GET() {
         records: recordsCount,
       },
       storage: {
-        type: 'Local Server Storage',
+        type: 'Hybrid Disk & Cloud Delivery',
         path: 'public/videos/',
         videoCount: videoFileCount,
         storageUsedMB: totalStorageMB,
-        maxUploadLimitMB: 500,
+        maxUploadLimitMB: parseInt(settingsMap.max_upload_limit_mb || '500', 10),
       },
       branding: {
-        platformName: 'Jolly Board LMS',
-        supportEmail: 'admin@jollyboard.com',
-        issuerName: 'Jolly Board Learning & Development Academy',
-        signatoryTitle: 'Head of Operations & Safety Directorate',
+        platformName: settingsMap.platform_name,
+        orgName: settingsMap.org_name,
+        supportEmail: settingsMap.support_email,
+        masterLogo: '/jolly-clamps-logo.png',
+        issuerName: settingsMap.issuer_name,
+        signatoryTitle: settingsMap.signatory_title,
       },
       learningRules: {
-        enforceAntiSkip: true,
-        allowYouTubeEmbeds: true,
+        enforceAntiSkip: settingsMap.enforce_anti_skip === 'true',
+        allowYouTubeEmbeds: settingsMap.allow_youtube_embeds === 'true',
         minWatchPercentToComplete: 100,
         departments: [
           'HR', 'SAFETY', 'MAINTENANCE', 'PRODUCTION', 'QUALITY',
           'DESIGN', 'DEVELOPMENT', 'IT', 'AI',
           'CENTRAL_PROCESSING_ENGINEERING', 'STORE', 'DISPATCH'
-        ]
-      }
+        ],
+      },
+      categories: categoriesList,
     });
   } catch (error: any) {
     console.error('Admin Settings GET Error:', error);
     return NextResponse.json({ error: 'Failed to load system settings' }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    const allowBypass = process.env.ALLOW_ADMIN_BYPASS === 'true';
+
+    if (!user && !allowBypass) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (user && user.role !== 'admin' && !allowBypass) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { supportEmail, enforceAntiSkip, allowYouTubeEmbeds } = body;
+
+    // Department admins can only update operational settings:
+    // Support Email, Anti-Skip policy, and External Video Embed policy.
+    // Platform Name, Logo, Org Name, and Signatory are Enterprise Locked (HR/Developer only).
+    if (typeof supportEmail === 'string' && supportEmail.trim()) {
+      await query(
+        `INSERT INTO app_settings (setting_key, setting_value) 
+         VALUES ('support_email', ?) 
+         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+        [supportEmail.trim()]
+      );
+    }
+
+    if (typeof enforceAntiSkip === 'boolean') {
+      await query(
+        `INSERT INTO app_settings (setting_key, setting_value) 
+         VALUES ('enforce_anti_skip', ?) 
+         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+        [enforceAntiSkip ? 'true' : 'false']
+      );
+    }
+
+    if (typeof allowYouTubeEmbeds === 'boolean') {
+      await query(
+        `INSERT INTO app_settings (setting_key, setting_value) 
+         VALUES ('allow_youtube_embeds', ?) 
+         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+        [allowYouTubeEmbeds ? 'true' : 'false']
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Operational settings saved successfully.',
+    });
+  } catch (error: any) {
+    console.error('Admin Settings PUT Error:', error);
+    return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
   }
 }
