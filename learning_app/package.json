@@ -8,6 +8,7 @@
     "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "eslint",
     "doctor": "node scripts/doctor.js",
+    "init-settings": "node scripts/init-settings.js",
     "create-admin": "node scripts/create-admin.js",
     "update-admin-email": "node scripts/update-admin-email.js",
     "clean:activity": "node scripts/clean-db.js --activity-only",
