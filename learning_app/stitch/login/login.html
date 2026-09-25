@@ -1,0 +1,300 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Sign In | Jolly Clamps Technical Training LMS</title>
+<!-- Google Fonts: Inter & IBM Plex Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration for Jolly Clamps Brand Palette -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fef2f2',
+              100: '#ffe1e1',
+              500: '#ef4444',
+              600: '#dc2626',
+              700: '#c62828', // Official Jolly Clamps Red
+              800: '#b71c1c', // Primary Dark Red Hover
+              900: '#9a1414', // Deep Active Red
+            },
+            slate: {
+              850: '#151e2e',
+              900: '#0f172a',
+            }
+          },
+          fontFamily: {
+            sans: ['"Inter"', '"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Visual Styles -->
+<style data-purpose="background-pattern">
+    /* Subtle technical engineering grid texture background */
+    .bg-tech-grid {
+      background-color: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px), radial-gradient(#e2e8f0 0.75px, #f8fafc 0.75px);
+      background-size: 24px 24px;
+      background-position: 0 0, 12px 12px;
+    }
+  </style>
+<style data-purpose="form-transitions">
+    /* Smooth focus & interactive transitions */
+    .auth-input:focus {
+      outline: none;
+      border-color: #c62828;
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.15);
+    }
+    .btn-action {
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+<!-- END: Custom Visual Styles -->
+</head>
+<body class="bg-tech-grid min-h-screen text-slate-800 font-sans flex flex-col justify-between antialiased selection:bg-brand-700 selection:text-white">
+<!-- Top Decorative Engineering Status Bar -->
+<div class="w-full bg-slate-900 border-b border-slate-800 py-1.5 px-4 text-center">
+<div class="max-w-7xl mx-auto flex items-center justify-between text-[11px] font-mono tracking-wider text-slate-400 uppercase">
+<div class="flex items-center space-x-2">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="text-slate-300">System Online</span>
+<span class="text-slate-600"><br></span>
+
+</div>
+<div class="text-slate-400">
+<span class="text-amber-400 font-medium">Notice:</span>&nbsp;Jolly EMPLOYEE ONLY</div>
+</div>
+</div>
+<!-- BEGIN: Main Login Content Section -->
+<main class="flex-grow flex items-center justify-center p-4 sm:p-6" data-purpose="main-login-viewport">
+<div class="w-full max-w-[440px] flex flex-col items-center">
+<!-- BEGIN: Brand Header Block -->
+<header class="text-center mb-6 flex flex-col items-center" data-purpose="brand-header">
+<!-- Logo Container -->
+<div class="mb-3 p-2 bg-white rounded-xl shadow-sm border border-slate-200/80 inline-flex items-center justify-center"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBb7wUv9OyJ7I07IDDIGHv0oTP_WEfQMe4k91qX8VLdmakkEaXEqFVbXEJS5UyR9catNzLDgINaaUAiT_xqDRksIPeXVk5agxPGI_uXzZS78rVCwXvxQweqgPTCSspHCDydDX5F34BC6_XBNv15OXuLldb1cmvX-TF9CQIkGrRsSPYdD7kpaEyIPtoW9Xy0GI99dDRrxqkx8z0nSrSDoirFQMCTMvHbOQhfCtF6ZwTYmQafvDs9bR3YMRCSce_sq_JjxA" alt="Jolly Clamps Logo" class="h-12 w-auto object-contain block mx-auto"></div>
+<!-- Wordmark & Portal Sub-badge -->
+<h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-1.5 justify-center">
+          JOLLY CLAMPS
+        </h1>
+<div class="mt-1 flex items-center gap-1.5">
+<span class="text-[11px] font-semibold uppercase tracking-widest text-brand-700 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded">
+            Technical Training LMS
+          </span>
+</div>
+</header>
+<!-- END: Brand Header Block -->
+<!-- BEGIN: Authentication Card Container -->
+<section class="w-full bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8" data-purpose="auth-card">
+<!-- Card Header Text -->
+<div class="mb-6">
+<h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+            Sign in to your account
+          </h2>
+<p class="text-sm text-slate-500 mt-1 leading-normal">
+            Use your registered employee credentials to access training modules.
+          </p>
+</div>
+<!-- Feedback Alert Container (Hidden by default, used for validation display) -->
+<div aria-live="polite" class="hidden mb-4 p-3 rounded-lg text-xs font-medium bg-red-50 text-brand-700 border border-red-200 flex items-start gap-2" id="feedbackAlert" role="alert">
+<svg class="w-4 h-4 text-brand-700 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+<path clip-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+<span id="feedbackText" class="">Please verify your credentials and try again.</span>
+</div>
+<!-- Login Form Element -->
+<form class="space-y-5" data-purpose="login-form" id="loginForm" method="POST" novalidate="">
+<!-- Email Address Input Field -->
+<div data-purpose="email-field-group">
+<label class="block text-sm font-medium text-slate-800 mb-1.5" for="employeeEmail">
+              Email address <span aria-hidden="true" class="text-brand-700">*</span>
+</label>
+<div class="relative">
+<input autocomplete="email" class="auth-input w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-700 transition" id="employeeEmail" name="email" placeholder="Enter your registered email" required="" type="email">
+</div>
+<p class="hidden mt-1 text-xs text-brand-700 font-medium" id="emailError">Please enter a valid work email address.</p>
+</div>
+<!-- Password Input Field with Interactive Show/Hide Toggle -->
+<div data-purpose="password-field-group">
+<label class="block text-sm font-medium text-slate-800 mb-1.5" for="employeePassword">
+              Password <span aria-hidden="true" class="text-brand-700">*</span>
+</label>
+<div class="relative flex items-center">
+<input autocomplete="current-password" class="auth-input w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-700 transition" id="employeePassword" name="password" placeholder="Enter your password" required="" type="password">
+<!-- Password Eye Visibility Toggle Button -->
+<button aria-label="Toggle password visibility" class="absolute right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none focus:text-slate-700 transition" data-purpose="password-visibility-toggle" id="togglePasswordBtn" type="button">
+<!-- Eye Open Icon (Visible by default) -->
+<svg class="w-5 h-5" fill="none" id="eyeIconOpen" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<!-- Eye Crossed/Slash Icon (Hidden initially) -->
+<svg class="w-5 h-5 hidden" fill="none" id="eyeIconClosed" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<p class="hidden mt-1 text-xs text-brand-700 font-medium" id="passwordError">Password is required.</p>
+</div>
+<!-- Session Preservation Option -->
+<div class="flex items-center justify-between pt-0.5" data-purpose="session-options">
+<label class="flex items-center select-none cursor-pointer">
+<input checked="" class="w-4 h-4 rounded border-slate-300 text-brand-700 focus:ring-brand-700/25 cursor-pointer" id="staySignedIn" name="stay_signed_in" type="checkbox">
+<span class="ml-2.5 text-sm text-slate-600 font-normal">Stay signed in for 7 days</span>
+</label>
+</div>
+<!-- Primary Submit Action Button -->
+<button class="btn-action w-full py-3 h-12 rounded-lg bg-brand-700 hover:bg-brand-800 active:bg-brand-900 text-white font-medium text-base shadow-sm flex items-center justify-center gap-2 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-700" data-purpose="sign-in-button" id="signInButton" type="submit">
+<!-- Button Content Normal -->
+<span class="flex items-center gap-2" id="buttonText">
+              Sign in
+              <!-- Industrial Arrow Icon -->
+<svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+<!-- Spinner State (Hidden by default) -->
+<span class="hidden flex items-center gap-2" id="buttonSpinner">
+<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+              Authenticating...
+            </span>
+</button>
+</form>
+<!-- BEGIN: Internal Account Creation Notice & Support -->
+<div class="mt-6 pt-5 border-t border-slate-100 text-center" data-purpose="support-notice">
+<p class="text-xs text-slate-500">
+            Don't have an account?
+          </p>
+<p class="text-xs text-slate-600 mt-1">
+            Contact your HOD&nbsp;to request access.
+          </p>
+</div>
+<!-- END: Internal Account Creation Notice & Support -->
+</section>
+<!-- END: Authentication Card Container -->
+<!-- BEGIN: Security Badges & Footer Information -->
+<footer class="mt-6 text-center space-y-2" data-purpose="page-footer">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-200/60 border border-slate-300/60 text-slate-600 text-[10px] font-mono tracking-widest uppercase">
+<svg class="w-3 h-3 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
+<path clip-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" fill-rule="evenodd"></path>
+</svg>
+          SECURE INDUSTRIAL ACCESS
+        </div>
+<p class="text-xs text-slate-400">
+          Jolly Clamps Manufacturing Group © 2026 • Internal Operations
+        </p>
+</footer>
+<!-- END: Security Badges & Footer Information -->
+</div>
+</main>
+<!-- END: Main Login Content Section -->
+<!-- Minimal Decorative Footer Band -->
+<div class="py-2 px-4 bg-white border-t border-slate-200 text-center text-[11px] text-slate-500">
+    Technical Support Hotline: Ext. 8856926700 • Plant Operations IT Desk
+  </div>
+<!-- BEGIN: Interactive Client-Side JavaScript -->
+<script data-purpose="password-visibility">
+    // Eye icon toggle logic for revealing/concealing the password
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const passwordInput = document.getElementById('employeePassword');
+    const eyeOpen = document.getElementById('eyeIconOpen');
+    const eyeClosed = document.getElementById('eyeIconClosed');
+
+    if (togglePasswordBtn && passwordInput) {
+      togglePasswordBtn.addEventListener('click', function () {
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        
+        if (isPassword) {
+          passwordInput.setAttribute('type', 'text');
+          eyeOpen.classList.add('hidden');
+          eyeClosed.classList.remove('hidden');
+          togglePasswordBtn.setAttribute('aria-label', 'Hide password');
+        } else {
+          passwordInput.setAttribute('type', 'password');
+          eyeOpen.classList.remove('hidden');
+          eyeClosed.classList.add('hidden');
+          togglePasswordBtn.setAttribute('aria-label', 'Show password');
+        }
+      });
+    }
+  </script>
+<script data-purpose="form-validation-and-submit">
+    // Form handling with realistic feedback & loading indicator
+    const loginForm = document.getElementById('loginForm');
+    const signInButton = document.getElementById('signInButton');
+    const buttonText = document.getElementById('buttonText');
+    const buttonSpinner = document.getElementById('buttonSpinner');
+    const feedbackAlert = document.getElementById('feedbackAlert');
+    const feedbackText = document.getElementById('feedbackText');
+    const emailField = document.getElementById('employeeEmail');
+    const passwordField = document.getElementById('employeePassword');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      let hasError = false;
+      const emailVal = emailField.value.trim();
+      const passwordVal = passwordField.value;
+
+      // Reset errors
+      emailError.classList.add('hidden');
+      passwordError.classList.add('hidden');
+      feedbackAlert.classList.add('hidden');
+      emailField.classList.remove('border-red-500');
+      passwordField.classList.remove('border-red-500');
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailVal || !emailRegex.test(emailVal)) {
+        emailError.classList.remove('hidden');
+        emailField.classList.add('border-red-500');
+        hasError = true;
+      }
+
+      // Password validation
+      if (!passwordVal) {
+        passwordError.classList.remove('hidden');
+        passwordField.classList.add('border-red-500');
+        hasError = true;
+      }
+
+      if (hasError) {
+        return;
+      }
+
+      // Display authenticating state
+      signInButton.disabled = true;
+      buttonText.classList.add('hidden');
+      buttonSpinner.classList.remove('hidden');
+
+      // Simulate authentication request
+      setTimeout(function () {
+        signInButton.disabled = false;
+        buttonText.classList.remove('hidden');
+        buttonSpinner.classList.add('hidden');
+
+        // Simulation check (for demonstration of professional error banner)
+        feedbackText.textContent = 'Active directory verification successful. Redirecting to technical training portal...';
+        feedbackAlert.className = 'mb-4 p-3 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-start gap-2';
+        feedbackAlert.classList.remove('hidden');
+      }, 1200);
+    });
+  </script>
+<!-- END: Interactive Client-Side JavaScript -->
+
+
+
+
+</body></html>
