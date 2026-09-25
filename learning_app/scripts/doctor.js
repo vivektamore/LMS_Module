@@ -85,7 +85,8 @@ async function runDiagnostics() {
       'enrollments',
       'lesson_progress',
       'video_watch_time',
-      'certificates'
+      'certificates',
+      'app_settings'
     ];
 
     const [existingRows] = await conn.query(

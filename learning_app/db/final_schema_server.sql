@@ -21,6 +21,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 CREATE TABLE IF NOT EXISTS users (
   id              VARCHAR(36)                          NOT NULL PRIMARY KEY,
   email           VARCHAR(255)                         NOT NULL UNIQUE,
+  name            VARCHAR(255)                         NULL,
+  employee_id     VARCHAR(50)                          NULL,
   password_hash   VARCHAR(255)                         NOT NULL,
   role            ENUM('admin', 'employee', 'student') NOT NULL DEFAULT 'employee',
   department      ENUM(
@@ -28,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
                     'DESIGN', 'DEVELOPMENT', 'IT', 'AI',
                     'CENTRAL_PROCESSING_ENGINEERING', 'STORE', 'DISPATCH'
                   )                                    NULL,
+  created_by      VARCHAR(36)                          NULL,
   last_sign_in_at DATETIME                             NULL,
   created_at      DATETIME                             NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -48,6 +51,7 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE TABLE IF NOT EXISTS courses (
   id              VARCHAR(36)             NOT NULL PRIMARY KEY,
   title           VARCHAR(500)            NOT NULL,
+  course_code     VARCHAR(50)             NULL,
   description     TEXT                    NULL,
   thumbnail_url   VARCHAR(500)            NULL,
   category_id     VARCHAR(36)             NULL,
@@ -161,14 +165,34 @@ CREATE TABLE IF NOT EXISTS video_watch_time (
 -- TABLE 11: certificates (Issued upon 100% course completion)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS certificates (
-  id        VARCHAR(36) NOT NULL PRIMARY KEY,
-  user_id   VARCHAR(36) NOT NULL,
-  course_id VARCHAR(36) NOT NULL,
-  issued_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id             VARCHAR(36)  NOT NULL PRIMARY KEY,
+  user_id        VARCHAR(36)  NOT NULL,
+  course_id      VARCHAR(36)  NOT NULL,
+  issued_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  recipient_name VARCHAR(255) NULL,
   UNIQUE KEY uq_cert_user_course (user_id, course_id),
   CONSTRAINT fk_cert_user   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
   CONSTRAINT fk_cert_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- TABLE 12: app_settings (Platform branding & corporate enterprise locks)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS app_settings (
+  setting_key   VARCHAR(100) PRIMARY KEY,
+  setting_value TEXT         NOT NULL,
+  updated_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES
+  ('platform_name', 'Jolly Clamps Technical Training LMS'),
+  ('org_name', 'Jolly Clamps'),
+  ('support_email', 'admin@jollyclamps.com'),
+  ('issuer_name', 'Jolly Clamps Technical Training Academy'),
+  ('signatory_title', 'Head of Operations & Safety Directorate'),
+  ('enforce_anti_skip', 'true'),
+  ('allow_youtube_embeds', 'true'),
+  ('max_upload_limit_mb', '500');
 
 -- ============================================================================
 -- PERFORMANCE INDEXES
