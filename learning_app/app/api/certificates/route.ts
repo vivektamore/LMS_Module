@@ -68,9 +68,12 @@ export async function POST(req: Request) {
 
   // Issue certificate
   const certId = randomUUID();
+  const userRows = await query<any[]>('SELECT name, email FROM users WHERE id = ?', [user.id]);
+  const recipientName = userRows[0]?.name || userRows[0]?.email?.split('@')[0] || '';
+
   await query(
-    'INSERT INTO certificates (id, user_id, course_id) VALUES (?, ?, ?)',
-    [certId, user.id, course_id]
+    'INSERT INTO certificates (id, user_id, course_id, recipient_name) VALUES (?, ?, ?, ?)',
+    [certId, user.id, course_id, recipientName]
   );
 
   // Mark enrollment as completed

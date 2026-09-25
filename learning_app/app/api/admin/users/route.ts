@@ -216,6 +216,14 @@ export async function PUT(req: Request) {
       );
     }
 
+    // Keep issued course certificates in sync with the updated employee name
+    if (finalName) {
+      await query(
+        `UPDATE certificates SET recipient_name = ? WHERE user_id = ?`,
+        [finalName, id]
+      );
+    }
+
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';

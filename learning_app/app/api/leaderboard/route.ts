@@ -13,6 +13,8 @@ export async function GET() {
       SELECT 
         u.id,
         u.email,
+        u.name,
+        u.employee_id,
         u.department,
         u.role,
         COALESCE((SELECT COUNT(*) FROM lesson_progress lp WHERE lp.user_id = u.id AND (lp.is_completed = 1 OR lp.completed_at IS NOT NULL)), 0) AS completed_lessons,
@@ -24,7 +26,7 @@ export async function GET() {
           0
         ) AS watched_seconds
       FROM users u
-      GROUP BY u.id, u.email, u.department, u.role
+      GROUP BY u.id, u.email, u.name, u.employee_id, u.department, u.role
       ORDER BY completed_lessons DESC, certificates_count DESC, watched_seconds DESC, u.created_at ASC
       LIMIT 20;
     `);
@@ -42,7 +44,8 @@ export async function GET() {
         rank,
         id: user.id,
         email: user.email,
-        name: user.email.split('@')[0],
+        name: user.name || user.email.split('@')[0],
+        employeeId: user.employee_id,
         department: user.department,
         completedLessons: Number(user.completed_lessons) || 0,
         certificatesCount: Number(user.certificates_count) || 0,

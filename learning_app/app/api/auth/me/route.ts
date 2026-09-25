@@ -9,10 +9,10 @@ export async function GET() {
     return NextResponse.json({ user: null });
   }
 
-  // Fetch LIVE data from DB so department/role changes take effect immediately
+  // Fetch LIVE data from DB so department/role/name changes take effect immediately
   // without requiring the user to log out and back in
   const rows = await query<any[]>(
-    'SELECT id, email, role, department FROM users WHERE id = ?',
+    'SELECT id, email, name, employee_id, role, department FROM users WHERE id = ?',
     [tokenUser.id]
   );
 
@@ -26,6 +26,8 @@ export async function GET() {
     user: {
       id: dbUser.id,
       email: dbUser.email,
+      name: dbUser.name ?? null,
+      employee_id: dbUser.employee_id ?? null,
       role: dbUser.role,
       department: dbUser.department ?? null,
     },

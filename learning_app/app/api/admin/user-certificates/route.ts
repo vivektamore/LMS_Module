@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
   }
 
   const certs = await query<any[]>(`
-    SELECT c.id, c.issued_at,
-           u.email,
+    SELECT c.id, c.issued_at, c.recipient_name,
+           u.email, u.name, u.employee_id,
            cr.title AS course_title
     FROM certificates c
     JOIN users u   ON u.id  = c.user_id

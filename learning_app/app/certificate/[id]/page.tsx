@@ -13,7 +13,7 @@ export default async function CertificatePage({
 
   const rows = await query<any[]>(`
     SELECT c.id, c.issued_at, c.recipient_name,
-           u.email, u.department,
+           u.email, u.name, u.employee_id, u.department,
            cr.title AS course_title,
            cr.id AS course_id
     FROM certificates c
@@ -67,7 +67,7 @@ export default async function CertificatePage({
         <p className="text-gray-500 text-lg mb-2">This certifies that</p>
         <CertificateNameEditor
           certificateId={cert.id}
-          initialName={cert.recipient_name || ''}
+          initialName={cert.recipient_name || cert.name || ''}
           userEmail={cert.email}
         />
         {cert.department && (

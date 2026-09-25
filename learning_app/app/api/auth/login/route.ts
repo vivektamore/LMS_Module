@@ -25,7 +25,14 @@ export async function POST(req: Request) {
     // Update last_sign_in_at
     await query('UPDATE users SET last_sign_in_at = NOW() WHERE id = ?', [user.id]);
 
-    const authUser = { id: user.id, email: user.email, role: user.role, department: user.department ?? null };
+    const authUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name ?? null,
+      employee_id: user.employee_id ?? null,
+      role: user.role,
+      department: user.department ?? null
+    };
     const token = signToken(authUser as any, rememberMe ? '7d' : '1d');
 
     const response = NextResponse.json({ success: true, user: authUser });

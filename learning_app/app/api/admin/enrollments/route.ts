@@ -54,6 +54,8 @@ export async function GET(req: NextRequest) {
         e.enrolled_at,
         e.completed_at,
         u.email,
+        u.name,
+        u.employee_id,
         u.department,
         c.title AS course_title,
         c.course_code,
@@ -119,8 +121,8 @@ export async function GET(req: NextRequest) {
         userId: r.user_id,
         courseId: r.course_id,
         email: r.email,
-        name: formatName(r.email),
-        badgeId: getBadgeId({ id: r.user_id, department: r.department }),
+        name: r.name || formatName(r.email),
+        badgeId: r.employee_id || getBadgeId({ id: r.user_id, department: r.department }),
         department: r.department || 'GENERAL',
         courseTitle: r.course_title,
         courseCode: r.course_code || 'JC-GEN-001',
@@ -145,7 +147,7 @@ export async function GET(req: NextRequest) {
       'SELECT id, title, course_code FROM courses ORDER BY title ASC'
     );
     const availableEmployees = await query<any[]>(
-      'SELECT id, email, department FROM users WHERE role != "admin" ORDER BY email ASC'
+      'SELECT id, email, name, employee_id, department FROM users WHERE role != "admin" ORDER BY email ASC'
     );
 
     return NextResponse.json({
@@ -164,9 +166,9 @@ export async function GET(req: NextRequest) {
       availableEmployees: (availableEmployees || []).map((u) => ({
         id: u.id,
         email: u.email,
-        name: formatName(u.email),
+        name: u.name || formatName(u.email),
         department: u.department || 'GENERAL',
-        badgeId: getBadgeId(u),
+        badgeId: u.employee_id || getBadgeId(u),
       })),
     });
   } catch (err: unknown) {

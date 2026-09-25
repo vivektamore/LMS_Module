@@ -30,7 +30,14 @@ export async function login(formData: FormData) {
 
   await query('UPDATE users SET last_sign_in_at = NOW() WHERE id = ?', [user.id]);
 
-  const authUser = { id: user.id, email: user.email, role: user.role, department: user.department };
+  const authUser = {
+    id: user.id,
+    email: user.email,
+    name: user.name ?? null,
+    employee_id: user.employee_id ?? null,
+    role: user.role,
+    department: user.department ?? null,
+  };
   const token = signToken(authUser as any, rememberMe ? '7d' : '1d');
 
   const cookieStore = await cookies();

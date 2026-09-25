@@ -34,6 +34,8 @@ interface TrendDay {
 interface UserProgress {
   id: string;
   email: string;
+  name?: string | null;
+  employee_id?: string | null;
   role: string;
   department: string | null;
   created_at: string;
@@ -60,6 +62,8 @@ interface EnrollmentItem {
   userId: string;
   courseId: string;
   email: string;
+  name?: string | null;
+  employeeId?: string | null;
   department: string | null;
   courseTitle: string;
   enrolledAt: string;
@@ -226,6 +230,8 @@ export default function AdminDashboard() {
       userId: u.id,
       courseId: 'general',
       email: u.email,
+      name: u.name ?? null,
+      employeeId: u.employee_id ?? null,
       department: u.department,
       courseTitle: u.enrolledCoursesCount > 0 ? `${u.enrolledCoursesCount} Curricula Assigned` : 'No Assigned Course',
       enrolledAt: u.created_at,
@@ -235,6 +241,7 @@ export default function AdminDashboard() {
     })).filter((item) => {
       const matchesQuery = 
         item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.department || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesDept = selectedDept === 'all' || (item.department || '').toLowerCase() === selectedDept.toLowerCase();
       return matchesQuery && matchesDept;
@@ -574,20 +581,22 @@ export default function AdminDashboard() {
                 ) : (
                   paginatedEnrollments.map((item) => {
                     const matchedUser = users.find((u) => u.id === item.userId || u.email === item.email);
+                    const displayName = matchedUser?.name || item.name || item.email.split('@')[0];
+                    const displayEmployeeId = matchedUser?.employee_id || item.employeeId || getTechId(item.email, item.department);
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                         {/* Employee Column */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs uppercase flex-shrink-0">
-                              {getInitials(item.email)}
+                              {getInitials(displayName || item.email)}
                             </div>
                             <div className="min-w-0">
                               <div className="font-semibold text-slate-900 leading-tight truncate">
-                                {item.email.split('@')[0]}
+                                {displayName}
                               </div>
-                              <span className="text-[11px] text-slate-400 font-medium block">
-                                {getTechId(item.email, item.department)}
+                              <span className="text-[11px] text-slate-400 font-mono font-medium block">
+                                {displayEmployeeId}
                               </span>
                             </div>
                           </div>

@@ -124,7 +124,7 @@ export async function GET() {
     const usersList = adminId
       ? await query<any[]>(`
           SELECT 
-            u.id, u.email, u.role, u.department, u.created_at, u.last_sign_in_at,
+            u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at,
             (SELECT COUNT(*) FROM enrollments e WHERE e.user_id = u.id) AS enrolledCoursesCount,
             (SELECT COUNT(*) FROM lesson_progress lp WHERE lp.user_id = u.id AND lp.is_completed = 1) AS completedLessonsCount,
             (SELECT COUNT(*) FROM certificates c WHERE c.user_id = u.id) AS certificatesCount,
@@ -135,7 +135,7 @@ export async function GET() {
         `, [adminId])
       : await query<any[]>(`
           SELECT 
-            u.id, u.email, u.role, u.department, u.created_at, u.last_sign_in_at,
+            u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at,
             (SELECT COUNT(*) FROM enrollments e WHERE e.user_id = u.id) AS enrolledCoursesCount,
             (SELECT COUNT(*) FROM lesson_progress lp WHERE lp.user_id = u.id AND lp.is_completed = 1) AS completedLessonsCount,
             (SELECT COUNT(*) FROM certificates c WHERE c.user_id = u.id) AS certificatesCount,
@@ -173,7 +173,7 @@ export async function GET() {
       ? await query<any[]>(`
           SELECT 
             e.id AS enrollment_id, e.user_id, e.course_id, e.enrolled_at, e.completed_at,
-            u.email, u.department,
+            u.email, u.name, u.employee_id, u.department,
             c.title AS course_title,
             (SELECT COUNT(*) FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = c.id) AS total_lessons,
             (SELECT COUNT(*) FROM lesson_progress lp JOIN lessons l2 ON lp.lesson_id = l2.id JOIN modules m2 ON l2.module_id = m2.id WHERE m2.course_id = c.id AND lp.user_id = u.id AND lp.is_completed = 1) AS completed_lessons,
@@ -188,7 +188,7 @@ export async function GET() {
       : await query<any[]>(`
           SELECT 
             e.id AS enrollment_id, e.user_id, e.course_id, e.enrolled_at, e.completed_at,
-            u.email, u.department,
+            u.email, u.name, u.employee_id, u.department,
             c.title AS course_title,
             (SELECT COUNT(*) FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = c.id) AS total_lessons,
             (SELECT COUNT(*) FROM lesson_progress lp JOIN lessons l2 ON lp.lesson_id = l2.id JOIN modules m2 ON l2.module_id = m2.id WHERE m2.course_id = c.id AND lp.user_id = u.id AND lp.is_completed = 1) AS completed_lessons,
@@ -231,6 +231,8 @@ export async function GET() {
         userId: r.user_id,
         courseId: r.course_id,
         email: r.email,
+        name: r.name || null,
+        employeeId: r.employee_id || null,
         department: r.department,
         courseTitle: r.course_title,
         enrolledAt: r.enrolled_at,

@@ -102,6 +102,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userDept, setUserDept] = useState<string | null>(null);
 
@@ -125,6 +126,7 @@ export default function HomePage() {
         const meData = meRes.ok ? await meRes.json() : { user: null };
         const dept = meData.user?.department;
         setUserEmail(meData.user?.email ?? null);
+        setUserName(meData.user?.name ?? null);
         setUserRole(meData.user?.role ?? null);
         setUserDept(dept ?? null);
 
@@ -255,13 +257,13 @@ export default function HomePage() {
               <div className="flex items-center gap-2.5 pl-1 sm:pl-2">
                 <div className="relative flex items-center justify-center">
                   <div className="w-8 h-8 rounded-full bg-[#a20513] text-white flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm">
-                    {userEmail[0].toUpperCase()}
+                    {(userName || userEmail)[0].toUpperCase()}
                   </div>
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#16A34A] ring-2 ring-white" />
                 </div>
                 <div className="hidden lg:flex flex-col text-left">
-                  <span className="text-xs font-bold text-[#0F172A] truncate max-w-[120px]">
-                    {userEmail.split('@')[0]}
+                  <span className="text-xs font-bold text-[#0F172A] truncate max-w-[140px]">
+                    {userName || userEmail.split('@')[0]}
                   </span>
                   <span className="text-[10px] text-[#64748B] capitalize">
                     {userDept || userRole || 'Operator'}

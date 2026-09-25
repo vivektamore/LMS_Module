@@ -118,6 +118,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'all' | 'inprogress' | 'completed'>('all');
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userDept, setUserDept] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -186,6 +187,7 @@ export default function DashboardPage() {
         }
 
         setUserEmail(user.email ?? null);
+        setUserName(user.name ?? null);
         setUserRole(user.role ?? null);
         setUserDept(user.department ?? null);
 
@@ -373,22 +375,30 @@ export default function DashboardPage() {
 
   // Formatted display name
   const employeeName = useMemo(() => {
+    if (userName && userName.trim()) return userName.trim();
     if (!userEmail) return 'Employee';
     const userPart = userEmail.split('@')[0];
     return userPart
       .split(/[._-]/)
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
-  }, [userEmail]);
+  }, [userName, userEmail]);
 
   const userInitials = useMemo(() => {
+    if (userName && userName.trim()) {
+      const parts = userName.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return userName.slice(0, 2).toUpperCase();
+    }
     if (!userEmail) return 'U';
     const parts = userEmail.split('@')[0].split(/[._-]/);
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
     return userEmail.slice(0, 2).toUpperCase();
-  }, [userEmail]);
+  }, [userName, userEmail]);
 
   // ── Loading Skeleton ──────────────────────────────────────────────
   if (loading || !dataReady) {
