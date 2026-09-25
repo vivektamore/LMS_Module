@@ -8,8 +8,10 @@ export const pool = mysql.createPool({
   password: process.env.MYSQL_PASSWORD || '12345',
   database: process.env.MYSQL_DATABASE || 'learning_app_db',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: Number(process.env.MYSQL_CONNECTION_LIMIT) || 25,
   queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
 
 /**
