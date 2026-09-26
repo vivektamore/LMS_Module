@@ -56,3 +56,23 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 }
+
+export function getAuthCookieOptions(maxAgeSeconds?: number) {
+  // On local enterprise networks running on HTTP (e.g. http://192.168.8.163:3000),
+  // client browsers block/drop cookies if secure: true.
+  // Only enable secure if COOKIE_SECURE is explicitly set to 'true' (when behind HTTPS).
+  const secure = process.env.COOKIE_SECURE === 'true';
+
+  const options: any = {
+    httpOnly: true,
+    secure,
+    sameSite: 'lax',
+    path: '/',
+  };
+
+  if (typeof maxAgeSeconds === 'number') {
+    options.maxAge = maxAgeSeconds;
+  }
+
+  return options;
+}

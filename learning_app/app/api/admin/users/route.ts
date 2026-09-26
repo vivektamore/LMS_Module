@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import { getCurrentUser, signToken } from '@/lib/auth';
+import { getCurrentUser, signToken, getAuthCookieOptions } from '@/lib/auth';
 import { getNextEmployeeId } from './next-id/route';
 
 const DEPARTMENTS = [
@@ -238,13 +238,7 @@ export async function PUT(req: Request) {
         department: department || currentUser.department,
       };
       const newToken = signToken(updatedAuthUser);
-      response.cookies.set('token', newToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60,
-      });
+      response.cookies.set('token', newToken, getAuthCookieOptions(7 * 24 * 60 * 60));
     }
 
     return response;

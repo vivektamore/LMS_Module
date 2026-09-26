@@ -2,7 +2,7 @@
 
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { signToken } from '@/lib/auth';
+import { signToken, getAuthCookieOptions } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -41,19 +41,8 @@ export async function login(formData: FormData) {
   const token = signToken(authUser as any, rememberMe ? '7d' : '1d');
 
   const cookieStore = await cookies();
-  const cookieOptions: any = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-  };
-
-  if (rememberMe) {
-    // 7 days persistent cookie
-    cookieOptions.maxAge = 7 * 24 * 60 * 60;
-  }
-  // If rememberMe is false, omitting maxAge creates a Session Cookie.
-  // The browser will automatically destroy it when the user closes the browser/session.
+  const maxAge = rememberMe ? 7 * 24 * 60 * 60 : undefined;
+  const cookieOptions = getAuthCookieOptions(maxAge);
 
   cookieStore.set('token', token, cookieOptions);
 

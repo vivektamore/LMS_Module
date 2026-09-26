@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { signToken, getCurrentUser } from '@/lib/auth';
+import { signToken, getCurrentUser, getAuthCookieOptions } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -35,13 +35,7 @@ export async function POST(req: Request) {
     const token = signToken(user as any);
 
     const response = NextResponse.json({ success: true, user });
-    response.cookies.set('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60,
-    });
+    response.cookies.set('token', token, getAuthCookieOptions(7 * 24 * 60 * 60));
 
     return response;
   } catch (err: any) {

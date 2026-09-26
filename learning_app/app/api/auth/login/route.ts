@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { signToken } from '@/lib/auth';
+import { signToken, getAuthCookieOptions } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -36,15 +36,8 @@ export async function POST(req: Request) {
     const token = signToken(authUser as any, rememberMe ? '7d' : '1d');
 
     const response = NextResponse.json({ success: true, user: authUser });
-    const cookieOptions: any = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    };
-    if (rememberMe) {
-      cookieOptions.maxAge = 7 * 24 * 60 * 60;
-    }
+    const maxAge = rememberMe ? 7 * 24 * 60 * 60 : undefined;
+    const cookieOptions = getAuthCookieOptions(maxAge);
     response.cookies.set('token', token, cookieOptions);
 
     return response;
