@@ -10,6 +10,15 @@ export interface AuthUser {
   employee_id?: string | null;
   role: 'admin' | 'employee' | 'student';
   department?: string | null;
+  is_super_admin?: boolean;
+}
+
+export const SUPER_ADMIN_DEPARTMENTS = ['HR', 'IT', 'AI', 'DEVELOPMENT', 'GLOBAL'];
+
+export function isSuperAdmin(user: AuthUser | null | undefined): boolean {
+  if (!user || user.role !== 'admin') return false;
+  const dept = (user.department || '').toUpperCase();
+  return SUPER_ADMIN_DEPARTMENTS.includes(dept);
 }
 
 export function signToken(user: AuthUser, expiresIn: string = '7d'): string {
@@ -21,6 +30,7 @@ export function signToken(user: AuthUser, expiresIn: string = '7d'): string {
       employee_id: user.employee_id ?? null,
       role: user.role,
       department: user.department ?? null,
+      is_super_admin: isSuperAdmin(user),
     },
     JWT_SECRET,
     { expiresIn: expiresIn as any }

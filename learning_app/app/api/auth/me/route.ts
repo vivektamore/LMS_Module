@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 import { query } from '@/lib/db';
 
 export async function GET() {
@@ -30,6 +30,7 @@ export async function GET() {
       employee_id: dbUser.employee_id ?? null,
       role: dbUser.role,
       department: dbUser.department ?? null,
+      is_super_admin: isSuperAdmin(dbUser),
     },
   });
 }
