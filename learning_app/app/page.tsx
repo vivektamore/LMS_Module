@@ -145,8 +145,14 @@ export default function HomePage() {
           fetch('/api/categories'),
         ]);
 
-        if (!coursesRes.ok || !categoriesRes.ok) {
-          throw new Error('Failed to fetch data from the server.');
+        if (!coursesRes.ok) {
+          const errData = await coursesRes.json().catch(() => ({}));
+          throw new Error(errData.error || `Courses service returned HTTP ${coursesRes.status}`);
+        }
+
+        if (!categoriesRes.ok) {
+          const errData = await categoriesRes.json().catch(() => ({}));
+          throw new Error(errData.error || `Categories service returned HTTP ${categoriesRes.status}`);
         }
 
         const [{ courses: rawCourses }, { categories: rawCats }] =

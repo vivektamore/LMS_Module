@@ -234,7 +234,10 @@ export default function DashboardPage() {
       try {
         setLoading(true);
         const res = await fetch('/api/courses');
-        if (!res.ok) throw new Error('Failed to load courses.');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed to load courses (HTTP ${res.status}).`);
+        }
         const { courses: stubs } = await res.json();
 
         const detailed: Course[] = await Promise.all(
