@@ -13,7 +13,7 @@ export interface AuthUser {
   is_super_admin?: boolean;
 }
 
-export const SUPER_ADMIN_DEPARTMENTS = ['HR', 'IT', 'AI', 'DEVELOPMENT', 'GLOBAL'];
+export const SUPER_ADMIN_DEPARTMENTS = ['HR', 'MAINTENANCE'];
 
 export function isSuperAdmin(user: AuthUser | null | undefined): boolean {
   if (!user || user.role !== 'admin') return false;

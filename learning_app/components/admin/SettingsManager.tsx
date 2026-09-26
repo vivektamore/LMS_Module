@@ -216,7 +216,7 @@ export default function SettingsManager({ initialData }: SettingsManagerProps) {
               </div>
               <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-slate-200/80 text-slate-700 px-2 py-0.5 rounded font-mono">
                 <Lock className="w-2.5 h-2.5 text-slate-500" />
-                HR / Developer Governed
+                HR / Maintenance Governed
               </span>
             </div>
 
@@ -224,7 +224,7 @@ export default function SettingsManager({ initialData }: SettingsManagerProps) {
               <div className="p-3 bg-amber-50/60 border border-amber-200/70 rounded-lg flex items-start gap-2.5 text-xs text-amber-800">
                 <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold">Enterprise Identity Notice:</span> Corporate branding, legal entity names, and master logos are standardized across all plant departments and can only be altered by <strong>HR or Developers</strong>.
+                  <span className="font-semibold">Enterprise Identity Notice:</span> Corporate branding, legal entity names, and master logos are standardized across all plant departments and can only be altered by <strong>HR or Maintenance Super Admins</strong>.
                 </div>
               </div>
 
@@ -299,7 +299,7 @@ export default function SettingsManager({ initialData }: SettingsManagerProps) {
                   </div>
 
                   <span className="text-[11px] text-slate-500 italic bg-white px-2.5 py-1 rounded border border-slate-200">
-                    🔒 Managed by HR / IT
+                    🔒 Managed by HR / Maintenance
                   </span>
                 </div>
               </div>

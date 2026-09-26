@@ -1,13 +1,17 @@
 /**
- * Terminal CLI Script: Create or Promote Super Admin (Developer / HR)
+ * Terminal CLI Script: Create or Promote Super Admin (HR / Maintenance)
+ * 
+ * Super Admins in Jolly Clamps LMS are strictly:
+ *   - HR (Human Resources)
+ *   - MAINTENANCE (Plant Maintenance)
  * 
  * Usage Examples:
  *   1. Interactive mode:
- *      node scripts/create-admin.js
+ *      npm run create-admin
  * 
  *   2. Command-line flags mode:
- *      node scripts/create-admin.js --email hr@jollyclamps.com --name "HR Director" --department HR --password "admin123"
- *      node scripts/create-admin.js --email dev@jollyclamps.com --name "Lead Developer" --department IT --password "dev123"
+ *      node scripts/create-admin.js --email hr@jollyclamps.com --name "HR Director" --department HR --password "12345"
+ *      node scripts/create-admin.js --email maintenance.pew@gmail.com --name "Vivek Tamore" --department MAINTENANCE --password "12345"
  */
 
 const mysql = require('mysql2/promise');
@@ -128,12 +132,12 @@ async function main() {
     }
 
     if (!name) {
-      name = await prompt(rl, 'Enter Full Name (e.g. HR Director / Lead Developer): ');
+      name = await prompt(rl, 'Enter Full Name (e.g. HR Director / Vivek Tamore): ');
     }
 
     if (!department) {
-      department = await prompt(rl, 'Enter Department (HR, IT, MAINTENANCE, GLOBAL) [Default: HR]: ');
-      if (!department) department = 'HR';
+      department = await prompt(rl, 'Enter Department (HR, MAINTENANCE) [Default: MAINTENANCE]: ');
+      if (!department) department = 'MAINTENANCE';
     }
     department = department.toUpperCase();
 
