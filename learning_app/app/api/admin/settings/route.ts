@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 import { query, pool } from '@/lib/db';
 import fs from 'fs';
 import path from 'path';
@@ -118,6 +118,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       currentUserDepartment: user?.department || 'GLOBAL',
+      isSuperAdmin: isSuperAdmin(user),
       database: {
         status: dbStatus,
         version: dbVersion,
@@ -173,12 +174,55 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const superAdmin = isSuperAdmin(user) || allowBypass;
     const body = await req.json();
-    const { supportEmail, enforceAntiSkip, allowYouTubeEmbeds } = body;
+    const {
+      supportEmail,
+      enforceAntiSkip,
+      allowYouTubeEmbeds,
+      platformName,
+      orgName,
+      issuerName,
+      signatoryTitle,
+    } = body;
 
-    // Department admins can only update operational settings:
-    // Support Email, Anti-Skip policy, and External Video Embed policy.
-    // Platform Name, Logo, Org Name, and Signatory are Enterprise Locked (HR/Developer only).
+    // Super Admin Exclusive Settings (HR / Maintenance)
+    if (superAdmin) {
+      if (typeof platformName === 'string' && platformName.trim()) {
+        await query(
+          `INSERT INTO app_settings (setting_key, setting_value) 
+           VALUES ('platform_name', ?) 
+           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+          [platformName.trim()]
+        );
+      }
+      if (typeof orgName === 'string' && orgName.trim()) {
+        await query(
+          `INSERT INTO app_settings (setting_key, setting_value) 
+           VALUES ('org_name', ?) 
+           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+          [orgName.trim()]
+        );
+      }
+      if (typeof issuerName === 'string' && issuerName.trim()) {
+        await query(
+          `INSERT INTO app_settings (setting_key, setting_value) 
+           VALUES ('issuer_name', ?) 
+           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+          [issuerName.trim()]
+        );
+      }
+      if (typeof signatoryTitle === 'string' && signatoryTitle.trim()) {
+        await query(
+          `INSERT INTO app_settings (setting_key, setting_value) 
+           VALUES ('signatory_title', ?) 
+           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+          [signatoryTitle.trim()]
+        );
+      }
+    }
+
+    // Operational Settings (all admins)
     if (typeof supportEmail === 'string' && supportEmail.trim()) {
       await query(
         `INSERT INTO app_settings (setting_key, setting_value) 
@@ -208,7 +252,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Operational settings saved successfully.',
+      message: 'Operational & corporate settings saved successfully.',
     });
   } catch (error: any) {
     console.error('Admin Settings PUT Error:', error);

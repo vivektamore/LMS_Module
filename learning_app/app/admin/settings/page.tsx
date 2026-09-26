@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import SettingsManager, { SettingsData } from '@/components/admin/SettingsManager';
 import { query, pool } from '@/lib/db';
@@ -112,6 +112,7 @@ export default async function AdminSettingsPage() {
 
   const initialData: SettingsData = {
     currentUserDepartment: user?.department || 'GLOBAL',
+    isSuperAdmin: isSuperAdmin(user),
     database: {
       status: dbStatus,
       version: dbVersion,
