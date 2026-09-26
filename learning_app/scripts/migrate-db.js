@@ -50,14 +50,19 @@ async function migrate() {
 
     if (cols.length === 0) {
       console.log(`+ Adding column \`${column}\` to table \`${table}\`...`);
-      await conn.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
-      console.log(`  ✓ Added \`${column}\` to \`${table}\``);
+      try {
+        await conn.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+        console.log(`  ✓ Added \`${column}\` to \`${table}\``);
+      } catch (err) {
+        console.error(`  ✗ Error adding \`${column}\` to \`${table}\`:`, err.message);
+      }
     } else {
-      console.log(`  ✓ Column \`${table}.${column}\` already exists`);
+      console.log(`  ✓ Column \`${table}.${column}\` exists`);
     }
   }
 
   // 1. Users Table Columns
+  console.log('\n[1/7] Checking `users` table...');
   await ensureColumn('users', 'name', 'VARCHAR(255) NULL');
   await ensureColumn('users', 'employee_id', 'VARCHAR(50) NULL');
   await ensureColumn(
@@ -80,14 +85,43 @@ async function migrate() {
   `);
 
   // 2. Courses Table Columns
+  console.log('\n[2/7] Checking `courses` table...');
   await ensureColumn('courses', 'course_code', 'VARCHAR(50) NULL');
+  await ensureColumn('courses', 'description', 'TEXT NULL');
+  await ensureColumn('courses', 'thumbnail_url', 'VARCHAR(500) NULL');
+  await ensureColumn('courses', 'category_id', 'VARCHAR(36) NULL');
+  await ensureColumn('courses', 'created_by', 'VARCHAR(36) NULL');
   await ensureColumn('courses', 'visibility', "ENUM('all', 'specific') NOT NULL DEFAULT 'all'");
   await ensureColumn('courses', 'has_certificate', 'TINYINT(1) NOT NULL DEFAULT 0');
+  await ensureColumn('courses', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
 
-  // 3. Certificates Table Columns
+  // 3. Lessons Table Columns
+  console.log('\n[3/7] Checking `lessons` table...');
+  await ensureColumn('lessons', 'type', "ENUM('single', 'playlist') NOT NULL DEFAULT 'single'");
+  await ensureColumn('lessons', 'video_url', 'TEXT NULL');
+  await ensureColumn('lessons', 'playlist_urls', 'JSON NULL');
+  await ensureColumn('lessons', 'duration_seconds', 'INT NOT NULL DEFAULT 0');
+  await ensureColumn('lessons', 'order_index', 'INT NOT NULL DEFAULT 0');
+
+  // 4. Lesson Progress Table Columns
+  console.log('\n[4/7] Checking `lesson_progress` table...');
+  await ensureColumn('lesson_progress', 'is_completed', 'TINYINT(1) NOT NULL DEFAULT 0');
+  await ensureColumn('lesson_progress', 'completed_at', 'DATETIME NULL');
+  await ensureColumn('lesson_progress', 'max_watched_time_sec', 'INT NOT NULL DEFAULT 0');
+  await ensureColumn('lesson_progress', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  // 5. Video Watch Time Table Columns
+  console.log('\n[5/7] Checking `video_watch_time` table...');
+  await ensureColumn('video_watch_time', 'watched_seconds', 'INT NOT NULL DEFAULT 0');
+  await ensureColumn('video_watch_time', 'total_seconds', 'INT NOT NULL DEFAULT 0');
+  await ensureColumn('video_watch_time', 'last_watched_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  // 6. Certificates Table Columns
+  console.log('\n[6/7] Checking `certificates` table...');
   await ensureColumn('certificates', 'recipient_name', 'VARCHAR(255) NULL');
 
-  // 4. Ensure app_settings table exists
+  // 7. App Settings Table
+  console.log('\n[7/7] Checking `app_settings` table...');
   await conn.query(`
     CREATE TABLE IF NOT EXISTS app_settings (
       setting_key VARCHAR(100) PRIMARY KEY,
@@ -114,7 +148,9 @@ async function migrate() {
   }
   console.log('  ✓ Default corporate settings populated in `app_settings`');
 
-  console.log('\n🎉 Database schema migration completed successfully!\n');
+  console.log('\n══════════════════════════════════════════════════════════════════');
+  console.log('  🎉 Database schema migration completed successfully!');
+  console.log('══════════════════════════════════════════════════════════════════\n');
   await conn.end();
 }
 
