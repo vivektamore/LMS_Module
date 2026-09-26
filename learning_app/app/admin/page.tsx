@@ -347,6 +347,15 @@ export default function AdminDashboard() {
           <div className="h-5 w-px bg-slate-200"></div>
 
           <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer"
+            title="Go to All Courses Catalog"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-slate-600" />
+            <span>All Courses</span>
+          </Link>
+
+          <Link
             href="/admin/courses"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#c62828] hover:bg-[#a20513] text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
           >
