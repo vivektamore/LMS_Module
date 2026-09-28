@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 import { query } from '@/lib/db';
 
 export const revalidate = 0; // Don't cache admin analytics
@@ -30,13 +30,16 @@ export async function GET() {
     }
 
     const adminId = user?.id;
+    const isSuper = isSuperAdmin(user);
+    // Super Admins (HR & MAINTENANCE) or dev bypass see enterprise-wide metrics
+    const filterByAdmin = !isSuper && !!adminId;
 
-    // 1. Fetch live metrics from MySQL for this admin's created courses & users
-    const [coursesCount] = adminId
+    // 1. Fetch live metrics from MySQL
+    const [coursesCount] = filterByAdmin
       ? await query<any[]>('SELECT COUNT(*) AS total FROM courses WHERE created_by = ?', [adminId])
       : await query<any[]>('SELECT COUNT(*) AS total FROM courses');
 
-    const [enrollsCount] = adminId
+    const [enrollsCount] = filterByAdmin
       ? await query<any[]>(
           `SELECT COUNT(*) AS total FROM enrollments e 
            JOIN users u ON e.user_id = u.id 
@@ -45,8 +48,8 @@ export async function GET() {
         )
       : await query<any[]>('SELECT COUNT(*) AS total FROM enrollments');
 
-    // Use video_watch_time for accurate total watched seconds across employees created by this admin
-    const [watchSum] = adminId
+    // Use video_watch_time for accurate total watched seconds
+    const [watchSum] = filterByAdmin
       ? await query<any[]>(
           `SELECT COALESCE(SUM(vwt.watched_seconds), 0) AS total_sec 
            FROM video_watch_time vwt 
@@ -56,7 +59,7 @@ export async function GET() {
         )
       : await query<any[]>('SELECT COALESCE(SUM(watched_seconds), 0) AS total_sec FROM video_watch_time');
 
-    const [activeUsersCount] = adminId
+    const [activeUsersCount] = filterByAdmin
       ? await query<any[]>(
           'SELECT COUNT(*) AS total FROM users WHERE created_by = ? AND last_sign_in_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)',
           [adminId]
@@ -85,7 +88,7 @@ export async function GET() {
     }
 
     // Daily watch time from video_watch_time grouped by date
-    const watchRecords = adminId
+    const watchRecords = filterByAdmin
       ? await query<any[]>(`
           SELECT 
             DATE_FORMAT(vwt.last_watched_at, '%Y-%m-%d') AS watch_date,
@@ -121,7 +124,7 @@ export async function GET() {
     }));
 
     // 3. Fetch users list with department, enrolled & completed metrics, and certificates count
-    const usersList = adminId
+    const usersList = filterByAdmin
       ? await query<any[]>(`
           SELECT 
             u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at,
@@ -145,7 +148,7 @@ export async function GET() {
         `);
 
     // 4. Fetch courses overview for admin dashboard
-    const coursesList = adminId
+    const coursesList = filterByAdmin
       ? await query<any[]>(`
           SELECT 
             c.id, c.title, c.course_code, c.created_at,
@@ -169,7 +172,7 @@ export async function GET() {
         `);
 
     // 5. Fetch recent enrollments with user details & progress
-    const recentEnrollmentRows = adminId
+    const recentEnrollmentRows = filterByAdmin
       ? await query<any[]>(`
           SELECT 
             e.id AS enrollment_id, e.user_id, e.course_id, e.enrolled_at, e.completed_at,

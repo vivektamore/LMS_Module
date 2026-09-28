@@ -299,7 +299,14 @@ export default function AdminDashboard() {
   }, [trend]);
 
   const maxDailyMinutes = useMemo(() => {
-    return Math.max(...trend.map((d) => d.minutes || 0), 60);
+    const maxVal = Math.max(...trend.map((d) => d.minutes || 0), 0);
+    return maxVal > 0 ? maxVal : 30;
+  }, [trend]);
+
+  const peakDay = useMemo(() => {
+    if (!trend.length) return null;
+    const max = trend.reduce((prev, curr) => (curr.seconds > prev.seconds ? curr : prev), trend[0]);
+    return max && max.seconds > 0 ? max : null;
   }, [trend]);
 
   if (loading) {
@@ -1152,21 +1159,47 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Minimal Industrial Bar Chart (Mon - Sun) */}
+              {/* Minimal Industrial Bar Chart (Last 7 Days) */}
               <div className="h-44 flex items-end justify-between gap-2 pt-6 pb-2 px-1">
                 {trend.map((d, i) => {
-                  const pct = Math.max(12, Math.round((d.minutes / maxDailyMinutes) * 100));
+                  const hasData = d.minutes > 0;
+                  const isPeak = peakDay && d.date === peakDay.date && d.seconds > 0;
+                  const pct = hasData
+                    ? Math.max(18, Math.round((d.minutes / maxDailyMinutes) * 100))
+                    : 0;
+
                   return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end">
-                      <span className="text-[10px] text-slate-500 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                        {d.minutes}m
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end relative">
+                      {/* Floating tooltip badge */}
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-all pointer-events-none whitespace-nowrap mb-1 ${
+                        hasData
+                          ? 'opacity-0 group-hover:opacity-100 bg-slate-900 text-white shadow-sm'
+                          : 'opacity-0 group-hover:opacity-100 bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}>
+                        {hasData ? `${d.minutes}m` : '0m'}
                       </span>
-                      <div
-                        className="w-full bg-[#565e74] rounded-t transition-all group-hover:bg-[#c62828] cursor-pointer"
-                        style={{ height: `${pct}%` }}
-                        title={`${d.day} (${d.date}): ${d.minutes} min (${d.formatted})`}
-                      ></div>
-                      <span className="text-[11px] text-slate-500 uppercase font-bold">
+
+                      {/* Bar / Baseline */}
+                      {hasData ? (
+                        <div
+                          className={`w-full rounded-t transition-all cursor-pointer ${
+                            isPeak
+                              ? 'bg-[#c62828] hover:bg-[#a20513] shadow-sm'
+                              : 'bg-slate-600 hover:bg-[#c62828]'
+                          }`}
+                          style={{ height: `${pct}%` }}
+                          title={`${d.day} (${d.date}): ${d.minutes} min (${d.formatted})`}
+                        ></div>
+                      ) : (
+                        <div
+                          className="w-full h-1.5 bg-slate-200 rounded-full group-hover:bg-slate-300 transition-colors cursor-pointer"
+                          title={`${d.day} (${d.date}): 0 min`}
+                        ></div>
+                      )}
+
+                      <span className={`text-[11px] uppercase font-bold tracking-tight mt-1 ${
+                        isPeak ? 'text-[#c62828]' : hasData ? 'text-slate-800' : 'text-slate-400'
+                      }`}>
                         {d.day}
                       </span>
                     </div>
@@ -1177,10 +1210,17 @@ export default function AdminDashboard() {
 
             <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1.5 font-medium">
-                <span className="w-2 h-2 rounded-full bg-[#c62828]"></span> Active Training Peak
+                <span className={`w-2 h-2 rounded-full ${peakDay ? 'bg-[#c62828]' : 'bg-slate-300'}`}></span>
+                {peakDay ? (
+                  <span>
+                    Peak: <strong className="text-slate-800">{peakDay.day}</strong> ({peakDay.formatted})
+                  </span>
+                ) : (
+                  <span>No activity in last 7 days</span>
+                )}
               </span>
-              <span className="font-bold text-slate-800">
-                {stats?.formattedWatchTime || `${stats?.videoHours || 0} hrs total`}
+              <span className="font-bold text-slate-800" title="Cumulative total watch time across all training">
+                Total: {stats?.formattedWatchTime || `${stats?.videoHours || 0} hrs`}
               </span>
             </div>
           </div>
