@@ -2006,14 +2006,49 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                       onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
                     />
 
-                    {/* Lesson Summary Bar */}
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-500">
-                      <span className="font-mono text-slate-700 font-medium">
-                        Lesson Duration: {formatSeconds(lesson.duration_seconds || 0)}
-                      </span>
-                      <span>
-                        Type: {lesson.type === 'single' ? 'Single Video' : 'Multi-Part Sequential Video'}
-                      </span>
+                    {/* Lesson Summary & Duration Editor Bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200 text-xs text-slate-600 bg-slate-50/80 p-3 rounded-lg border border-slate-200">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-[#c62828] flex-shrink-0" />
+                        <span className="font-semibold text-slate-800">Lesson Duration:</span>
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={lesson.duration_seconds ? Math.floor(lesson.duration_seconds / 60) : ''}
+                            onChange={(e) => {
+                              const mins = Math.max(0, parseInt(e.target.value) || 0);
+                              const secs = (lesson.duration_seconds || 0) % 60;
+                              updateLesson(mod.id, lesson.id, { duration_seconds: mins * 60 + secs });
+                            }}
+                            className="w-14 px-2 py-1 text-center bg-white border border-slate-300 rounded text-xs text-slate-900 font-bold focus:border-[#c62828] focus:outline-none shadow-2xs"
+                            title="Duration in minutes (auto-calculated from video, or edit manually)"
+                          />
+                          <span className="text-[11px] text-slate-500 font-semibold">min</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="59"
+                            placeholder="0"
+                            value={lesson.duration_seconds ? (lesson.duration_seconds % 60) : ''}
+                            onChange={(e) => {
+                              const mins = Math.floor((lesson.duration_seconds || 0) / 60);
+                              const secs = Math.min(59, Math.max(0, parseInt(e.target.value) || 0));
+                              updateLesson(mod.id, lesson.id, { duration_seconds: mins * 60 + secs });
+                            }}
+                            className="w-14 px-2 py-1 text-center bg-white border border-slate-300 rounded text-xs text-slate-900 font-bold focus:border-[#c62828] focus:outline-none shadow-2xs"
+                            title="Duration in seconds (auto-calculated from video, or edit manually)"
+                          />
+                          <span className="text-[11px] text-slate-500 font-semibold">sec</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-sans">
+                          {lesson.duration_seconds && lesson.duration_seconds > 0 ? '✓ Auto-calculated / Editable' : '(Auto-detects on upload or set manually)'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        Type: <span className="font-semibold text-slate-700">{lesson.type === 'single' ? 'Single Video' : 'Multi-Part Sequential Video'}</span>
+                      </div>
                     </div>
                   </div>
                 ))}

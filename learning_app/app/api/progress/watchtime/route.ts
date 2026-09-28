@@ -25,6 +25,15 @@ export async function POST(req: Request) {
       last_watched_at = NOW()
   `, [randomUUID(), user.id, lesson_id, watched_seconds, total_seconds || 0]);
 
+  // Auto-heal lesson duration_seconds in lessons table if it was previously 0
+  if (total_seconds && total_seconds > 0) {
+    await query(`
+      UPDATE lessons 
+      SET duration_seconds = ? 
+      WHERE id = ? AND (duration_seconds IS NULL OR duration_seconds = 0)
+    `, [Math.round(total_seconds), lesson_id]);
+  }
+
   // Auto-mark lesson complete if 80%+ watched, or record in-progress watch time
   const pct = total_seconds > 0 ? (watched_seconds / total_seconds) : 0;
   const isComplete = pct >= 0.8;

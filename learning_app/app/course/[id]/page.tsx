@@ -758,7 +758,7 @@ export default function CourseDetailPage({
                                     <div className="flex items-center space-x-2 mt-1 text-[11px] text-slate-500 font-mono">
                                       <span className="flex items-center">
                                         <Clock className="w-3 h-3 mr-1" />
-                                        {fmtSeconds(lesson.duration_seconds)}
+                                        {fmtSeconds(lesson.duration_seconds > 0 ? lesson.duration_seconds : (isActive ? duration : 0))}
                                       </span>
                                       {isPlaylist && (
                                         <>
