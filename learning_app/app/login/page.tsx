@@ -83,7 +83,8 @@ export default function LoginPage() {
                 alt="Jolly Clamps Logo" 
                 width={160} 
                 height={48} 
-                className="h-12 w-auto object-contain block mx-auto"
+                style={{ width: 'auto', height: '3rem' }}
+                className="object-contain block mx-auto"
                 priority
               />
             </div>
@@ -123,7 +124,7 @@ export default function LoginPage() {
             )}
 
             {/* Login Form */}
-            <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+            <form className="space-y-5" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
               {/* Email Address Input Field */}
               <div>
                 <label className="block text-sm font-medium text-slate-800 mb-1.5" htmlFor="employeeEmail">
@@ -139,6 +140,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your registered email"
+                    suppressHydrationWarning
                     className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#c62828] focus:ring-2 focus:ring-[#c62828]/20 transition"
                   />
                 </div>
@@ -159,12 +161,14 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
+                    suppressHydrationWarning
                     className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#c62828] focus:ring-2 focus:ring-[#c62828]/20 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    suppressHydrationWarning
                     className="absolute right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition"
                   >
                     {showPassword ? (
@@ -185,6 +189,7 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
+                    suppressHydrationWarning
                     className="w-4 h-4 rounded border-slate-300 text-[#c62828] focus:ring-[#c62828]/25 cursor-pointer accent-[#c62828]"
                   />
                   <span className="ml-2.5 text-sm text-slate-600 font-normal">
@@ -198,6 +203,7 @@ export default function LoginPage() {
                 id="signInButton"
                 type="submit"
                 disabled={loading}
+                suppressHydrationWarning
                 className="w-full py-3 h-12 rounded-lg bg-[#c62828] hover:bg-[#b71c1c] active:bg-[#9a1414] text-white font-medium text-base shadow-sm flex items-center justify-center gap-2 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c62828] transition-all disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 {loading ? (
