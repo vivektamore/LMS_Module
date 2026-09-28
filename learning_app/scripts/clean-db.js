@@ -34,11 +34,12 @@ if (fs.existsSync(envPath)) {
 }
 
 const args = process.argv.slice(2);
-const cleanActivity = args.includes('--activity-only') || args.includes('--all') || args.length === 0;
-const cleanCourses = args.includes('--courses') || args.includes('--all');
+const isResetEverything = args.includes('--reset-everything');
+const cleanActivity = args.includes('--activity-only') || args.includes('--all') || isResetEverything || args.length === 0;
+const cleanCourses = args.includes('--courses') || args.includes('--all') || isResetEverything;
 const cleanUsers = args.includes('--test-users') || args.includes('--all');
-const cleanAllUsers = args.includes('--all-users') || args.includes('--reset-everything');
-const cleanCategories = args.includes('--categories') || args.includes('--reset-everything');
+const cleanAllUsers = args.includes('--all-users') || isResetEverything;
+const cleanCategories = args.includes('--categories') || isResetEverything;
 
 async function main() {
   console.log('\n🧹  LEARNING APP — DATABASE CLEANUP');
@@ -88,6 +89,20 @@ async function main() {
       console.log('🗑️  Clearing categories...');
       await conn.query('TRUNCATE TABLE categories');
       console.log('   ✅ All categories wiped clean.');
+
+      // Reseed standard categories for fresh trial
+      console.log('🌱  Reseeding standard curriculum categories...');
+      const defaultCategories = [
+        { name: 'Machine Maintenance', slug: 'machine_maintenance' },
+        { name: 'Industrial Safety', slug: 'safety' },
+        { name: 'Quality Assurance', slug: 'quality' },
+        { name: 'Manufacturing & Production', slug: 'production' },
+        { name: 'Hydraulics & Pneumatics', slug: 'hydraulics' },
+      ];
+      for (const cat of defaultCategories) {
+        await conn.query('INSERT INTO categories (id, name, slug) VALUES (UUID(), ?, ?)', [cat.name, cat.slug]);
+      }
+      console.log('   ✅ Reseeded standard categories.');
     }
 
     await conn.query('SET FOREIGN_KEY_CHECKS = 1');

@@ -377,8 +377,8 @@ export default function HomePage() {
                     className={`group inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap shadow-sm cursor-pointer ${
                       isActive
                         ? 'bg-[#a20513] text-white shadow-md'
-                        : 'bg-white text-[#565e74] border border-[#E2E8F0] hover:bg-[#eceef0]'
-                    } ${count === 0 ? 'opacity-60' : ''}`}
+                        : 'bg-white text-[#565e74] border border-[#E2E8F0] hover:bg-[#eceef0] hover:text-[#0F172A]'
+                    }`}
                   >
                     <span>{cat.name}</span>
                     <span

@@ -11,7 +11,7 @@ upstream nextjs_upstream {
 
 server {
     listen 80;
-    server_name lms.jollyclamps.local 192.168.1.100; # Replace with Company Server IP / Hostname
+    server_name lms.jollyclamps.local 192.168.8.163; # Replace with Company Server IP / Hostname
 
     # Client body upload cap for course MP4 video uploads (matches 500MB setting)
     client_max_body_size 500M;
