@@ -61,11 +61,11 @@ export async function GET() {
 
     const [activeUsersCount] = filterByAdmin
       ? await query<any[]>(
-          'SELECT COUNT(*) AS total FROM users WHERE created_by = ? AND last_sign_in_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)',
+          'SELECT COUNT(*) AS total FROM users WHERE created_by = ? AND role != "admin" AND last_sign_in_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)',
           [adminId]
         )
       : await query<any[]>(
-          'SELECT COUNT(*) AS total FROM users WHERE last_sign_in_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
+          'SELECT COUNT(*) AS total FROM users WHERE role != "admin" AND last_sign_in_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
         );
 
     const totalCourses = coursesCount?.total || 0;
@@ -133,7 +133,7 @@ export async function GET() {
             (SELECT COUNT(*) FROM certificates c WHERE c.user_id = u.id) AS certificatesCount,
             (SELECT COALESCE(SUM(vwt.watched_seconds), 0) FROM video_watch_time vwt WHERE vwt.user_id = u.id) AS watchedSeconds
           FROM users u
-          WHERE u.created_by = ?
+          WHERE u.created_by = ? AND u.role != 'admin'
           ORDER BY u.created_at DESC
         `, [adminId])
       : await query<any[]>(`
@@ -144,6 +144,7 @@ export async function GET() {
             (SELECT COUNT(*) FROM certificates c WHERE c.user_id = u.id) AS certificatesCount,
             (SELECT COALESCE(SUM(vwt.watched_seconds), 0) FROM video_watch_time vwt WHERE vwt.user_id = u.id) AS watchedSeconds
           FROM users u
+          WHERE u.role != 'admin'
           ORDER BY u.created_at DESC
         `);
 

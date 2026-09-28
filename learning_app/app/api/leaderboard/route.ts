@@ -9,6 +9,7 @@ export async function GET() {
     const currentUser = await getCurrentUser();
 
     // Query top learners by tutorials (lessons) completed, certificates, and watch time
+    // ONLY include employees/learners (exclude administrators)
     const learners = await query<any[]>(`
       SELECT 
         u.id,
@@ -26,6 +27,7 @@ export async function GET() {
           0
         ) AS watched_seconds
       FROM users u
+      WHERE u.role != 'admin'
       GROUP BY u.id, u.email, u.name, u.employee_id, u.department, u.role
       ORDER BY completed_lessons DESC, certificates_count DESC, watched_seconds DESC, u.created_at ASC
       LIMIT 20;
@@ -33,12 +35,17 @@ export async function GET() {
 
     const leaderboard = learners.map((user, idx) => {
       const rank = idx + 1;
-      let badge = '';
-      if (rank === 1) badge = 'Top Achiever 👑';
-      else if (rank === 2) badge = 'Master Learner 🥈';
-      else if (rank === 3) badge = 'High Performer 🥉';
-      else if (Number(user.completed_lessons) >= 5) badge = 'Dedicated ⭐';
-      else badge = 'Active Learner 🚀';
+      const completed = Number(user.completed_lessons) || 0;
+      const certs = Number(user.certificates_count) || 0;
+      const watched = Number(user.watched_seconds) || 0;
+      const points = (completed * 10) + (certs * 25) + Math.round(watched / 60);
+
+      let badge = 'Enrolled Learner 📋';
+      if (certs > 0 && completed >= 5) badge = 'Master Learner 👑';
+      else if (certs > 0) badge = 'Certified Specialist 🎖️';
+      else if (completed >= 3) badge = 'High Performer ⭐';
+      else if (completed >= 1) badge = 'Rising Tech 🔧';
+      else if (watched > 0) badge = 'Active Learner 🚀';
 
       return {
         rank,
@@ -47,10 +54,11 @@ export async function GET() {
         name: user.name || user.email.split('@')[0],
         employeeId: user.employee_id,
         department: user.department,
-        completedLessons: Number(user.completed_lessons) || 0,
-        certificatesCount: Number(user.certificates_count) || 0,
+        completedLessons: completed,
+        certificatesCount: certs,
         completedCourses: Number(user.completed_courses) || 0,
-        watchedSeconds: Number(user.watched_seconds) || 0,
+        watchedSeconds: watched,
+        points,
         badge,
         isCurrentUser: currentUser ? currentUser.id === user.id : false,
       };

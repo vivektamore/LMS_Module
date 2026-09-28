@@ -36,6 +36,7 @@ export interface UserItem {
   notStartedCount: number;
   enrollments: UserEnrollmentInfo[];
   isCurrentUser?: boolean;
+  createdBy?: string | null;
 }
 
 interface UserManagerProps {
@@ -84,7 +85,7 @@ function formatDateTime(dateStr?: string | null): string {
 export default function UserManager({
   initialUsers,
   currentUserId,
-  currentUserDept = '',
+  currentUserDept = 'MAINTENANCE',
   isSuperAdmin = false,
 }: UserManagerProps) {
   const [users, setUsers] = useState<UserItem[]>(initialUsers);
@@ -102,11 +103,10 @@ export default function UserManager({
   const pageSize = 8;
 
   // Add User Modal
-  const defaultDept = !isSuperAdmin && currentUserDept ? currentUserDept : 'MAINTENANCE';
   const [showAddModal, setShowAddModal] = useState(false);
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
-  const [addDept, setAddDept] = useState(defaultDept);
+  const [addDept, setAddDept] = useState(currentUserDept || 'MAINTENANCE');
   const [addEmployeeId, setAddEmployeeId] = useState('');
   const [addRole, setAddRole] = useState<'employee' | 'admin'>('employee');
   const [addPassword, setAddPassword] = useState('12345');
@@ -155,8 +155,8 @@ export default function UserManager({
   // Auto-generate employee ID when department changes in Add User modal
   useEffect(() => {
     if (showAddModal && !isManualId) {
-      const targetDept = !isSuperAdmin && currentUserDept ? currentUserDept : addDept;
-      fetch(`/api/admin/users/next-id?department=${targetDept}`)
+      const deptToFetch = !isSuperAdmin ? currentUserDept : addDept;
+      fetch(`/api/admin/users/next-id?department=${deptToFetch}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.employee_id) setAddEmployeeId(data.employee_id);
@@ -217,8 +217,6 @@ export default function UserManager({
     setIsSubmittingAdd(true);
     setAddError('');
 
-    const finalDept = !isSuperAdmin && currentUserDept ? currentUserDept : addDept;
-
     try {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
@@ -226,7 +224,7 @@ export default function UserManager({
         body: JSON.stringify({
           email: addEmail.trim(),
           name: addName.trim(),
-          department: finalDept,
+          department: !isSuperAdmin ? currentUserDept : addDept,
           employee_id: addEmployeeId.trim(),
           role: addRole,
           password: addPassword.trim() || '12345',
@@ -286,10 +284,22 @@ export default function UserManager({
     }
   }
 
-  // Delete User
+  // Delete User — Allowed for Super Admins or the admin who created this user
   async function handleDeleteUser(user: UserItem) {
     if (user.id === currentUserId) {
       alert('You cannot delete your own active admin account.');
+      return;
+    }
+
+    const deptUpper = (user.department || '').toUpperCase();
+    if (user.role === 'admin' && (deptUpper === 'HR' || deptUpper === 'MAINTENANCE')) {
+      alert('Protection: Super Admin accounts (HR / Maintenance) cannot be deleted.');
+      return;
+    }
+
+    const canDeleteThisUser = isSuperAdmin || (!!user.createdBy && user.createdBy === currentUserId && user.role !== 'admin');
+    if (!canDeleteThisUser) {
+      alert('Access Denied: You can only delete users created by your own admin account.');
       return;
     }
 
@@ -299,7 +309,8 @@ export default function UserManager({
 
     try {
       const res = await fetch(`/api/admin/users?id=${user.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete user');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete user');
 
       setToastMsg(`User ${user.name} removed successfully.`);
       if (selectedUser?.id === user.id) {
@@ -311,8 +322,13 @@ export default function UserManager({
     }
   }
 
-  // Open Edit Modal
+  // Open Edit Modal — Allowed for user self, Super Admins, or the admin who created this user
   function openEditModal(user: UserItem) {
+    const canEdit = user.id === currentUserId || isSuperAdmin || (!!user.createdBy && user.createdBy === currentUserId);
+    if (!canEdit) {
+      alert('Access Denied: You can only edit users created by your own admin account.');
+      return;
+    }
     setEditUser(user);
     setEditName(user.name);
     setEditEmail(user.email);
@@ -344,27 +360,18 @@ export default function UserManager({
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              User Management
-            </h1>
-            {!isSuperAdmin && currentUserDept && (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                {currentUserDept} Department
-              </span>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            User Management
+          </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            {isSuperAdmin
-              ? 'Create, edit and manage shop-floor employees and LMS access across all departments.'
-              : `Create, edit and manage ${currentUserDept} department employees and LMS access.`}
+            Create, edit and manage shop-floor employees and LMS access.
           </p>
         </div>
 
         <div className="flex items-center gap-3 self-start md:self-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-white rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs">
             <Users className="w-4 h-4 text-slate-500" />
-            <span>{!isSuperAdmin && currentUserDept ? `${currentUserDept} Users:` : 'Total Users:'}</span>
+            <span>Total Users:</span>
             <span className="font-mono text-[#c62828] font-bold text-sm">
               {users.length}
             </span>
@@ -375,8 +382,9 @@ export default function UserManager({
             onClick={() => {
               setAddName('');
               setAddEmail('');
-              setAddDept(!isSuperAdmin && currentUserDept ? currentUserDept : 'MAINTENANCE');
-              setAddEmployeeId('');
+              const targetDept = !isSuperAdmin ? currentUserDept : (currentUserDept || 'MAINTENANCE');
+              setAddDept(targetDept);
+              setAddRole('employee');
               setAddPassword('12345');
               setAddError('');
               setIsManualId(false);
@@ -415,28 +423,21 @@ export default function UserManager({
 
             {/* Filter Dropdowns */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-              {!isSuperAdmin && currentUserDept ? (
-                <div className="h-9 px-3 rounded-lg bg-red-50 border border-red-200 text-[#c62828] text-xs font-semibold flex items-center gap-1.5 shadow-2xs" title={`Viewing ${currentUserDept} users only`}>
-                  <span className="text-slate-500">Dept:</span>
-                  <span className="font-bold">{currentUserDept}</span>
-                </div>
-              ) : (
-                <select
-                  value={deptFilter}
-                  onChange={(e) => {
-                    setDeptFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium focus:outline-none focus:border-[#c62828] cursor-pointer"
-                >
-                  <option value="all">All Departments</option>
-                  {ALL_DEPARTMENTS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <select
+                value={deptFilter}
+                onChange={(e) => {
+                  setDeptFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium focus:outline-none focus:border-[#c62828] cursor-pointer"
+              >
+                <option value="all">All Departments</option>
+                {ALL_DEPARTMENTS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
 
               <select
                 value={roleFilter}
@@ -597,15 +598,24 @@ export default function UserManager({
                           {/* Actions */}
                           <td className="py-3 px-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                type="button"
-                                onClick={() => openEditModal(user)}
-                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                                title="Edit User"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
+                              {/* Edit: Available for self, Super Admins, or if this admin created the user */}
+                              {(isCurrentUser || isSuperAdmin || (!!user.createdBy && user.createdBy === currentUserId)) && (
+                                <button
+                                  type="button"
+                                  onClick={() => openEditModal(user)}
+                                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                                  title="Edit User"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              {/* Delete: Available for Super Admins (non-super-admins) or if this admin created the user (non-admin) */}
                               {!isCurrentUser && (
+                                isSuperAdmin
+                                  ? !(user.role === 'admin' && (user.department?.toUpperCase() === 'HR' || user.department?.toUpperCase() === 'MAINTENANCE'))
+                                  : (!!user.createdBy && user.createdBy === currentUserId && user.role !== 'admin')
+                              ) && (
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteUser(user)}
@@ -614,6 +624,13 @@ export default function UserManager({
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
+                              )}
+
+                              {/* Read-only indicator if neither edit nor delete is authorized */}
+                              {!(isCurrentUser || isSuperAdmin || (!!user.createdBy && user.createdBy === currentUserId)) && (
+                                <span className="text-[11px] text-slate-300 font-mono px-2 select-none" title="Read-only record">
+                                  —
+                                </span>
                               )}
                             </div>
                           </td>
@@ -840,16 +857,28 @@ export default function UserManager({
 
             {/* Drawer Footer Action Bar */}
             <div className="p-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2 mt-auto">
-              <button
-                type="button"
-                onClick={() => openEditModal(selectedUser)}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-300 rounded-lg transition-colors cursor-pointer shadow-xs"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-slate-500" />
-                <span>Edit Details</span>
-              </button>
+              {/* Edit Details: Available for self, Super Admins, or if this admin created the user */}
+              {(selectedUser.id === currentUserId || isSuperAdmin || (!!selectedUser.createdBy && selectedUser.createdBy === currentUserId)) ? (
+                <button
+                  type="button"
+                  onClick={() => openEditModal(selectedUser)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-300 rounded-lg transition-colors cursor-pointer shadow-xs"
+                >
+                  <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Edit Details</span>
+                </button>
+              ) : (
+                <div className="flex-1 py-1.5 text-center text-xs text-slate-400 font-medium italic">
+                  Read-only record
+                </div>
+              )}
 
+              {/* Delete: Available for Super Admins (non-super-admins) or if this admin created the user (non-admin) */}
               {selectedUser.id !== currentUserId && (
+                isSuperAdmin
+                  ? !(selectedUser.role === 'admin' && (selectedUser.department?.toUpperCase() === 'HR' || selectedUser.department?.toUpperCase() === 'MAINTENANCE'))
+                  : (!!selectedUser.createdBy && selectedUser.createdBy === currentUserId && selectedUser.role !== 'admin')
+              ) && (
                 <button
                   type="button"
                   onClick={() => handleDeleteUser(selectedUser)}
@@ -905,24 +934,24 @@ export default function UserManager({
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-slate-900 flex items-center justify-between">
                     <span>Department <span className="text-[#c62828]">*</span></span>
-                    {!isSuperAdmin && currentUserDept && (
-                      <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
-                        <Lock className="w-2.5 h-2.5" /> Department Locked
+                    {!isSuperAdmin && (
+                      <span className="text-[10px] text-slate-500 font-semibold flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Scoped to {currentUserDept}
                       </span>
                     )}
                   </label>
-                  {!isSuperAdmin && currentUserDept ? (
+                  {!isSuperAdmin ? (
                     <div className="flex flex-col gap-1">
                       <select
                         disabled
                         value={currentUserDept}
-                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold cursor-not-allowed"
-                        title={`Department is locked to ${currentUserDept}`}
+                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 font-medium text-xs cursor-not-allowed"
+                        title="Department Admins can only register users for their own department"
                       >
                         <option value={currentUserDept}>{currentUserDept} (Your Department)</option>
                       </select>
-                      <p className="text-[10px] text-amber-700 leading-tight">
-                        As a {currentUserDept} Admin, you can only create users in the {currentUserDept} department.
+                      <p className="text-[10px] text-slate-500 leading-tight">
+                        Department Admins can only register users for their assigned department ({currentUserDept}).
                       </p>
                     </div>
                   ) : (
@@ -951,7 +980,8 @@ export default function UserManager({
                     <button
                       type="button"
                       onClick={() => {
-                        fetch(`/api/admin/users/next-id?department=${addDept}`)
+                        const targetDept = !isSuperAdmin ? currentUserDept : addDept;
+                        fetch(`/api/admin/users/next-id?department=${targetDept}`)
                           .then((r) => r.json())
                           .then((d) => {
                             if (d.employee_id) setAddEmployeeId(d.employee_id);
@@ -1099,15 +1129,11 @@ export default function UserManager({
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-slate-900 flex items-center justify-between">
                     <span>Department</span>
-                    {editUser.id === currentUserId ? (
+                    {editUser.id === currentUserId && (
                       <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
                         <Lock className="w-2.5 h-2.5" /> Your Account
                       </span>
-                    ) : !isSuperAdmin ? (
-                      <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
-                        <Lock className="w-2.5 h-2.5" /> Department Locked
-                      </span>
-                    ) : null}
+                    )}
                   </label>
                   {editUser.id === currentUserId ? (
                     <div className="flex flex-col gap-1">
@@ -1128,13 +1154,13 @@ export default function UserManager({
                       <select
                         disabled
                         value={editDept}
-                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold cursor-not-allowed"
-                        title={`Department is locked to ${currentUserDept}`}
+                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-500 text-xs font-medium cursor-not-allowed"
+                        title="Only Super Admins can reassign departments"
                       >
-                        <option value={editDept}>{editDept} (Locked to {currentUserDept})</option>
+                        <option value={editDept}>{editDept} (Fixed)</option>
                       </select>
-                      <p className="text-[10px] text-amber-700 leading-tight">
-                        Department cannot be altered. Only Super Admins (HR & Maintenance) can reassign departments.
+                      <p className="text-[10px] text-slate-500 leading-tight">
+                        Department reassignment across departments is restricted to Super Admins.
                       </p>
                     </div>
                   ) : (

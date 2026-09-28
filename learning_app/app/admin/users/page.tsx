@@ -20,27 +20,13 @@ export default async function UsersPage() {
     redirect('/auth/login');
   }
 
-  const superAdmin = isSuperAdmin(currentUser);
-  const currentUserDept = (currentUser.department || '').trim().toUpperCase();
-
-  // Fetch users scoped to department for department admins, or all users for super admins
-  let users;
-  if (!superAdmin && currentUserDept) {
-    users = await query<any[]>(`
-      SELECT 
-        u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
-      FROM users u
-      WHERE UPPER(u.department) = ?
-      ORDER BY u.created_at DESC
-    `, [currentUserDept]);
-  } else {
-    users = await query<any[]>(`
-      SELECT 
-        u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
-      FROM users u
-      ORDER BY u.created_at DESC
-    `);
-  }
+  // Fetch all users with name and employee_id
+  const users = await query<any[]>(`
+    SELECT 
+      u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_by, u.created_at, u.last_sign_in_at
+    FROM users u
+    ORDER BY u.created_at DESC
+  `);
 
   const userIds = (users || []).map((u) => u.id);
   const enrollmentsMap: Record<string, UserEnrollmentInfo[]> = {};
@@ -118,15 +104,19 @@ export default async function UsersPage() {
       notStartedCount,
       enrollments: userEnrolls,
       isCurrentUser: u.id === currentUser.id,
+      createdBy: u.created_by || null,
     };
   });
+
+  const userIsSuperAdmin = isSuperAdmin(currentUser);
+  const currentUserDept = currentUser.department || 'GENERAL';
 
   return (
     <UserManager
       initialUsers={initialUsers}
       currentUserId={currentUser.id}
       currentUserDept={currentUserDept}
-      isSuperAdmin={superAdmin}
+      isSuperAdmin={userIsSuperAdmin}
     />
   );
 }

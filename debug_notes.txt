@@ -1,0 +1,6 @@
+1. when we clicked the specific department should mandotory to select the Department 
+2. Created course total length of the video we cant see
+3. When we update the code not we created the course total we just updtaed
+4. A Admin A says created a Course and User that only we can delete.
+5. Particular Admin can see there Employee total watch time hours and Individual we can see
+6. Customize with the Paper and sizes and of Certification Page we can add the Company Logo.

@@ -6,7 +6,7 @@ import {
   BookOpen, Users, Clock, TrendingUp, ArrowLeft, 
   PlayCircle, UserCheck, Activity, Search, RefreshCw, Loader2, Award, X,
   CheckCircle, Film, Eye, Download, ShieldCheck, Trophy, ChevronRight,
-  Filter, ArrowUpRight, BarChart3, AlertCircle, Medal, Sparkles
+  Filter, ArrowUpRight, BarChart3, AlertCircle, Medal, Sparkles, UserPlus
 } from 'lucide-react';
 
 interface Stats {
@@ -82,6 +82,7 @@ interface LeaderboardUser {
   certificatesCount: number;
   completedCourses: number;
   watchedSeconds: number;
+  points?: number;
   badge: string;
   isCurrentUser: boolean;
 }
@@ -224,8 +225,11 @@ export default function AdminDashboard() {
       });
     }
 
-    // Fallback if no enrollments table rows yet: map from users
-    return users.map((u) => ({
+    // Fallback if no enrollments table rows yet: only map learners who actually have assigned courses
+    const learnersWithCourses = users.filter((u) => u.role !== 'admin' && u.enrolledCoursesCount > 0);
+    if (learnersWithCourses.length === 0) return [];
+
+    return learnersWithCourses.map((u) => ({
       id: u.id,
       userId: u.id,
       courseId: 'general',
@@ -233,7 +237,7 @@ export default function AdminDashboard() {
       name: u.name ?? null,
       employeeId: u.employee_id ?? null,
       department: u.department,
-      courseTitle: u.enrolledCoursesCount > 0 ? `${u.enrolledCoursesCount} Curricula Assigned` : 'No Assigned Course',
+      courseTitle: `${u.enrolledCoursesCount} Curricula Assigned`,
       enrolledAt: u.created_at,
       progressPct: u.completedLessonsCount > 0 ? Math.min(100, u.completedLessonsCount * 25) : 0,
       status: (u.completedLessonsCount > 3 ? 'Completed' : u.completedLessonsCount > 0 ? 'In Progress' : 'Not Started') as 'Completed' | 'In Progress' | 'Not Started',
@@ -828,212 +832,243 @@ export default function AdminDashboard() {
 
           {/* Top 3 Podium Cards */}
           <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            {/* Rank 1: Gold */}
-            {leaders[0] ? (
-              <div className="rounded-xl border-2 border-[#F59E0B] bg-[#FEF3C7]/40 p-5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
-                <div className="absolute top-0 right-0 left-0 h-1 bg-[#F59E0B] rounded-t-[10px]"></div>
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex-shrink-0">
-                        <div className="w-9 h-9 rounded-lg bg-[#FEF3C7] border border-[#F59E0B] flex items-center justify-center text-sm font-bold text-[#B45309] shadow-sm">
-                          1
-                        </div>
-                        <Medal className="w-4 h-4 text-[#F59E0B] absolute -top-1.5 -right-1.5 drop-shadow-sm" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-sm text-slate-900 truncate">
-                            {leaders[0].name || leaders[0].email.split('@')[0]}
-                          </span>
-                          {leaders[0].isCurrentUser && (
-                            <span className="px-1.5 py-0.5 bg-[#c62828] text-white text-[10px] font-bold rounded uppercase tracking-wider">
-                              YOU
+            {leaders.length === 0 ? (
+              <div className="col-span-1 md:col-span-3 py-10 px-6 flex flex-col items-center justify-center text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-3 shadow-xs">
+                  <Trophy className="w-6 h-6 text-amber-500" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-800">No Shop-Floor Learners Recorded Yet</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-md">
+                  This leadership board recognizes shop-floor technical learners, speed to qualification, and ISO compliance metrics. When employees begin learning tutorials, top performers will appear here.
+                </p>
+                <div className="mt-4 flex items-center gap-2">
+                  <Link
+                    href="/admin/users"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#c62828] hover:bg-[#a20513] text-white text-xs font-semibold rounded-lg shadow-xs transition"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Register Employees</span>
+                  </Link>
+                  <Link
+                    href="/admin/enrollments"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-xs transition"
+                  >
+                    <span>Assign Curricula</span>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Rank 1: Gold */}
+                {leaders[0] && (
+                  <div className="rounded-xl border-2 border-[#F59E0B] bg-[#FEF3C7]/40 p-5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 left-0 h-1 bg-[#F59E0B] rounded-t-[10px]"></div>
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-9 h-9 rounded-lg bg-[#FEF3C7] border border-[#F59E0B] flex items-center justify-center text-sm font-bold text-[#B45309] shadow-sm">
+                              1
+                            </div>
+                            <Medal className="w-4 h-4 text-[#F59E0B] absolute -top-1.5 -right-1.5 drop-shadow-sm" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-sm text-slate-900 truncate">
+                                {leaders[0].name || leaders[0].email.split('@')[0]}
+                              </span>
+                              {leaders[0].isCurrentUser && (
+                                <span className="px-1.5 py-0.5 bg-[#c62828] text-white text-[10px] font-bold rounded uppercase tracking-wider">
+                                  YOU
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mt-0.5 truncate">
+                              {leaders[0].department ? `${leaders[0].department} DEPT` : 'GENERAL'}
                             </span>
-                          )}
+                          </div>
                         </div>
-                        <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mt-0.5 truncate">
-                          {leaders[0].department ? `${leaders[0].department} DEPT` : 'MAINTENANCE DEPT'}
-                        </span>
+
+                        <div className="flex items-center gap-1 bg-white border border-[#FEF3C7] px-2 py-1 rounded-md text-[#B45309] text-xs font-bold shadow-sm">
+                          <TrendingUp className="w-3.5 h-3.5 text-[#16A34A]" />
+                          <span>{leaders[0].points ?? Math.round(leaders[0].watchedSeconds / 60)} pts</span>
+                        </div>
+                      </div>
+
+                      {/* Skills Track Badge */}
+                      <div className="mt-3 p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between shadow-xs">
+                        <div className="flex items-center gap-1.5 text-slate-800 text-xs font-medium">
+                          <span className={`w-2 h-2 rounded-full ${leaders[0].completedLessons > 0 ? 'bg-[#16A34A]' : 'bg-slate-400'}`}></span>
+                          <span className="truncate">{leaders[0].badge || 'Active Learner'}</span>
+                        </div>
+                        {leaders[0].certificatesCount > 0 ? (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-200">
+                            Certified
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider border border-slate-200">
+                            In Training
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 3-Stat Industrial Micro Grid */}
+                      <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                        <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Tutorials</span>
+                          <span className="text-sm font-bold text-slate-900 mt-0.5">{leaders[0].completedLessons}</span>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Certs</span>
+                          <span className="text-sm font-bold text-[#B45309] mt-0.5">{leaders[0].certificatesCount}</span>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Watched</span>
+                          <span className="text-sm font-bold text-slate-900 mt-0.5">
+                            {Math.floor(leaders[0].watchedSeconds / 60)}m
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 bg-white border border-[#FEF3C7] px-2 py-1 rounded-md text-[#B45309] text-xs font-bold shadow-sm">
-                      <TrendingUp className="w-3.5 h-3.5 text-[#16A34A]" />
-                      <span>{Math.round(leaders[0].watchedSeconds / 60)} pts</span>
+                    <div className="mt-3 pt-2.5 border-t border-amber-200/60 flex items-center justify-between text-xs font-medium">
+                      <span className="text-slate-500">Sprint Velocity</span>
+                      {leaders[0].completedLessons > 0 ? (
+                        <span className="font-bold text-[#16A34A] flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" /> {Math.min(100, leaders[0].completedLessons * 20)}% On-Target
+                        </span>
+                      ) : (
+                        <span className="font-medium text-slate-500 flex items-center gap-1">
+                          Starting Out
+                        </span>
+                      )}
                     </div>
                   </div>
+                )}
 
-                  {/* Skills Track Badge */}
-                  <div className="mt-3 p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between shadow-xs">
-                    <div className="flex items-center gap-1.5 text-slate-800 text-xs font-medium">
-                      <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
-                      <span className="truncate">{leaders[0].badge || 'Torque Calibration Lead'}</span>
-                    </div>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-200">
-                      Certified
-                    </span>
-                  </div>
+                {/* Rank 2: Silver */}
+                {leaders[1] && (
+                  <div className="rounded-xl border border-slate-300 bg-white p-5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 left-0 h-1 bg-slate-400 rounded-t-[10px]"></div>
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-sm font-bold text-slate-600 shadow-sm">
+                              2
+                            </div>
+                            <Award className="w-4 h-4 text-slate-500 absolute -top-1.5 -right-1.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-sm text-slate-900 truncate">
+                              {leaders[1].name || leaders[1].email.split('@')[0]}
+                            </div>
+                            <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mt-0.5 truncate">
+                              {leaders[1].department ? `${leaders[1].department} DEPT` : 'GENERAL'}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 text-xs font-semibold">
+                          {leaders[1].points ?? Math.round(leaders[1].watchedSeconds / 60)} pts
+                        </span>
+                      </div>
 
-                  {/* 3-Stat Industrial Micro Grid */}
-                  <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-                    <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Tutorials</span>
-                      <span className="text-sm font-bold text-slate-900 mt-0.5">{leaders[0].completedLessons}</span>
+                      <div className="mt-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs shadow-xs">
+                        <span className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Track Goal</span>
+                        <span className="font-medium text-slate-800 truncate max-w-[150px]">
+                          {leaders[1].badge || 'Active Learner'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Tutorials</span>
+                          <span className="text-sm font-bold text-slate-900 mt-0.5">{leaders[1].completedLessons}</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Certs</span>
+                          <span className="text-sm font-bold text-slate-700 mt-0.5">{leaders[1].certificatesCount}</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Watched</span>
+                          <span className="text-sm font-bold text-slate-900 mt-0.5">
+                            {Math.floor(leaders[1].watchedSeconds / 60)}m
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Certs</span>
-                      <span className="text-sm font-bold text-[#B45309] mt-0.5">{leaders[0].certificatesCount}</span>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Watched</span>
-                      <span className="text-sm font-bold text-slate-900 mt-0.5">
-                        {Math.floor(leaders[0].watchedSeconds / 60)}m
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-medium">
+                      <span className="text-slate-500">Qualification</span>
+                      <span className="text-slate-600 font-semibold">
+                        {leaders[1].certificatesCount > 0 ? 'Qualified' : leaders[1].completedLessons > 0 ? 'Progressing' : 'Enrolled'}
                       </span>
                     </div>
                   </div>
-                </div>
+                )}
 
-                <div className="mt-3 pt-2.5 border-t border-amber-200/60 flex items-center justify-between text-xs font-medium">
-                  <span className="text-slate-500">Sprint Velocity</span>
-                  <span className="font-bold text-[#16A34A] flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" /> 100% On-Target
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
-                No Rank 1 user yet
-              </div>
-            )}
-
-            {/* Rank 2: Silver */}
-            {leaders[1] ? (
-              <div className="rounded-xl border border-slate-300 bg-white p-5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
-                <div className="absolute top-0 right-0 left-0 h-1 bg-slate-400 rounded-t-[10px]"></div>
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex-shrink-0">
-                        <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-sm font-bold text-slate-600 shadow-sm">
-                          2
+                {/* Rank 3: Bronze */}
+                {leaders[2] && (
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 left-0 h-1 bg-[#F59E0B]/50 rounded-t-[10px]"></div>
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-9 h-9 rounded-lg bg-[#FEF3C7]/40 border border-slate-300 flex items-center justify-center text-sm font-bold text-[#B45309] shadow-sm">
+                              3
+                            </div>
+                            <Award className="w-4 h-4 text-[#B45309] absolute -top-1.5 -right-1.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-sm text-slate-900 truncate">
+                              {leaders[2].name || leaders[2].email.split('@')[0]}
+                            </div>
+                            <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mt-0.5 truncate">
+                              {leaders[2].department ? `${leaders[2].department} DEPT` : 'GENERAL'}
+                            </span>
+                          </div>
                         </div>
-                        <Award className="w-4 h-4 text-slate-500 absolute -top-1.5 -right-1.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-sm text-slate-900 truncate">
-                          {leaders[1].name || leaders[1].email.split('@')[0]}
-                        </div>
-                        <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mt-0.5 truncate">
-                          {leaders[1].department ? `${leaders[1].department} DEPT` : 'PRODUCTION DEPT'}
+                        <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 text-xs font-semibold">
+                          {leaders[2].points ?? Math.round(leaders[2].watchedSeconds / 60)} pts
                         </span>
                       </div>
-                    </div>
-                    <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 text-xs font-semibold">
-                      Rank 2
-                    </span>
-                  </div>
 
-                  <div className="mt-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs shadow-xs">
-                    <span className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Track Goal</span>
-                    <span className="font-medium text-slate-800 truncate max-w-[150px]">
-                      {leaders[1].badge || 'Next: LOTO Protocol'}
-                    </span>
-                  </div>
+                      <div className="mt-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs shadow-xs">
+                        <span className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Track Goal</span>
+                        <span className="font-medium text-slate-800 truncate max-w-[150px]">
+                          {leaders[2].badge || 'Active Learner'}
+                        </span>
+                      </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Tutorials</span>
-                      <span className="text-sm font-bold text-slate-900 mt-0.5">{leaders[1].completedLessons}</span>
+                      <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Tutorials</span>
+                          <span className="text-sm font-bold text-slate-900 mt-0.5">{leaders[2].completedLessons}</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Certs</span>
+                          <span className="text-sm font-bold text-slate-700 mt-0.5">{leaders[2].certificatesCount}</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Watched</span>
+                          <span className="text-sm font-bold text-slate-900 mt-0.5">
+                            {Math.floor(leaders[2].watchedSeconds / 60)}m
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Certs</span>
-                      <span className="text-sm font-bold text-slate-700 mt-0.5">{leaders[1].certificatesCount}</span>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Watched</span>
-                      <span className="text-sm font-bold text-slate-900 mt-0.5">
-                        {Math.floor(leaders[1].watchedSeconds / 60)}m
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-medium">
+                      <span className="text-slate-500">Qualification</span>
+                      <span className="text-slate-600 font-semibold">
+                        {leaders[2].certificatesCount > 0 ? 'Qualified' : leaders[2].completedLessons > 0 ? 'Progressing' : 'Enrolled'}
                       </span>
                     </div>
                   </div>
-                </div>
-
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-medium">
-                  <span className="text-slate-500">Qualification</span>
-                  <span className="text-slate-600 font-semibold">Progressing</span>
-                </div>
-              </div>
-            ) : (
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
-                No Rank 2 user yet
-              </div>
+                )}
+              </>
             )}
-
-            {/* Rank 3: Bronze */}
-            {leaders[2] ? (
-              <div className="rounded-xl border border-slate-200 bg-white p-5 relative flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
-                <div className="absolute top-0 right-0 left-0 h-1 bg-[#F59E0B]/50 rounded-t-[10px]"></div>
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex-shrink-0">
-                        <div className="w-9 h-9 rounded-lg bg-[#FEF3C7]/40 border border-slate-300 flex items-center justify-center text-sm font-bold text-[#B45309] shadow-sm">
-                          3
-                        </div>
-                        <Award className="w-4 h-4 text-[#B45309] absolute -top-1.5 -right-1.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-sm text-slate-900 truncate">
-                          {leaders[2].name || leaders[2].email.split('@')[0]}
-                        </div>
-                        <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mt-0.5 truncate">
-                          {leaders[2].department ? `${leaders[2].department} DEPT` : 'QUALITY INSPECTION'}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 text-xs font-semibold">
-                      Rank 3
-                    </span>
-                  </div>
-
-                  <div className="mt-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs shadow-xs">
-                    <span className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Track Goal</span>
-                    <span className="font-medium text-slate-800 truncate max-w-[150px]">
-                      {leaders[2].badge || 'Next: Caliper Check'}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Tutorials</span>
-                      <span className="text-sm font-bold text-slate-900 mt-0.5">{leaders[2].completedLessons}</span>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Certs</span>
-                      <span className="text-sm font-bold text-slate-700 mt-0.5">{leaders[2].certificatesCount}</span>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Watched</span>
-                      <span className="text-sm font-bold text-slate-900 mt-0.5">
-                        {Math.floor(leaders[2].watchedSeconds / 60)}m
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-medium">
-                  <span className="text-slate-500">Qualification</span>
-                  <span className="text-slate-600 font-semibold">Progressing</span>
-                </div>
-              </div>
-            ) : (
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
-                No Rank 3 user yet
-              </div>
-            )}
-
           </div>
 
           {/* Footer Ribbon */}
@@ -1042,7 +1077,13 @@ export default function AdminDashboard() {
               <span className="text-[#c62828] font-bold">⚡</span>
               <span>
                 <strong className="text-slate-900 font-bold">Current Sprint Pacesetter:</strong>{' '}
-                {leaders[0] ? (leaders[0].name || leaders[0].email.split('@')[0]) : 'maintenance.pew'} (+{leaders[0] ? Math.floor(leaders[0].watchedSeconds / 60) : 11} min)
+                {leaders[0] && (leaders[0].completedLessons > 0 || leaders[0].watchedSeconds > 0) ? (
+                  <>
+                    {leaders[0].name || leaders[0].email.split('@')[0]} (+{Math.floor(leaders[0].watchedSeconds / 60)} min)
+                  </>
+                ) : (
+                  <span className="text-slate-500 font-normal">No active pacesetter recorded yet in this sprint</span>
+                )}
               </span>
               <span className="text-slate-300">•</span>
               <span>Shop-Floor Compliance Leaderboard</span>
