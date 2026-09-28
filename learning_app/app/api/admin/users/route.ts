@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import { getCurrentUser, signToken, getAuthCookieOptions } from '@/lib/auth';
+import { getCurrentUser, isSuperAdmin, signToken, getAuthCookieOptions } from '@/lib/auth';
 import { getNextEmployeeId } from './next-id/route';
 
 const DEPARTMENTS = [
@@ -28,12 +28,26 @@ export async function GET() {
   }
 
   try {
-    const users = await query<any[]>(`
-      SELECT 
-        u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
-      FROM users u
-      ORDER BY u.created_at DESC
-    `);
+    const superAdmin = isSuperAdmin(currentUser);
+    const currentUserDept = (currentUser.department || '').trim().toUpperCase();
+
+    let users;
+    if (!superAdmin && currentUserDept) {
+      users = await query<any[]>(`
+        SELECT 
+          u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
+        FROM users u
+        WHERE UPPER(u.department) = ?
+        ORDER BY u.created_at DESC
+      `, [currentUserDept]);
+    } else {
+      users = await query<any[]>(`
+        SELECT 
+          u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
+        FROM users u
+        ORDER BY u.created_at DESC
+      `);
+    }
 
     // Fetch user course enrollments & progress for each user
     const userIds = (users || []).map((u) => u.id);
@@ -137,7 +151,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    if (department && !DEPARTMENTS.includes(department)) {
+    const superAdmin = isSuperAdmin(currentUser);
+    const currentUserDept = (currentUser.department || '').trim().toUpperCase();
+
+    let finalDept = (department || '').trim().toUpperCase();
+    if (!superAdmin) {
+      if (!currentUserDept) {
+        return NextResponse.json({
+          error: 'Your admin account does not have an assigned department. Please contact HR.'
+        }, { status: 403 });
+      }
+      if (finalDept && finalDept !== currentUserDept) {
+        return NextResponse.json({
+          error: `Department Admins can only create users in their own department (${currentUserDept}).`
+        }, { status: 403 });
+      }
+      finalDept = currentUserDept;
+    }
+
+    if (finalDept && !DEPARTMENTS.includes(finalDept)) {
       return NextResponse.json({ error: 'Invalid department' }, { status: 400 });
     }
 
@@ -149,7 +181,7 @@ export async function POST(req: Request) {
     // Auto-generate employee_id if not provided
     let finalEmpId = (employee_id || '').trim();
     if (!finalEmpId) {
-      finalEmpId = await getNextEmployeeId(department);
+      finalEmpId = await getNextEmployeeId(finalDept);
     }
 
     const finalName = (name || '').trim() || formatNameFromEmail(email);
@@ -159,7 +191,7 @@ export async function POST(req: Request) {
 
     await query(
       'INSERT INTO users (id, email, name, employee_id, password_hash, role, department, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [userId, email.trim(), finalName, finalEmpId, hashedPassword, role, department || null, currentUser.id]
+      [userId, email.trim(), finalName, finalEmpId, hashedPassword, role, finalDept || null, currentUser.id]
     );
 
     return NextResponse.json({ success: true, userId, employee_id: finalEmpId }, { status: 201 });
@@ -194,6 +226,42 @@ export async function PUT(req: Request) {
     );
     if (emailConflict.length > 0) {
       return NextResponse.json({ error: 'This email is already used by another account' }, { status: 409 });
+    }
+
+    const superAdmin = isSuperAdmin(currentUser);
+    const currentUserDept = (currentUser.department || '').trim().toUpperCase();
+
+    // Boundary check for Department Admins (e.g. SAFETY admin can only manage SAFETY users)
+    if (!superAdmin) {
+      const targetUsers = await query<any[]>('SELECT id, department FROM users WHERE id = ?', [id]);
+      if (!targetUsers || targetUsers.length === 0) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      const targetUserDept = (targetUsers[0].department || '').trim().toUpperCase();
+      if (targetUserDept !== currentUserDept) {
+        return NextResponse.json({
+          error: `Department Admins can only manage users within their own department (${currentUserDept}).`
+        }, { status: 403 });
+      }
+      if (department && department.trim().toUpperCase() !== currentUserDept) {
+        return NextResponse.json({
+          error: `Department Admins cannot transfer users to another department (${department}).`
+        }, { status: 403 });
+      }
+    }
+
+    // Safety Guard: Prevent admin from demoting their own account to 'employee'
+    if (id === currentUser.id && role && role !== 'admin') {
+      return NextResponse.json({
+        error: 'You cannot change your own role to Learner to prevent locking yourself out of the Admin Panel.'
+      }, { status: 400 });
+    }
+
+    // Safety Guard: Prevent admin from changing their own department while logged in
+    if (id === currentUser.id && department && department !== currentUser.department) {
+      return NextResponse.json({
+        error: 'You cannot change your own department while logged in to prevent administrative authority mismatch.'
+      }, { status: 400 });
     }
 
     const finalName = name ? name.trim() : null;
@@ -262,6 +330,22 @@ export async function DELETE(req: Request) {
 
     if (id === currentUser.id) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
+    }
+
+    const superAdmin = isSuperAdmin(currentUser);
+    const currentUserDept = (currentUser.department || '').trim().toUpperCase();
+
+    if (!superAdmin) {
+      const targetUsers = await query<any[]>('SELECT id, department FROM users WHERE id = ?', [id]);
+      if (!targetUsers || targetUsers.length === 0) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      const targetUserDept = (targetUsers[0].department || '').trim().toUpperCase();
+      if (targetUserDept !== currentUserDept) {
+        return NextResponse.json({
+          error: `Department Admins can only delete users within their own department (${currentUserDept}).`
+        }, { status: 403 });
+      }
     }
 
     await query('DELETE FROM users WHERE id = ?', [id]);

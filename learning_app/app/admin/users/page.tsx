@@ -1,5 +1,5 @@
 import { query } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 import UserManager, { UserItem, UserEnrollmentInfo } from '@/components/admin/UserManager';
 import { redirect } from 'next/navigation';
 
@@ -20,13 +20,27 @@ export default async function UsersPage() {
     redirect('/auth/login');
   }
 
-  // Fetch all users with name and employee_id
-  const users = await query<any[]>(`
-    SELECT 
-      u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
-    FROM users u
-    ORDER BY u.created_at DESC
-  `);
+  const superAdmin = isSuperAdmin(currentUser);
+  const currentUserDept = (currentUser.department || '').trim().toUpperCase();
+
+  // Fetch users scoped to department for department admins, or all users for super admins
+  let users;
+  if (!superAdmin && currentUserDept) {
+    users = await query<any[]>(`
+      SELECT 
+        u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
+      FROM users u
+      WHERE UPPER(u.department) = ?
+      ORDER BY u.created_at DESC
+    `, [currentUserDept]);
+  } else {
+    users = await query<any[]>(`
+      SELECT 
+        u.id, u.email, u.name, u.employee_id, u.role, u.department, u.created_at, u.last_sign_in_at
+      FROM users u
+      ORDER BY u.created_at DESC
+    `);
+  }
 
   const userIds = (users || []).map((u) => u.id);
   const enrollmentsMap: Record<string, UserEnrollmentInfo[]> = {};
@@ -107,6 +121,13 @@ export default async function UsersPage() {
     };
   });
 
-  return <UserManager initialUsers={initialUsers} currentUserId={currentUser.id} />;
+  return (
+    <UserManager
+      initialUsers={initialUsers}
+      currentUserId={currentUser.id}
+      currentUserDept={currentUserDept}
+      isSuperAdmin={superAdmin}
+    />
+  );
 }
 

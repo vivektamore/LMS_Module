@@ -5,7 +5,7 @@ import {
   Users, UserPlus, Search, Filter, RefreshCw, X, Check,
   Edit2, Trash2, MoreVertical, CheckCircle2, AlertTriangle,
   ArrowRight, ShieldCheck, Mail, Calendar, Clock, BookOpen,
-  UserCheck, UserX, ExternalLink, KeyRound, ChevronLeft, ChevronRight
+  UserCheck, UserX, ExternalLink, KeyRound, ChevronLeft, ChevronRight, Lock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -41,6 +41,8 @@ export interface UserItem {
 interface UserManagerProps {
   initialUsers: UserItem[];
   currentUserId: string;
+  currentUserDept?: string;
+  isSuperAdmin?: boolean;
 }
 
 const ALL_DEPARTMENTS = [
@@ -79,7 +81,12 @@ function formatDateTime(dateStr?: string | null): string {
   }
 }
 
-export default function UserManager({ initialUsers, currentUserId }: UserManagerProps) {
+export default function UserManager({
+  initialUsers,
+  currentUserId,
+  currentUserDept = '',
+  isSuperAdmin = false,
+}: UserManagerProps) {
   const [users, setUsers] = useState<UserItem[]>(initialUsers);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(initialUsers[0] || null);
   const [showDrawer, setShowDrawer] = useState(true);
@@ -95,10 +102,11 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
   const pageSize = 8;
 
   // Add User Modal
+  const defaultDept = !isSuperAdmin && currentUserDept ? currentUserDept : 'MAINTENANCE';
   const [showAddModal, setShowAddModal] = useState(false);
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
-  const [addDept, setAddDept] = useState('MAINTENANCE');
+  const [addDept, setAddDept] = useState(defaultDept);
   const [addEmployeeId, setAddEmployeeId] = useState('');
   const [addRole, setAddRole] = useState<'employee' | 'admin'>('employee');
   const [addPassword, setAddPassword] = useState('12345');
@@ -147,14 +155,15 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
   // Auto-generate employee ID when department changes in Add User modal
   useEffect(() => {
     if (showAddModal && !isManualId) {
-      fetch(`/api/admin/users/next-id?department=${addDept}`)
+      const targetDept = !isSuperAdmin && currentUserDept ? currentUserDept : addDept;
+      fetch(`/api/admin/users/next-id?department=${targetDept}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.employee_id) setAddEmployeeId(data.employee_id);
         })
         .catch(() => {});
     }
-  }, [addDept, showAddModal, isManualId]);
+  }, [addDept, showAddModal, isManualId, isSuperAdmin, currentUserDept]);
 
   // Filtered dataset
   const filteredUsers = useMemo(() => {
@@ -208,6 +217,8 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
     setIsSubmittingAdd(true);
     setAddError('');
 
+    const finalDept = !isSuperAdmin && currentUserDept ? currentUserDept : addDept;
+
     try {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
@@ -215,7 +226,7 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
         body: JSON.stringify({
           email: addEmail.trim(),
           name: addName.trim(),
-          department: addDept,
+          department: finalDept,
           employee_id: addEmployeeId.trim(),
           role: addRole,
           password: addPassword.trim() || '12345',
@@ -333,18 +344,27 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div className="flex flex-col">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            User Management
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              User Management
+            </h1>
+            {!isSuperAdmin && currentUserDept && (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                {currentUserDept} Department
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Create, edit and manage shop-floor employees and LMS access.
+            {isSuperAdmin
+              ? 'Create, edit and manage shop-floor employees and LMS access across all departments.'
+              : `Create, edit and manage ${currentUserDept} department employees and LMS access.`}
           </p>
         </div>
 
         <div className="flex items-center gap-3 self-start md:self-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-white rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs">
             <Users className="w-4 h-4 text-slate-500" />
-            <span>Total Users:</span>
+            <span>{!isSuperAdmin && currentUserDept ? `${currentUserDept} Users:` : 'Total Users:'}</span>
             <span className="font-mono text-[#c62828] font-bold text-sm">
               {users.length}
             </span>
@@ -355,7 +375,8 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
             onClick={() => {
               setAddName('');
               setAddEmail('');
-              setAddDept('MAINTENANCE');
+              setAddDept(!isSuperAdmin && currentUserDept ? currentUserDept : 'MAINTENANCE');
+              setAddEmployeeId('');
               setAddPassword('12345');
               setAddError('');
               setIsManualId(false);
@@ -394,21 +415,28 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
 
             {/* Filter Dropdowns */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-              <select
-                value={deptFilter}
-                onChange={(e) => {
-                  setDeptFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium focus:outline-none focus:border-[#c62828] cursor-pointer"
-              >
-                <option value="all">All Departments</option>
-                {ALL_DEPARTMENTS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
+              {!isSuperAdmin && currentUserDept ? (
+                <div className="h-9 px-3 rounded-lg bg-red-50 border border-red-200 text-[#c62828] text-xs font-semibold flex items-center gap-1.5 shadow-2xs" title={`Viewing ${currentUserDept} users only`}>
+                  <span className="text-slate-500">Dept:</span>
+                  <span className="font-bold">{currentUserDept}</span>
+                </div>
+              ) : (
+                <select
+                  value={deptFilter}
+                  onChange={(e) => {
+                    setDeptFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium focus:outline-none focus:border-[#c62828] cursor-pointer"
+                >
+                  <option value="all">All Departments</option>
+                  {ALL_DEPARTMENTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               <select
                 value={roleFilter}
@@ -875,23 +903,44 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
               {/* Field 2 & 3: Department & Auto Employee ID */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-900">
-                    Department <span className="text-[#c62828]">*</span>
+                  <label className="text-xs font-semibold text-slate-900 flex items-center justify-between">
+                    <span>Department <span className="text-[#c62828]">*</span></span>
+                    {!isSuperAdmin && currentUserDept && (
+                      <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Department Locked
+                      </span>
+                    )}
                   </label>
-                  <select
-                    value={addDept}
-                    onChange={(e) => {
-                      setAddDept(e.target.value);
-                      setIsManualId(false);
-                    }}
-                    className="h-9 px-3 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#c62828] cursor-pointer"
-                  >
-                    {ALL_DEPARTMENTS.map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
-                    ))}
-                  </select>
+                  {!isSuperAdmin && currentUserDept ? (
+                    <div className="flex flex-col gap-1">
+                      <select
+                        disabled
+                        value={currentUserDept}
+                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold cursor-not-allowed"
+                        title={`Department is locked to ${currentUserDept}`}
+                      >
+                        <option value={currentUserDept}>{currentUserDept} (Your Department)</option>
+                      </select>
+                      <p className="text-[10px] text-amber-700 leading-tight">
+                        As a {currentUserDept} Admin, you can only create users in the {currentUserDept} department.
+                      </p>
+                    </div>
+                  ) : (
+                    <select
+                      value={addDept}
+                      onChange={(e) => {
+                        setAddDept(e.target.value);
+                        setIsManualId(false);
+                      }}
+                      className="h-9 px-3 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#c62828] cursor-pointer"
+                    >
+                      {ALL_DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -1048,20 +1097,59 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-900">
-                    Department
+                  <label className="text-xs font-semibold text-slate-900 flex items-center justify-between">
+                    <span>Department</span>
+                    {editUser.id === currentUserId ? (
+                      <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Your Account
+                      </span>
+                    ) : !isSuperAdmin ? (
+                      <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Department Locked
+                      </span>
+                    ) : null}
                   </label>
-                  <select
-                    value={editDept}
-                    onChange={(e) => setEditDept(e.target.value)}
-                    className="h-9 px-3 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#c62828] cursor-pointer"
-                  >
-                    {ALL_DEPARTMENTS.map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
-                    ))}
-                  </select>
+                  {editUser.id === currentUserId ? (
+                    <div className="flex flex-col gap-1">
+                      <select
+                        disabled
+                        value={editDept}
+                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-500 text-xs font-medium cursor-not-allowed"
+                        title="You cannot change your own department while logged in"
+                      >
+                        <option value={editDept}>{editDept} (Locked)</option>
+                      </select>
+                      <p className="text-[10px] text-amber-700 leading-tight">
+                        Department is locked to prevent administrative authority mismatch.
+                      </p>
+                    </div>
+                  ) : !isSuperAdmin ? (
+                    <div className="flex flex-col gap-1">
+                      <select
+                        disabled
+                        value={editDept}
+                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold cursor-not-allowed"
+                        title={`Department is locked to ${currentUserDept}`}
+                      >
+                        <option value={editDept}>{editDept} (Locked to {currentUserDept})</option>
+                      </select>
+                      <p className="text-[10px] text-amber-700 leading-tight">
+                        Department cannot be altered. Only Super Admins (HR & Maintenance) can reassign departments.
+                      </p>
+                    </div>
+                  ) : (
+                    <select
+                      value={editDept}
+                      onChange={(e) => setEditDept(e.target.value)}
+                      className="h-9 px-3 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#c62828] cursor-pointer"
+                    >
+                      {ALL_DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -1093,17 +1181,38 @@ export default function UserManager({ initialUsers, currentUserId }: UserManager
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-900">
-                    Role
+                  <label className="text-xs font-semibold text-slate-900 flex items-center justify-between">
+                    <span>Role</span>
+                    {editUser.id === currentUserId && (
+                      <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Your Account
+                      </span>
+                    )}
                   </label>
-                  <select
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value as 'employee' | 'admin')}
-                    className="h-9 px-3 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#c62828] cursor-pointer"
-                  >
-                    <option value="employee">Learner (Employee)</option>
-                    <option value="admin">Administrator</option>
-                  </select>
+                  {editUser.id === currentUserId ? (
+                    <div className="flex flex-col gap-1">
+                      <select
+                        disabled
+                        value="admin"
+                        className="h-9 px-3 rounded-lg bg-slate-100 border border-slate-300 text-slate-500 text-xs font-medium cursor-not-allowed"
+                        title="You cannot change your own role to prevent locking yourself out of the admin panel"
+                      >
+                        <option value="admin">Administrator (Locked)</option>
+                      </select>
+                      <p className="text-[10px] text-amber-700 leading-tight">
+                        Self-demotion is locked to prevent losing Admin access.
+                      </p>
+                    </div>
+                  ) : (
+                    <select
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value as 'employee' | 'admin')}
+                      className="h-9 px-3 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#c62828] cursor-pointer"
+                    >
+                      <option value="employee">Learner (Employee)</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1">
