@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     await connection.beginTransaction();
 
-    const courseId = uuidv4();
+    const courseId = `crs_${uuidv4().replace(/-/g, '')}`;
     await connection.execute(
       'INSERT INTO courses (id, title, course_code, description, thumbnail_url, category_id, created_by, visibility, has_certificate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [courseId, title, finalCourseCode, description || null, thumbnail_url || null, category_id, currentUser.id, visibility, has_certificate ? 1 : 0]

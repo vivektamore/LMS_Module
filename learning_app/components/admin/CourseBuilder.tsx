@@ -1542,7 +1542,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             <div className="md:col-span-4">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="font-semibold text-xs text-slate-900">
-                  Course Code / SOP ID <span className="text-[#c62828]">*</span>
+                  Course Code <span className="text-[#c62828]">*</span>
                 </label>
                 <button
                   type="button"
