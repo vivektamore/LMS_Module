@@ -6,7 +6,7 @@ import { CourseBuilder } from '@/components/admin/CourseBuilder';
 import {
   Plus, Search, X, Edit2, Eye, Trash2, Archive, ArchiveRestore,
   BookOpen, Users, Clock, CheckCircle2, AlertTriangle, Layers,
-  ChevronLeft, ChevronRight, HelpCircle, ArrowLeft, Filter, RefreshCw
+  ChevronLeft, ChevronRight, HelpCircle, ArrowLeft, Filter, RefreshCw, Lock
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -26,6 +26,10 @@ export interface CourseItem {
   enrollments?: number;
   createdAt?: string;
   status: 'Published' | 'Draft' | 'Archived';
+  created_by?: string;
+  creator_name?: string;
+  creator_department?: string;
+  can_edit?: boolean;
 }
 
 export interface CategoryItem {
@@ -37,6 +41,7 @@ export interface CategoryItem {
 interface CourseManagerProps {
   initialCourses: CourseItem[];
   initialCategories?: CategoryItem[];
+  currentUserDept?: string;
 }
 
 function formatDuration(sec: number) {
@@ -158,6 +163,10 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
             enrollments: Number(c.enrollmentCount || 0),
             createdAt: c.created_at,
             status: 'Published',
+            created_by: c.created_by || '',
+            creator_name: c.creator_name || 'Admin',
+            creator_department: c.creator_department || '',
+            can_edit: c.can_edit !== undefined ? Boolean(c.can_edit) : true,
           }))
         );
       }
@@ -210,12 +219,21 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
   }
 
   function handleEditCourse(courseId: string) {
+    const target = courses.find((c) => c.id === courseId);
+    if (target && target.can_edit === false) {
+      alert(`Permission Denied: This course was created by ${target.creator_department || 'another'} department. You do not have permission to edit it.`);
+      return;
+    }
     setEditingCourseId(courseId);
     setViewMode('builder');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function handleToggleArchive(course: CourseItem) {
+    if (course.can_edit === false) {
+      alert(`Permission Denied: You cannot archive courses from another department.`);
+      return;
+    }
     const newStatus = course.status === 'Archived' ? 'Published' : 'Archived';
     setCourses((prev) =>
       prev.map((c) => (c.id === course.id ? { ...c, status: newStatus } : c))
@@ -225,6 +243,11 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
 
   async function handleConfirmDelete() {
     if (!deleteTarget) return;
+    if (deleteTarget.can_edit === false) {
+      alert(`Permission Denied: You cannot delete courses from another department.`);
+      setDeleteTarget(null);
+      return;
+    }
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/courses/${deleteTarget.id}`, { method: 'DELETE' });
@@ -551,17 +574,39 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
                               </div>
 
                               <div className="flex flex-col min-w-0">
-                                <button
-                                  type="button"
-                                  onClick={() => handleEditCourse(course.id)}
-                                  className="font-semibold text-slate-900 hover:text-[#c62828] text-sm transition-colors truncate text-left cursor-pointer"
-                                >
-                                  {course.title}
-                                </button>
+                                {course.can_edit !== false ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditCourse(course.id)}
+                                    className="font-semibold text-slate-900 hover:text-[#c62828] text-sm transition-colors truncate text-left cursor-pointer"
+                                    title="Click to edit course"
+                                  >
+                                    {course.title}
+                                  </button>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <Link
+                                      href={`/course/${course.id}`}
+                                      target="_blank"
+                                      className="font-semibold text-slate-700 hover:text-[#c62828] text-sm transition-colors truncate text-left"
+                                      title="Preview course (Read-only for other departments)"
+                                    >
+                                      {course.title}
+                                    </Link>
+                                    <span className="text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded shrink-0">
+                                      View Only • {course.creator_department || 'Other Dept'}
+                                    </span>
+                                  </div>
+                                )}
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   <span className="text-[11px] font-mono font-medium text-slate-500 uppercase">
                                     {code}
                                   </span>
+                                  {course.creator_department && (
+                                    <span className="text-[10px] font-mono text-slate-400">
+                                      • {course.creator_department}
+                                    </span>
+                                  )}
                                   {isRecent && (
                                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
                                       Saved ✓
@@ -634,15 +679,24 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
                           {/* Actions */}
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              {/* Edit */}
-                              <button
-                                type="button"
-                                onClick={() => handleEditCourse(course.id)}
-                                className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                title="Edit Course"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
+                              {/* Edit or Lock */}
+                              {course.can_edit !== false ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditCourse(course.id)}
+                                  className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                  title="Edit Course"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <span
+                                  className="p-1.5 rounded text-slate-400 cursor-not-allowed"
+                                  title={`Locked: Created by ${course.creator_department || 'another'} department. Only its admins can edit it.`}
+                                >
+                                  <Lock className="w-4 h-4" />
+                                </span>
+                              )}
 
                               {/* Preview */}
                               <Link
@@ -655,28 +709,32 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
                               </Link>
 
                               {/* Archive / Restore */}
-                              <button
-                                type="button"
-                                onClick={() => setArchiveTarget(course)}
-                                className="p-1.5 rounded text-slate-500 hover:text-amber-700 hover:bg-amber-50 transition cursor-pointer"
-                                title={isArchived ? 'Restore Course' : 'Archive Course'}
-                              >
-                                {isArchived ? (
-                                  <ArchiveRestore className="w-4 h-4 text-emerald-600" />
-                                ) : (
-                                  <Archive className="w-4 h-4" />
-                                )}
-                              </button>
+                              {course.can_edit !== false && (
+                                <button
+                                  type="button"
+                                  onClick={() => setArchiveTarget(course)}
+                                  className="p-1.5 rounded text-slate-500 hover:text-amber-700 hover:bg-amber-50 transition cursor-pointer"
+                                  title={isArchived ? 'Restore Course' : 'Archive Course'}
+                                >
+                                  {isArchived ? (
+                                    <ArchiveRestore className="w-4 h-4 text-emerald-600" />
+                                  ) : (
+                                    <Archive className="w-4 h-4" />
+                                  )}
+                                </button>
+                              )}
 
                               {/* Delete */}
-                              <button
-                                type="button"
-                                onClick={() => setDeleteTarget(course)}
-                                className="p-1.5 rounded text-slate-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
-                                title="Delete Course"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              {course.can_edit !== false && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteTarget(course)}
+                                  className="p-1.5 rounded text-slate-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                                  title="Delete Course"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

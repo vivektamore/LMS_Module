@@ -127,14 +127,17 @@ export async function GET(req: NextRequest) {
     let sql = `
       SELECT 
         c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at,
-        c.visibility, c.has_certificate,
+        c.visibility, c.has_certificate, c.created_by,
+        u.name AS creator_name, u.department AS creator_department,
         cat.id AS category_id, cat.name AS category_name, cat.slug AS category_slug,
         (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS module_count,
+        (SELECT COUNT(*) FROM lessons l_tot JOIN modules m_tot ON l_tot.module_id = m_tot.id WHERE m_tot.course_id = c.id) AS total_lessons,
         (SELECT COALESCE(SUM(l.duration_seconds), 0)
          FROM lessons l
          JOIN modules m2 ON l.module_id = m2.id
          WHERE m2.course_id = c.id) AS total_duration_seconds
       FROM courses c
+      LEFT JOIN users u ON c.created_by = u.id
       LEFT JOIN categories cat ON c.category_id = cat.id
     `;
 
@@ -196,21 +199,53 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const courses = rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      course_code: r.course_code || '',
-      description: r.description,
-      thumbnail_url: r.thumbnail_url || null,
-      created_at: r.created_at,
-      visibility: r.visibility,
-      has_certificate: !!r.has_certificate,
-      departments: deptMap[r.id] || [],
-      categories: r.category_id ? { id: r.category_id, name: r.category_name, slug: r.category_slug } : null,
-      module_count: r.module_count,
-      total_duration_seconds: r.total_duration_seconds || 0,
-      modules: Array(r.module_count).fill({})
-    }));
+    const userProgressMap: Record<string, number> = {};
+    if (currentUser && courseIds.length > 0) {
+      const progRows = await query<any[]>(`
+        SELECT m.course_id, COUNT(DISTINCT up.lesson_id) as completed_count
+        FROM user_progress up
+        JOIN lessons l ON up.lesson_id = l.id
+        JOIN modules m ON l.module_id = m.id
+        WHERE up.user_id = ? AND m.course_id IN (${courseIds.map(() => '?').join(',')}) AND (up.is_completed = 1 OR up.completed_at IS NOT NULL)
+        GROUP BY m.course_id
+      `, [currentUser.id, ...courseIds]);
+      for (const pr of progRows) {
+        userProgressMap[pr.course_id] = Number(pr.completed_count || 0);
+      }
+    }
+
+    const courses = rows.map((r) => {
+      const totalLessons = Number(r.total_lessons || 0);
+      const completedLessons = userProgressMap[r.id] || 0;
+      const progressPct = totalLessons > 0 ? Math.min(100, Math.round((completedLessons / totalLessons) * 100)) : 0;
+      const isOwner = Boolean(r.created_by && r.created_by === currentUser?.id);
+      const isSameDept = Boolean(r.creator_department && currentUser?.department && r.creator_department === currentUser?.department);
+      const isHRAdmin = currentUser?.department === 'HR';
+      const canEdit = isOwner || isSameDept || isHRAdmin;
+
+      return {
+        id: r.id,
+        title: r.title,
+        course_code: r.course_code || '',
+        description: r.description,
+        thumbnail_url: r.thumbnail_url || null,
+        created_at: r.created_at,
+        visibility: r.visibility,
+        has_certificate: !!r.has_certificate,
+        departments: deptMap[r.id] || [],
+        categories: r.category_id ? { id: r.category_id, name: r.category_name, slug: r.category_slug } : null,
+        module_count: r.module_count,
+        total_lessons: totalLessons,
+        completed_lessons: completedLessons,
+        progress_pct: progressPct,
+        total_duration_seconds: r.total_duration_seconds || 0,
+        modules: Array(r.module_count).fill({}),
+        created_by: r.created_by || '',
+        creator_name: r.creator_name || 'Admin',
+        creator_department: r.creator_department || '',
+        can_edit: Boolean(canEdit),
+      };
+    });
 
     return NextResponse.json({ courses });
   } catch (err: unknown) {

@@ -274,25 +274,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
   // Derived / computed
   getCourseProgressPercentage: (courseLessonIds) => {
     const state = get();
-    if (!courseLessonIds.length) return 0;
+    if (!courseLessonIds || !courseLessonIds.length) return 0;
 
-    let totalScore = 0;
-    for (const id of courseLessonIds) {
-      if (state.completedLessons[id]) {
-        totalScore += 1;
-      } else {
-        const watched = state.maxWatchedTime[id] || 0;
-        const total = state.lessonTotalSeconds[id] || 0;
-        if (watched > 0 && total > 0) {
-          totalScore += Math.min(0.95, watched / total);
-        } else if (watched > 0) {
-          totalScore += 0.1;
-        }
-      }
-    }
+    const completedCount = courseLessonIds.filter((id) => state.completedLessons[id]).length;
+    if (completedCount === courseLessonIds.length) return 100;
 
-    const pct = Math.round((totalScore / courseLessonIds.length) * 100);
-    const allCompleted = courseLessonIds.every((id) => state.completedLessons[id]);
-    return allCompleted ? 100 : Math.min(99, pct);
+    return Math.round((completedCount / courseLessonIds.length) * 100);
   },
 }));

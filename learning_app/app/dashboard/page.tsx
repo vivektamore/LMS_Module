@@ -31,6 +31,7 @@ interface Lesson {
   title: string;
   order_index: number;
   video_url: string | null;
+  playlist_urls?: { url: string; title: string }[] | null;
   duration_seconds?: number;
 }
 
@@ -51,6 +52,7 @@ interface Course {
   categories: { id: string; name: string; slug: string } | null;
   modules: Module[];
   allLessons: Lesson[];
+  total_duration_seconds?: number;
 }
 
 interface ProgressRecord {
@@ -85,6 +87,22 @@ function formatWatchTime(totalSec: number): string {
   if (h > 0 && m > 0) return `${h}h ${m}m`;
   if (h > 0) return `${h}h`;
   return `${m} min`;
+}
+
+function getCourseDuration(course: Course): string {
+  const sumLessons = (course.allLessons || []).reduce(
+    (acc, l) => acc + (Number(l.duration_seconds) || 0),
+    0
+  );
+  const totalSec = sumLessons > 0 ? sumLessons : (Number(course.total_duration_seconds) || 0);
+  if (!totalSec || totalSec <= 0) return 'Self-paced';
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  if (m > 0) return `${m} min`;
+  return `${s}s`;
 }
 
 function formatRelativeTime(dateStr?: string | null): string {
@@ -248,7 +266,7 @@ export default function DashboardPage() {
             const allLessons: Lesson[] = (course.modules ?? []).flatMap(
               (m: Module) => m.lessons ?? []
             );
-            return { ...course, allLessons };
+            return { ...stub, ...course, allLessons };
           })
         );
         setAllCourses(detailed);
@@ -269,19 +287,32 @@ export default function DashboardPage() {
   const allLessonIds = useMemo(() => courses.flatMap((c) => c.allLessons.map((l) => l.id)), [courses]);
   const totalDone = useMemo(() => allLessonIds.filter((id) => completedLessons[id]).length, [allLessonIds, completedLessons]);
   const totalLessons = allLessonIds.length;
-  const overallPct = totalLessons ? getCourseProgress(allLessonIds) : 0;
 
   function coursePct(c: Course) {
     return getCourseProgress(c.allLessons.map((l) => l.id));
   }
+
+  // Overall progress is the average percentage across all enrolled courses
+  const overallPct = useMemo(() => {
+    if (!courses.length) return 0;
+    const total = courses.reduce((sum, c) => sum + coursePct(c), 0);
+    return Math.round(total / courses.length);
+  }, [courses, completedLessons, getCourseProgress]);
 
   function isCourseStarted(c: Course) {
     const p = coursePct(c);
     return p > 0 || c.allLessons.some((l) => (maxWatchedTime[l.id] || 0) > 0 || completedLessons[l.id]);
   }
 
+function hasLessonVideo(l?: Lesson | null): boolean {
+  if (!l) return false;
+  if (l.video_url && l.video_url.trim()) return true;
+  if (l.playlist_urls && Array.isArray(l.playlist_urls) && l.playlist_urls.length > 0) return true;
+  return false;
+}
+
   function nextLesson(c: Course): Lesson | undefined {
-    return c.allLessons.find((l) => !completedLessons[l.id]);
+    return c.allLessons.find((l) => !completedLessons[l.id] && hasLessonVideo(l));
   }
 
   // Count metrics
@@ -717,7 +748,7 @@ export default function DashboardPage() {
                           </span>
                           <span className="inline-flex items-center gap-1.5 bg-[#F1F5F9] px-2.5 py-1 rounded border border-[#E2E8F0]">
                             <Clock className="w-3.5 h-3.5 text-[#0F172A]" />
-                            {continueCourse.allLessons.length > 0 ? `${continueCourse.allLessons.length * 15} min` : '45 min'}
+                            {getCourseDuration(continueCourse)}
                           </span>
                           <span
                             className={`inline-flex items-center gap-1 font-bold ${
@@ -830,7 +861,7 @@ export default function DashboardPage() {
                           <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-[#64748B]">
                             <span>{doneCount} / {course.allLessons.length} Modules</span>
                             <span>•</span>
-                            <span>{course.allLessons.length > 0 ? `${course.allLessons.length * 15} min` : '45 min'}</span>
+                            <span>{getCourseDuration(course)}</span>
                             <span>•</span>
                             <span>Last accessed: Today</span>
                           </div>

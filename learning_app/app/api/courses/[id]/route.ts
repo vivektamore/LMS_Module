@@ -22,6 +22,10 @@ export async function GET(
       SELECT 
         c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at,
         c.visibility, c.has_certificate,
+        (SELECT COALESCE(SUM(l.duration_seconds), 0)
+         FROM lessons l
+         JOIN modules m2 ON l.module_id = m2.id
+         WHERE m2.course_id = c.id) AS total_duration_seconds,
         cat.id AS category_id, cat.name AS category_name, cat.slug AS category_slug
       FROM courses c
       LEFT JOIN categories cat ON c.category_id = cat.id
@@ -104,6 +108,7 @@ export async function GET(
         created_at: course.created_at,
         visibility: course.visibility || 'all',
         has_certificate: !!course.has_certificate,
+        total_duration_seconds: Number(course.total_duration_seconds || 0),
         categories: course.category_id ? { id: course.category_id, name: course.category_name, slug: course.category_slug } : null,
         modules,
       },
@@ -135,13 +140,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Course ID is required' }, { status: 400 });
     }
 
-    // Verify ownership — admin can only delete their own courses
-    const ownership = await query<any[]>(
-      'SELECT id FROM courses WHERE id = ? AND created_by = ?',
-      [id, user.id]
+    // Verify ownership or same department
+    const courseRows = await query<any[]>(
+      'SELECT c.id, c.created_by, u.department AS creator_department FROM courses c LEFT JOIN users u ON c.created_by = u.id WHERE c.id = ?',
+      [id]
     );
-    if (!ownership.length) {
-      return NextResponse.json({ error: 'You can only delete courses you created' }, { status: 403 });
+    if (!courseRows.length) {
+      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+    const c = courseRows[0];
+    const isOwner = c.created_by === user.id;
+    const isSameDept = Boolean(c.creator_department && user.department && c.creator_department === user.department);
+    const isHRSuperAdmin = user.department === 'HR';
+
+    if (!isOwner && !isSameDept && !isHRSuperAdmin) {
+      return NextResponse.json({
+        error: `Permission Denied: This course belongs to the ${c.creator_department || 'another'} department. Only ${c.creator_department || 'its'} admins can delete it.`
+      }, { status: 403 });
     }
 
     await query('DELETE FROM courses WHERE id = ?', [id]);
@@ -174,13 +189,23 @@ export async function PUT(
       return NextResponse.json({ error: 'Course ID is required' }, { status: 400 });
     }
 
-    // Verify ownership — admin can only edit their own courses
-    const ownership = await query<any[]>(
-      'SELECT id FROM courses WHERE id = ? AND created_by = ?',
-      [id, user.id]
+    // Verify ownership or same department
+    const courseRows = await query<any[]>(
+      'SELECT c.id, c.created_by, u.department AS creator_department FROM courses c LEFT JOIN users u ON c.created_by = u.id WHERE c.id = ?',
+      [id]
     );
-    if (!ownership.length) {
-      return NextResponse.json({ error: 'You can only edit courses you created' }, { status: 403 });
+    if (!courseRows.length) {
+      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+    const c = courseRows[0];
+    const isOwner = c.created_by === user.id;
+    const isSameDept = Boolean(c.creator_department && user.department && c.creator_department === user.department);
+    const isHRSuperAdmin = user.department === 'HR';
+
+    if (!isOwner && !isSameDept && !isHRSuperAdmin) {
+      return NextResponse.json({
+        error: `Permission Denied: This course was created by the ${c.creator_department || 'another'} department. Only ${c.creator_department || 'its'} admins can edit it.`
+      }, { status: 403 });
     }
 
     const body = await req.json();

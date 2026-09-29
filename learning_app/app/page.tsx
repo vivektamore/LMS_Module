@@ -41,6 +41,7 @@ interface Course {
   has_certificate?: boolean;
   visibility?: 'all' | 'specific';
   departments?: string[];
+  progress_pct?: number;
 }
 
 // Fallback industrial imagery from Stitch design for authentic engineering look
@@ -462,6 +463,8 @@ export default function HomePage() {
                 const durationText = formatDuration(course.total_duration_seconds);
                 const isEnrolled = enrolledCourseIds.includes(course.id);
                 const hasCert = !!courseCertificates[course.id];
+                const isCompleted = hasCert || (course.progress_pct === 100);
+                const currentPct = isCompleted ? 100 : (course.progress_pct || 0);
 
                 return (
                   <article
@@ -534,13 +537,13 @@ export default function HomePage() {
                       {/* Progress & Action Strip */}
                       <div className="space-y-2.5 pt-3 border-t border-[#E2E8F0]">
                         <div className="flex items-center justify-between text-[11px] font-mono">
-                          {hasCert ? (
+                          {isCompleted ? (
                             <span className="font-bold text-[#16A34A] flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              Completed
+                              Completed (100%)
                             </span>
                           ) : isEnrolled ? (
-                            <span className="font-bold text-[#a20513]">In Progress</span>
+                            <span className="font-bold text-[#a20513]">In Progress ({currentPct}%)</span>
                           ) : (
                             <span className="text-[#64748B] bg-[#eceef0] px-2 py-0.5 rounded font-medium">
                               Not Started
@@ -555,12 +558,11 @@ export default function HomePage() {
                         <div className="w-full h-1.5 bg-[#eceef0] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${
-                              hasCert
-                                ? 'bg-[#16A34A] w-full'
-                                : isEnrolled
-                                ? 'bg-[#a20513] w-1/2'
-                                : 'bg-transparent w-0'
+                              isCompleted
+                                ? 'bg-[#16A34A]'
+                                : 'bg-[#a20513]'
                             }`}
+                            style={{ width: `${isEnrolled || isCompleted ? currentPct : 0}%` }}
                           />
                         </div>
 

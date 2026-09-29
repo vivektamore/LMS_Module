@@ -995,6 +995,14 @@ export default function CourseDetailPage({
                     poster={posterImage}
                     className="w-full h-full object-contain"
                     src={activeLesson.playlist_urls[playlistIndex]?.url}
+                    onLoadedMetadata={() => {
+                      if (playlistVideoRef.current && activeLesson) {
+                        const dur = Math.round(playlistVideoRef.current.duration || 0);
+                        if (dur > 0) {
+                          setDuration(dur);
+                        }
+                      }
+                    }}
                     onError={() => setVideoLoadError(`Playlist video could not be loaded from Server storage (${activeLesson.playlist_urls?.[playlistIndex]?.url || 'missing path'}).`)}
                     onRateChange={() => enforceStandardPlaybackRate(playlistVideoRef.current)}
                     onTimeUpdate={handlePlaylistTimeUpdate}
@@ -1053,6 +1061,18 @@ export default function CourseDetailPage({
                       poster={posterImage}
                       className="w-full h-full object-contain"
                       src={activeLesson.video_url}
+                      onLoadedMetadata={() => {
+                        if (videoRef.current && activeLesson) {
+                          const dur = Math.round(videoRef.current.duration || 0);
+                          if (dur > 0) {
+                            setDuration(dur);
+                            if (!activeLesson.duration_seconds || activeLesson.duration_seconds === 0) {
+                              activeLesson.duration_seconds = dur;
+                              syncWatchtime(activeLesson.id, maxWatchedRef.current || 0, dur);
+                            }
+                          }
+                        }
+                      }}
                       onError={() => setVideoLoadError(`Lesson video could not be loaded from Server storage (${activeLesson?.video_url || 'missing path'}).`)}
                       onRateChange={() => enforceStandardPlaybackRate(videoRef.current)}
                       onEnded={handleMarkComplete}
