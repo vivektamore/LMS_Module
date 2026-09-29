@@ -23,6 +23,14 @@ public/videos/*
 !public/videos/.gitkeep
 learning_app/public/videos/*
 !learning_app/public/videos/.gitkeep
+public/thumbnails/*
+!public/thumbnails/.gitkeep
+learning_app/public/thumbnails/*
+!learning_app/public/thumbnails/.gitkeep
+uploads/*
+!uploads/**/.gitkeep
+learning_app/uploads/*
+!learning_app/uploads/**/.gitkeep
 
 # System & Editor
 .DS_Store

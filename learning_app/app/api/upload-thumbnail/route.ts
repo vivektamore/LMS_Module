@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getCurrentUser } from '@/lib/auth';
+import { ensureStorageDir, generateStorageFilename } from '@/lib/storage';
 
-// ── App Router route segment config ──────────────────────────────────────────
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
@@ -15,10 +15,9 @@ const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 /**
  * POST /api/upload-thumbnail
  * Admin only. Body: FormData with field "file" (Image file, max 50 MB)
- * Returns: { publicUrl: string }
+ * Saves thumbnail directly to Server PC storage (uploads/thumbnails).
  */
 export async function POST(req: NextRequest) {
-  // ── Auth ──────────────────────────────────────────────────────────────────
   const user = await getCurrentUser();
   const allowBypass = process.env.ALLOW_ADMIN_BYPASS === 'true';
 
@@ -66,31 +65,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `File size ${(file.size / 1024 / 1024).toFixed(1)} MB exceeds 50 MB limit` }, { status: 413 });
     }
 
-    // Write to public/thumbnails/
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const filename = `${timestamp}_${safeName}`;
-    const uploadDir = path.join(process.cwd(), 'public', 'thumbnails');
+    // 1. Generate unique collision-proof filename
+    const filename = generateStorageFilename(file.name);
 
-    console.log('[upload-thumbnail] writing to:', uploadDir, '/', filename);
-    await fs.mkdir(uploadDir, { recursive: true });
+    // 2. Ensure target storage directory exists on Server PC
+    const uploadDir = await ensureStorageDir('thumbnails');
+    const filePath = path.join(uploadDir, filename);
+
+    // 3. Write file directly to Server PC disk
     const arrayBuffer = await file.arrayBuffer();
-    await fs.writeFile(path.join(uploadDir, filename), Buffer.from(arrayBuffer));
+    const buffer = Buffer.from(arrayBuffer);
+    await fs.writeFile(filePath, buffer);
 
-    const publicUrl = `/thumbnails/${filename}`;
-    console.log('[upload-thumbnail] success:', publicUrl);
-    return NextResponse.json({ publicUrl });
+    // 4. Also duplicate to public/thumbnails/ for dual-route backward compatibility
+    try {
+      const legacyDir = path.join(process.cwd(), 'public', 'thumbnails');
+      await fs.mkdir(legacyDir, { recursive: true });
+      await fs.writeFile(path.join(legacyDir, filename), buffer);
+    } catch {
+      // Non-fatal
+    }
+
+    // 5. Return canonical LAN asset URL
+    const publicUrl = `/uploads/thumbnails/${filename}`;
+    return NextResponse.json({ publicUrl, filename, size: file.size });
 
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[upload-thumbnail] Unexpected error:', message, err);
+    console.error('[upload-thumbnail] Unexpected error on Server PC:', message, err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 /**
  * GET /api/upload-thumbnail
- * Debug: returns current session user info so we can verify auth is working.
+ * Debug endpoint returning current session user info.
  */
 export async function GET() {
   const user = await getCurrentUser();

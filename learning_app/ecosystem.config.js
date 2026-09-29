@@ -15,7 +15,7 @@ module.exports = {
     {
       name: 'jolly-clamps-lms',
       script: 'node_modules/next/dist/bin/next',
-      args: 'start',
+      args: 'start -H 0.0.0.0 -p 3000',
 
       // High-Concurrency Multi-Core Cluster
       instances: 'max',               // Scales across all available CPU cores automatically

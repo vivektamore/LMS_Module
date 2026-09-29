@@ -940,6 +940,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [customThumbnailUrl, setCustomThumbnailUrl] = useState('');
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [isThumbnailDragging, setIsThumbnailDragging] = useState(false);
 
   // 02 Course Settings
   const [estimatedDuration, setEstimatedDuration] = useState('2h 30m');
@@ -1399,7 +1400,37 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             </label>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-3 bg-[#f8fafc] border border-slate-200 rounded-xl">
               {/* Preview Box */}
-              <div className="md:col-span-5 relative group overflow-hidden rounded-lg border border-slate-300 bg-white aspect-video flex items-center justify-center">
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(true);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const f = e.dataTransfer.files[0];
+                    if (f) uploadThumbnailFile(f);
+                  }
+                }}
+                className={`md:col-span-5 relative group overflow-hidden rounded-lg border aspect-video flex items-center justify-center transition ${
+                  isThumbnailDragging
+                    ? 'border-[#c62828] bg-red-50/50 ring-2 ring-[#c62828]/20'
+                    : 'border-slate-300 bg-white'
+                }`}
+              >
                 {thumbnailUrl ? (
                   <img
                     src={thumbnailUrl}
@@ -1409,7 +1440,9 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 ) : (
                   <div className="flex flex-col items-center justify-center text-slate-400 p-4 text-center">
                     <ImageIcon className="w-8 h-8 mb-1 text-slate-300" />
-                    <span className="text-xs font-medium">No thumbnail selected</span>
+                    <span className="text-xs font-medium">
+                      {isThumbnailDragging ? 'Drop image here' : 'No thumbnail selected'}
+                    </span>
                   </div>
                 )}
 
@@ -1417,14 +1450,18 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                   <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white">
                     <button
                       type="button"
-                      onClick={() => thumbnailInputRef.current?.click()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        thumbnailInputRef.current?.click();
+                      }}
                       className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-900 rounded text-xs font-semibold cursor-pointer shadow-xs"
                     >
                       Replace
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setThumbnailUrl(null);
                         setCustomThumbnailUrl('');
                       }}
@@ -1441,13 +1478,50 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               </div>
 
               {/* Upload Dropzone */}
-              <div className="md:col-span-7 flex flex-col justify-between border-2 border-dashed border-slate-300 hover:border-[#c62828] rounded-lg p-4 text-center bg-white transition">
-                <div className="flex flex-col items-center justify-center py-2">
-                  <UploadCloud className="w-8 h-8 text-[#c62828] mb-1" />
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(true);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsThumbnailDragging(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const f = e.dataTransfer.files[0];
+                    if (f) uploadThumbnailFile(f);
+                  }
+                }}
+                onClick={() => thumbnailInputRef.current?.click()}
+                className={`md:col-span-7 flex flex-col justify-between border-2 border-dashed rounded-lg p-4 text-center transition cursor-pointer select-none ${
+                  isThumbnailDragging
+                    ? 'border-[#c62828] bg-red-50/70 ring-2 ring-[#c62828]/30 shadow-inner'
+                    : 'border-slate-300 hover:border-[#c62828] bg-white hover:bg-slate-50/70'
+                }`}
+              >
+                <div className="flex flex-col items-center justify-center py-2 pointer-events-none">
+                  <UploadCloud className={`w-8 h-8 mb-1 transition-transform duration-200 ${
+                    isThumbnailDragging ? 'text-[#c62828] scale-110 animate-bounce' : 'text-[#c62828]'
+                  }`} />
                   <p className="font-semibold text-xs text-slate-800 mb-0.5">
-                    Drag &amp; drop course thumbnail here, or click to browse
+                    {isThumbnailDragging ? (
+                      <span className="text-[#c62828] font-bold">Release to drop image here</span>
+                    ) : (
+                      'Drag & drop course thumbnail here, or click to browse'
+                    )}
                   </p>
-                  <p className="text-[11px] text-slate-500">Supports PNG, JPG, WebP (Max 20MB)</p>
+                  <p className="text-[11px] text-slate-500">Supports PNG, JPG, WebP, GIF (Max 20MB)</p>
                   {thumbnailUploading && (
                     <div className="w-full max-w-xs mt-2 space-y-1">
                       <div className="flex justify-between text-[10px] font-mono text-[#c62828]">
@@ -1467,7 +1541,10 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                   )}
                 </div>
 
-                <div className="flex items-center justify-center gap-2 pt-2 border-t border-slate-200">
+                <div
+                  className="flex items-center justify-center gap-2 pt-2 border-t border-slate-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     type="button"
                     onClick={() => thumbnailInputRef.current?.click()}
@@ -1487,7 +1564,10 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 </div>
 
                 {showUrlInput && (
-                  <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+                  <div
+                    className="flex gap-2 mt-2 pt-2 border-t border-slate-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <input
                       type="url"
                       value={customThumbnailUrl}
@@ -1513,7 +1593,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 <input
                   ref={thumbnailInputRef}
                   type="file"
-                  accept="image/*,.jpg,.jpeg,.png,.webp"
+                  accept="image/*,.jpg,.jpeg,.png,.webp,.gif"
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];

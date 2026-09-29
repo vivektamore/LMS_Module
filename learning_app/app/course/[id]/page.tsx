@@ -130,6 +130,7 @@ export default function CourseDetailPage({
   // Scrubber time display
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
 
   // Zustand Store
   const completedLessons = useAppStore((s) => s.completedLessons);
@@ -208,6 +209,7 @@ export default function CourseDetailPage({
       setIsPlaying(false);
       setCurrentTime(0);
       setDuration(0);
+      setVideoLoadError(null);
     }
   }, [activeLessonId]);
 
@@ -993,6 +995,7 @@ export default function CourseDetailPage({
                     poster={posterImage}
                     className="w-full h-full object-contain"
                     src={activeLesson.playlist_urls[playlistIndex]?.url}
+                    onError={() => setVideoLoadError(`Playlist video could not be loaded from Server storage (${activeLesson.playlist_urls?.[playlistIndex]?.url || 'missing path'}).`)}
                     onRateChange={() => enforceStandardPlaybackRate(playlistVideoRef.current)}
                     onTimeUpdate={handlePlaylistTimeUpdate}
                     onSeeking={handlePlaylistSeeking}
@@ -1050,6 +1053,7 @@ export default function CourseDetailPage({
                       poster={posterImage}
                       className="w-full h-full object-contain"
                       src={activeLesson.video_url}
+                      onError={() => setVideoLoadError(`Lesson video could not be loaded from Server storage (${activeLesson?.video_url || 'missing path'}).`)}
                       onRateChange={() => enforceStandardPlaybackRate(videoRef.current)}
                       onEnded={handleMarkComplete}
                       onTimeUpdate={handleTimeUpdate}
@@ -1063,6 +1067,22 @@ export default function CourseDetailPage({
                     >
                       Your browser does not support HTML5 video.
                     </video>
+
+                    {/* Server Storage Error Overlay */}
+                    {videoLoadError && (
+                      <div className="absolute inset-0 bg-slate-950/92 z-40 flex flex-col items-center justify-center p-6 text-center text-white">
+                        <div className="w-12 h-12 rounded-full bg-red-950 border border-red-700 flex items-center justify-center text-red-500 mb-3 shadow-lg">
+                          <AlertCircle className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-sm font-bold mb-1">Video File Not Found on Server</h3>
+                        <p className="text-xs text-slate-300 max-w-md mb-3 leading-relaxed">
+                          {videoLoadError}
+                        </p>
+                        <p className="text-[11px] text-slate-400 max-w-lg mb-2">
+                          Ensure the video file exists in the Server PC's <span className="font-mono text-amber-300">uploads/videos/</span> or <span className="font-mono text-amber-300">public/videos/</span> folder.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Quiz Overlay Modal */}
                     {activeQuiz && (

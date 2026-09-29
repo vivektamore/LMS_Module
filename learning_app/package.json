@@ -8,6 +8,7 @@
     "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "eslint",
     "doctor": "node scripts/doctor.js",
+    "lan:check": "node scripts/lan-doctor.js",
     "migrate": "node scripts/migrate-db.js",
     "init-settings": "node scripts/init-settings.js",
     "create-admin": "node scripts/create-admin.js",

@@ -2,17 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getCurrentUser } from '@/lib/auth';
+import { ensureStorageDir, generateStorageFilename } from '@/lib/storage';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 120; // 2 minutes for large videos
 
 /**
  * POST /api/upload-video
  * Admin only. Body: FormData with field "file" (mp4)
- * Returns: { publicUrl: string, storagePath: string }
+ * Saves video directly to Server PC storage (uploads/videos) and returns streaming URL.
  */
 export async function POST(req: NextRequest) {
   // ── Admin-only guard ──────────────────────────────────────────────────────
   const user = await getCurrentUser();
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: 'Only admins can upload videos' }, { status: 403 });
+  const allowBypass = process.env.ALLOW_ADMIN_BYPASS === 'true';
+
+  if (!user && !allowBypass) {
+    return NextResponse.json({ error: 'Session expired. Please sign in as admin.' }, { status: 401 });
+  }
+
+  if (user && user.role !== 'admin' && !allowBypass) {
+    return NextResponse.json({ error: 'Only administrators can upload training videos.' }, { status: 403 });
   }
 
   try {
@@ -20,40 +30,47 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return NextResponse.json({ error: 'No video file provided' }, { status: 400 });
     }
 
-    if (file.type !== 'video/mp4') {
-      return NextResponse.json({ error: 'Only .mp4 files are accepted' }, { status: 415 });
+    const ext = path.extname(file.name).toLowerCase();
+    const validExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.mkv'];
+    if (!validExtensions.includes(ext) && file.type !== 'video/mp4') {
+      return NextResponse.json({ error: 'Only .mp4 video files are accepted for LMS courses' }, { status: 415 });
     }
 
     const MAX_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
     if (file.size > MAX_SIZE_BYTES) {
-      return NextResponse.json({ error: 'File exceeds 500 MB limit' }, { status: 413 });
+      return NextResponse.json({ error: `Video size (${Math.round(file.size / 1024 / 1024)}MB) exceeds 500MB limit.` }, { status: 413 });
     }
 
-    // Build a unique storage path: public/videos/1714390000000_filename.mp4
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const filename = `${timestamp}_${safeName}`;
+    // 1. Generate unique collision-proof filename
+    const filename = generateStorageFilename(file.name);
 
-    // Target directory in Next.js public/videos
-    const uploadDir = path.join(process.cwd(), 'public', 'videos');
-    await fs.mkdir(uploadDir, { recursive: true });
+    // 2. Ensure target storage directory exists on Server PC
+    const uploadDir = await ensureStorageDir('videos');
     const filePath = path.join(uploadDir, filename);
 
-    // Write file directly to local server disk
+    // 3. Write file directly to Server PC disk
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     await fs.writeFile(filePath, buffer);
 
-    // The public URL path relative to the domain (e.g. /videos/filename.mp4)
-    const publicUrl = `/videos/${filename}`;
+    // 4. Also duplicate to public/videos/ for dual-route backward compatibility
+    try {
+      const legacyDir = path.join(process.cwd(), 'public', 'videos');
+      await fs.mkdir(legacyDir, { recursive: true });
+      await fs.writeFile(path.join(legacyDir, filename), buffer);
+    } catch {
+      // Non-fatal if legacy copy fails
+    }
 
-    return NextResponse.json({ publicUrl, storagePath: publicUrl });
+    // 5. Return canonical LAN streaming URL
+    const publicUrl = `/uploads/videos/${filename}`;
+    return NextResponse.json({ publicUrl, storagePath: publicUrl, filename, size: file.size });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[upload-video] Unexpected local write error:', message);
+    console.error('[upload-video] Unexpected write error on Server PC:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

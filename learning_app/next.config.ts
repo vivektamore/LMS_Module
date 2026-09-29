@@ -35,6 +35,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/videos/:path*',
+        destination: '/uploads/videos/:path*',
+      },
+      {
+        source: '/thumbnails/:path*',
+        destination: '/uploads/thumbnails/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
