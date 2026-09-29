@@ -79,7 +79,7 @@ function getCourseCode(course: Course): string {
   if (cat.includes('PROD')) return `MFG-STAMP-${shortId}`;
   if (cat.includes('MECH')) return `MEC-TORQ-${shortId}`;
   if (cat.includes('ENG')) return `DIN-3017-${shortId}`;
-  return `JC-MOD-${shortId}`;
+  return `JC-CRS-${shortId}`;
 }
 
 function formatDuration(seconds: number): string {

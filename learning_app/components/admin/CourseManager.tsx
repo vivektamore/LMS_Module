@@ -95,7 +95,7 @@ function getCourseCode(course: CourseItem) {
     else deptCode = cat.replace(/[^A-Z]/g, '').slice(0, 3) || 'GEN';
   }
 
-  return `JC-${deptCode}-001`;
+  return `JC-CRS-${deptCode}-001`;
 }
 
 export default function CourseManager({ initialCourses, initialCategories = [] }: CourseManagerProps) {

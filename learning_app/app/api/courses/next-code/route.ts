@@ -32,18 +32,18 @@ export async function getNextCourseCode(departments: string[] = [], categoryName
     else deptCode = cat.replace(/[^A-Z]/g, '').slice(0, 3) || 'GEN';
   }
 
-  const prefix = `JC-${deptCode}-`;
+  const prefix = `JC-CRS-${deptCode}-`;
 
   try {
     const rows = await query<any[]>(
-      'SELECT course_code FROM courses WHERE course_code LIKE ?',
-      [`${prefix}%`]
+      'SELECT course_code FROM courses WHERE course_code LIKE ? OR course_code LIKE ?',
+      [`${prefix}%`, `JC-${deptCode}-%`]
     );
 
     let maxNum = 0;
     for (const r of rows) {
       if (!r.course_code) continue;
-      const match = r.course_code.match(/JC-[A-Z]+-(\d+)/i);
+      const match = r.course_code.match(/JC-(?:CRS-)?[A-Z]+-(\d+)/i);
       if (match && match[1]) {
         const n = parseInt(match[1], 10);
         if (!isNaN(n) && n > maxNum) {

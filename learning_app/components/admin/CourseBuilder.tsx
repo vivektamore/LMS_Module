@@ -69,7 +69,7 @@ function generateCourseCode(departments: string[], categoryName?: string) {
     else if (cat.includes('TOOL') || cat.includes('CNC')) deptCode = 'CNC';
     else deptCode = cat.replace(/[^A-Z]/g, '').slice(0, 3) || 'GEN';
   }
-  return `JC-${deptCode}-001`;
+  return `JC-CRS-${deptCode}-001`;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1574,11 +1574,11 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                   setCourseCode(e.target.value.toUpperCase());
                   setIsManualCode(true);
                 }}
-                placeholder="e.g. JC-MNT-001"
+                placeholder="e.g. JC-CRS-MNT-001"
                 className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg font-mono text-xs text-slate-900 uppercase tracking-wider focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none"
               />
               <p className="mt-1 text-[11px] text-slate-500">
-                Auto-generated from Department (e.g. <span className="font-mono text-slate-700 font-semibold">JC-MNT-001</span>)
+                Auto-generated from Department (e.g. <span className="font-mono text-slate-700 font-semibold">JC-CRS-MNT-001</span>)
               </p>
             </div>
           </div>
