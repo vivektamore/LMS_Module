@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
     if (currentUser && courseIds.length > 0) {
       const progRows = await query<any[]>(`
         SELECT m.course_id, COUNT(DISTINCT up.lesson_id) as completed_count
-        FROM user_progress up
+        FROM lesson_progress up
         JOIN lessons l ON up.lesson_id = l.id
         JOIN modules m ON l.module_id = m.id
         WHERE up.user_id = ? AND m.course_id IN (${courseIds.map(() => '?').join(',')}) AND (up.is_completed = 1 OR up.completed_at IS NOT NULL)
