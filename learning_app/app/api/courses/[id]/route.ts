@@ -21,7 +21,7 @@ export async function GET(
     const courseRows = await query<any[]>(`
       SELECT 
         c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at,
-        c.visibility, c.has_certificate,
+        c.visibility, c.has_certificate, c.is_archived,
         (SELECT COALESCE(SUM(l.duration_seconds), 0)
          FROM lessons l
          JOIN modules m2 ON l.module_id = m2.id
@@ -37,10 +37,18 @@ export async function GET(
     }
 
     const course = courseRows[0];
+    const currentUser = await getCurrentUser();
+
+    // Block non-admin access if course is archived
+    if (course.is_archived && currentUser?.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'This course has been archived by administration and is no longer accessible.' },
+        { status: 403 }
+      );
+    }
 
     // Department authorization check for specific visibility
     if (course.visibility === 'specific') {
-      const currentUser = await getCurrentUser();
       if (!currentUser) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
       }
@@ -75,14 +83,15 @@ export async function GET(
 
       for (const lesson of lessons) {
         const quizzes = await query<any[]>(`
-          SELECT id, timestamp_sec, question, options, correct_index
+          SELECT id, part_index, timestamp_sec, question, options, correct_index
           FROM lesson_quizzes
           WHERE lesson_id = ?
-          ORDER BY timestamp_sec ASC
+          ORDER BY COALESCE(part_index, 0) ASC, timestamp_sec ASC
         `, [lesson.id]);
 
         lesson.lesson_quizzes = quizzes.map((q) => ({
           ...q,
+          part_index: q.part_index !== null && q.part_index !== undefined ? Number(q.part_index) : undefined,
           options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
         }));
 
@@ -108,6 +117,7 @@ export async function GET(
         created_at: course.created_at,
         visibility: course.visibility || 'all',
         has_certificate: !!course.has_certificate,
+        is_archived: !!course.is_archived,
         total_duration_seconds: Number(course.total_duration_seconds || 0),
         categories: course.category_id ? { id: course.category_id, name: course.category_name, slug: course.category_slug } : null,
         modules,
@@ -116,6 +126,47 @@ export async function GET(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('[courses/[id] GET] Unexpected error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH /api/courses/[id]
+ * Updates partial course state like archiving / restoring.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'admin') {
+    return NextResponse.json({ error: 'Only administrators can archive courses' }, { status: 403 });
+  }
+
+  try {
+    const { id } = await params;
+    if (!id) {
+      return NextResponse.json({ error: 'Course ID is required' }, { status: 400 });
+    }
+
+    const body = await req.json();
+    if (typeof body.is_archived === 'boolean') {
+      await query('UPDATE courses SET is_archived = ?, updated_at = NOW() WHERE id = ?', [
+        body.is_archived ? 1 : 0,
+        id,
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        id,
+        is_archived: body.is_archived,
+        status: body.is_archived ? 'Archived' : 'Published',
+      });
+    }
+
+    return NextResponse.json({ error: 'No recognized update fields' }, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -313,11 +364,12 @@ export async function PUT(
               for (const q of lesson.quizzes) {
                 const quizId = randomUUID();
                 await connection.execute(
-                  `INSERT INTO lesson_quizzes (id, lesson_id, timestamp_sec, question, options, correct_index)
-                   VALUES (?, ?, ?, ?, ?, ?)`,
+                  `INSERT INTO lesson_quizzes (id, lesson_id, part_index, timestamp_sec, question, options, correct_index)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)`,
                   [
                     quizId,
                     lessonId,
+                    q.part_index !== undefined && q.part_index !== null ? Number(q.part_index) : null,
                     q.timestamp_sec,
                     q.question,
                     JSON.stringify(q.options),

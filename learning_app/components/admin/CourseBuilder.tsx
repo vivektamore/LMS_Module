@@ -89,6 +89,7 @@ interface PlaylistSegment {
 
 interface Quiz {
   id: string;
+  partIndex?: number;
   timestampSec: number;
   question: string;
   options: string[];
@@ -436,22 +437,31 @@ function PlaylistBuilder({
   onUpdate: (patch: Partial<Lesson>) => void;
 }) {
   const [isBatchDragging, setIsBatchDragging] = useState(false);
+  const [activeDragSegId, setActiveDragSegId] = useState<string | null>(null);
   const batchFileInputRef = useRef<HTMLInputElement>(null);
+  const segmentsRef = useRef<PlaylistSegment[]>(lesson.segments);
+  segmentsRef.current = lesson.segments;
+
+  function updateSegmentsList(newSegments: PlaylistSegment[]) {
+    segmentsRef.current = newSegments;
+    const totalLessonDur = newSegments.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
+    onUpdate({ segments: newSegments, duration_seconds: totalLessonDur });
+  }
 
   function updateSegment(segId: string, patch: Partial<PlaylistSegment>) {
-    onUpdate({
-      segments: lesson.segments.map((s) => (s.id === segId ? { ...s, ...patch } : s)),
-    });
+    const current = segmentsRef.current;
+    const updated = current.map((s) => (s.id === segId ? { ...s, ...patch } : s));
+    updateSegmentsList(updated);
   }
 
   function moveSegment(index: number, direction: 'up' | 'down') {
+    const current = [...segmentsRef.current];
     const newIdx = direction === 'up' ? index - 1 : index + 1;
-    if (newIdx < 0 || newIdx >= lesson.segments.length) return;
-    const next = [...lesson.segments];
-    const temp = next[index];
-    next[index] = next[newIdx];
-    next[newIdx] = temp;
-    onUpdate({ segments: next });
+    if (newIdx < 0 || newIdx >= current.length) return;
+    const temp = current[index];
+    current[index] = current[newIdx];
+    current[newIdx] = temp;
+    updateSegmentsList(current);
   }
 
   async function uploadFileForSegment(segId: string, file: File, customTitle?: string) {
@@ -463,24 +473,17 @@ function PlaylistBuilder({
     const duration = await probeVideoDuration(file);
     const titlePatch = customTitle ? { title: customTitle } : {};
 
-    const currentSegments = lesson.segments.map((s) =>
-      s.id === segId
-        ? {
-            ...s,
-            ...titlePatch,
-            file,
-            fileName: file.name,
-            fileSize: file.size,
-            durationSeconds: duration,
-            uploading: true,
-            uploadPercent: 0,
-            error: null,
-            uploadedUrl: null,
-          }
-        : s
-    );
-    const totalLessonDur = currentSegments.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
-    onUpdate({ segments: currentSegments, duration_seconds: totalLessonDur });
+    updateSegment(segId, {
+      ...titlePatch,
+      file,
+      fileName: file.name,
+      fileSize: file.size,
+      durationSeconds: duration,
+      uploading: true,
+      uploadPercent: 0,
+      error: null,
+      uploadedUrl: null,
+    });
 
     const fd = new FormData();
     fd.append('file', file);
@@ -507,14 +510,15 @@ function PlaylistBuilder({
             fileName: file.name,
             fileSize: file.size,
             durationSeconds: duration,
+            error: null,
           });
         } catch {
-          updateSegment(segId, { uploading: false, error: 'Upload failed: invalid response' });
+          updateSegment(segId, { uploading: false, error: 'Upload failed: invalid server response.' });
         }
       } else {
         try {
           const json = JSON.parse(xhr.responseText);
-          updateSegment(segId, { uploading: false, error: json.error || 'Upload failed' });
+          updateSegment(segId, { uploading: false, error: json.error || `Upload failed (${xhr.status})` });
         } catch {
           updateSegment(segId, { uploading: false, error: `Upload failed (status ${xhr.status})` });
         }
@@ -522,51 +526,113 @@ function PlaylistBuilder({
     };
 
     xhr.onerror = () => {
-      updateSegment(segId, { uploading: false, error: 'Network error during upload' });
+      updateSegment(segId, { uploading: false, error: 'Network error during upload. Please check connection and retry.' });
     };
 
     xhr.send(fd);
   }
 
-  async function handleBatchFiles(files: File[]) {
+  async function handleBatchFiles(files: File[], targetSegId?: string) {
     const mp4Files = files.filter(
       (f) => f.type === 'video/mp4' || f.name.toLowerCase().endsWith('.mp4')
     );
 
     if (mp4Files.length === 0) {
-      alert('Please drop valid .mp4 video files.');
+      alert('Please drop or select valid .mp4 video files.');
       return;
     }
 
+    // Natural sort: Part 1, Part 2, Part 10...
     mp4Files.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
     );
 
-    const newSegments: PlaylistSegment[] = [];
-    for (const file of mp4Files) {
-      const generatedTitle = cleanFileNameToTitle(file.name);
-      const dur = await probeVideoDuration(file);
-      const seg = makeSegment(generatedTitle, file, file.name, file.size);
-      seg.durationSeconds = dur;
-      newSegments.push(seg);
+    const current = [...segmentsRef.current];
+
+    // Find indices of empty slots
+    const emptyIndices: number[] = [];
+    current.forEach((s, idx) => {
+      if (!s.uploadedUrl && !s.uploading && !s.file) {
+        emptyIndices.push(idx);
+      }
+    });
+
+    // If targeted at a specific card, ensure that card is filled first
+    if (targetSegId) {
+      const targetedIdx = current.findIndex((s) => s.id === targetSegId);
+      if (targetedIdx !== -1) {
+        const idxInEmpty = emptyIndices.indexOf(targetedIdx);
+        if (idxInEmpty !== -1) {
+          emptyIndices.splice(idxInEmpty, 1);
+        }
+        emptyIndices.unshift(targetedIdx);
+      }
     }
 
-    const updatedSegments = [...lesson.segments, ...newSegments];
-    const totalLessonDur = updatedSegments.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
-    onUpdate({ segments: updatedSegments, duration_seconds: totalLessonDur });
+    const assignments: { segId: string; file: File; customTitle?: string }[] = [];
+    let fileIdx = 0;
 
-    newSegments.forEach((seg, idx) => {
-      uploadFileForSegment(seg.id, mp4Files[idx]);
-    });
+    // First: fill existing empty segments preserving user-entered custom titles
+    while (fileIdx < mp4Files.length && emptyIndices.length > 0) {
+      const targetIdx = emptyIndices.shift()!;
+      const file = mp4Files[fileIdx];
+      const existingSeg = current[targetIdx];
+      const hasCustomTitle = existingSeg.title.trim() && !/^Part\s*\d+$/i.test(existingSeg.title.trim());
+      const titleToUse = hasCustomTitle ? existingSeg.title : cleanFileNameToTitle(file.name);
+
+      current[targetIdx] = {
+        ...existingSeg,
+        title: titleToUse,
+        file,
+        fileName: file.name,
+        fileSize: file.size,
+        uploading: true,
+        uploadPercent: 0,
+        error: null,
+      };
+      assignments.push({ segId: existingSeg.id, file, customTitle: titleToUse });
+      fileIdx++;
+    }
+
+    // Second: if there are remaining dropped files, append new segments
+    while (fileIdx < mp4Files.length) {
+      const file = mp4Files[fileIdx];
+      const generatedTitle = cleanFileNameToTitle(file.name);
+      const newSeg = makeSegment(generatedTitle, file, file.name, file.size);
+      newSeg.uploading = true;
+      current.push(newSeg);
+      assignments.push({ segId: newSeg.id, file, customTitle: generatedTitle });
+      fileIdx++;
+    }
+
+    // Update state once with all queued segments
+    updateSegmentsList(current);
+
+    // Launch uploads in parallel
+    for (const item of assignments) {
+      uploadFileForSegment(item.segId, item.file, item.customTitle);
+    }
   }
+
+  const uploadedCount = lesson.segments.filter((s) => !!s.uploadedUrl).length;
+  const totalParts = lesson.segments.length;
 
   return (
     <div className="space-y-3 pl-2 sm:pl-3 border-l-2 border-slate-200">
-      <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-        <span>Video Parts (Sequential Playback)</span>
-        <span className="font-mono text-slate-400">
-          {lesson.segments.length} {lesson.segments.length === 1 ? 'Part' : 'Parts'} Configured
-        </span>
+      {/* Header with live total duration */}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="flex items-center gap-2">
+          <span>Video Parts (Sequential Playback)</span>
+          <span className="font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded text-[11px] normal-case">
+            {totalParts} {totalParts === 1 ? 'Part' : 'Parts'} ({uploadedCount} uploaded)
+          </span>
+        </div>
+        {lesson.duration_seconds && lesson.duration_seconds > 0 ? (
+          <div className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-mono text-[11px] normal-case font-bold">
+            <Clock className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Total: {formatSeconds(lesson.duration_seconds)}</span>
+          </div>
+        ) : null}
       </div>
 
       {/* Batch Dropzone */}
@@ -587,10 +653,10 @@ function PlaylistBuilder({
           }
         }}
         onClick={() => batchFileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-lg p-3 text-center transition cursor-pointer ${
+        className={`border-2 border-dashed rounded-xl p-4 text-center transition-all cursor-pointer ${
           isBatchDragging
-            ? 'border-[#c62828] bg-red-50/50'
-            : 'border-slate-300 hover:border-[#c62828] bg-[#f8fafc]'
+            ? 'border-[#c62828] bg-red-50/70 ring-2 ring-red-400/30 scale-[1.005]'
+            : 'border-slate-300 hover:border-[#c62828] bg-[#f8fafc] hover:bg-red-50/20'
         }`}
       >
         <input
@@ -606,15 +672,25 @@ function PlaylistBuilder({
             }
           }}
         />
-        <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-700">
-          <UploadCloud className="w-4 h-4 text-[#c62828]" />
-          <span>Drag &amp; drop multiple MP4 files or click to browse</span>
+        <div className="flex flex-col items-center justify-center gap-1.5">
+          <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-[#c62828]">
+            <UploadCloud className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-bold text-slate-800">
+            {isBatchDragging
+              ? 'Release to drop & populate video parts in sequence'
+              : 'Drag & drop multiple MP4 files here, or click to browse'}
+          </p>
+          <p className="text-[11px] text-slate-500">
+            Automatically maps to empty parts in numeric order, probes durations, and sums total lesson time
+          </p>
         </div>
       </div>
 
       {/* Parts List */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {lesson.segments.map((seg, idx) => {
+          const isCardDraggedOver = activeDragSegId === seg.id;
           const displayFileName =
             seg.fileName ||
             seg.file?.name ||
@@ -625,103 +701,169 @@ function PlaylistBuilder({
           return (
             <div
               key={seg.id}
-              className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition shadow-xs"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveDragSegId(seg.id);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveDragSegId((prev) => (prev === seg.id ? null : prev));
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveDragSegId(null);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  const dropped = Array.from(e.dataTransfer.files);
+                  if (dropped.length === 1) {
+                    uploadFileForSegment(seg.id, dropped[0]);
+                  } else {
+                    handleBatchFiles(dropped, seg.id);
+                  }
+                }
+              }}
+              className={`flex flex-col gap-2 p-3 bg-white border rounded-lg transition-all shadow-xs ${
+                isCardDraggedOver
+                  ? 'border-2 border-[#c62828] bg-red-50/40 ring-2 ring-red-400/30'
+                  : seg.error
+                  ? 'border-red-300 bg-red-50/20'
+                  : 'border-slate-200 hover:border-slate-300'
+              }`}
             >
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                {/* Reorder and Part Number */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[#c62828] font-bold font-mono text-[11px]">
-                    P{idx + 1}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  {/* Reorder and Part Number */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[#c62828] font-bold font-mono text-[11px]">
+                      P{idx + 1}
+                    </div>
+                    <div className="flex flex-col -space-y-1">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => moveSegment(idx, 'up')}
+                        className="text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
+                        title="Move Up"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === lesson.segments.length - 1}
+                        onClick={() => moveSegment(idx, 'down')}
+                        className="text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
+                        title="Move Down"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex flex-col -space-y-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => moveSegment(idx, 'up')}
-                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
-                    >
-                      <ChevronUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === lesson.segments.length - 1}
-                      onClick={() => moveSegment(idx, 'down')}
-                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
-                    >
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </button>
+
+                  {/* Title & Status */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={seg.title}
+                        onChange={(e) => updateSegment(seg.id, { title: e.target.value })}
+                        placeholder={`PART ${idx + 1}: Title`}
+                        className="font-semibold text-xs text-slate-900 border-b border-transparent focus:border-[#c62828] focus:outline-none bg-transparent w-full"
+                      />
+                      {seg.durationSeconds ? (
+                        <span className="font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0 font-bold" title="Part Duration">
+                          {formatSeconds(seg.durationSeconds)}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {seg.uploadedUrl ? (
+                      <div className="flex items-center gap-1.5 mt-1 text-[11px] text-emerald-700">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="font-mono font-medium truncate">{displayFileName}</span>
+                        {seg.fileSize && <span>· {formatBytes(seg.fileSize)}</span>}
+                      </div>
+                    ) : seg.uploading ? (
+                      <div className="space-y-1 mt-1.5">
+                        <div className="flex items-center justify-between text-[11px] text-[#c62828] font-medium">
+                          <span className="flex items-center gap-1.5">
+                            <Loader2 className="w-3 h-3 animate-spin text-[#c62828]" />
+                            Uploading ({seg.fileName || 'video'})…
+                          </span>
+                          <span className="font-mono font-bold">{seg.uploadPercent}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className="bg-[#c62828] h-full transition-all duration-200 rounded-full"
+                            style={{ width: `${seg.uploadPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#c62828] hover:text-[#a20513] cursor-pointer mt-1 bg-red-50/50 hover:bg-red-100/50 border border-dashed border-red-200 px-2 py-1 rounded transition">
+                        <UploadCloud className="w-3.5 h-3.5" />
+                        <span>Drop MP4 file here or click to select</span>
+                        <input
+                          type="file"
+                          accept="video/mp4"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadFileForSegment(seg.id, f);
+                          }}
+                        />
+                      </label>
+                    )}
                   </div>
                 </div>
 
-                {/* Title & Status */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                {/* Actions */}
+                <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                  <label className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 border border-slate-300 rounded bg-white transition cursor-pointer shadow-xs">
+                    Replace
                     <input
-                      type="text"
-                      value={seg.title}
-                      onChange={(e) => updateSegment(seg.id, { title: e.target.value })}
-                      placeholder={`PART ${idx + 1}: Title`}
-                      className="font-semibold text-xs text-slate-900 border-b border-transparent focus:border-[#c62828] focus:outline-none bg-transparent w-full"
+                      type="file"
+                      accept="video/mp4"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadFileForSegment(seg.id, f);
+                      }}
                     />
-                    {seg.durationSeconds ? (
-                      <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
-                        {formatSeconds(seg.durationSeconds)}
-                      </span>
-                    ) : null}
-                  </div>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = segmentsRef.current.filter((s) => s.id !== seg.id);
+                      updateSegmentsList(next);
+                    }}
+                    className="p-1 text-slate-400 hover:text-red-600 rounded transition cursor-pointer"
+                    title="Remove Part"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
 
-                  {seg.uploadedUrl ? (
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-emerald-700">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span className="font-mono font-medium truncate">{displayFileName}</span>
-                      {seg.fileSize && <span>· {formatBytes(seg.fileSize)}</span>}
-                    </div>
-                  ) : seg.uploading ? (
-                    <div className="flex items-center gap-2 mt-1">
-                      <Loader2 className="w-3 h-3 animate-spin text-[#c62828]" />
-                      <span className="text-[11px] text-[#c62828]">Uploading ({seg.uploadPercent}%)…</span>
-                    </div>
-                  ) : (
-                    <label className="inline-flex items-center gap-1 text-[11px] text-[#c62828] hover:underline cursor-pointer mt-0.5">
-                      <UploadCloud className="w-3.5 h-3.5" />
-                      <span>Select video file</span>
-                      <input
-                        type="file"
-                        accept="video/mp4"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) uploadFileForSegment(seg.id, f);
-                        }}
-                      />
-                    </label>
+              {/* Error Alert Display */}
+              {seg.error && (
+                <div className="flex items-center justify-between gap-2 mt-1 px-2.5 py-1.5 bg-red-50 border border-red-200 rounded-md text-xs text-red-700">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                    <span className="truncate">{seg.error}</span>
+                  </div>
+                  {seg.file && (
+                    <button
+                      type="button"
+                      onClick={() => uploadFileForSegment(seg.id, seg.file!)}
+                      className="px-2 py-0.5 text-[11px] font-bold text-red-800 bg-red-100 hover:bg-red-200 rounded transition cursor-pointer shrink-0"
+                    >
+                      Retry Upload
+                    </button>
                   )}
                 </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-                <label className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 border border-slate-300 rounded bg-white transition cursor-pointer shadow-xs">
-                  Replace
-                  <input
-                    type="file"
-                    accept="video/mp4"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadFileForSegment(seg.id, f);
-                    }}
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => onUpdate({ segments: lesson.segments.filter((s) => s.id !== seg.id) })}
-                  className="p-1 text-slate-400 hover:text-red-600 rounded transition cursor-pointer"
-                  title="Remove Part"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              )}
             </div>
           );
         })}
@@ -730,8 +872,12 @@ function PlaylistBuilder({
       {/* Add Video Part Button */}
       <button
         type="button"
-        onClick={() => onUpdate({ segments: [...lesson.segments, makeSegment(`Part ${lesson.segments.length + 1}`)] })}
-        className="w-full py-2 border border-dashed border-slate-300 hover:border-[#c62828] text-slate-600 hover:text-[#c62828] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-white hover:bg-red-50/20 transition cursor-pointer"
+        onClick={() => {
+          const current = segmentsRef.current;
+          const next = [...current, makeSegment(`Part ${current.length + 1}`)];
+          updateSegmentsList(next);
+        }}
+        className="w-full py-2.5 border border-dashed border-slate-300 hover:border-[#c62828] text-slate-600 hover:text-[#c62828] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-white hover:bg-red-50/20 transition cursor-pointer"
       >
         <Plus className="w-4 h-4" />
         <span>+ Add Video Part</span>
@@ -754,6 +900,7 @@ function QuizBuilder({
   function addQuiz() {
     const newQ: Quiz = {
       id: uid(),
+      partIndex: lesson.type === 'playlist' ? 0 : undefined,
       timestampSec: 60,
       question: '',
       options: ['', '', '', ''],
@@ -810,6 +957,9 @@ function QuizBuilder({
       <div className="space-y-2.5">
         {lesson.quizzes.map((q, qIdx) => {
           const isExpanded = expandedQuizId === q.id || !q.question.trim();
+          const targetPartIndex = q.partIndex ?? 0;
+          const targetSegment = lesson.type === 'playlist' ? lesson.segments[targetPartIndex] : null;
+
           return (
             <div
               key={q.id}
@@ -820,6 +970,11 @@ function QuizBuilder({
                   <span className="font-mono text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">
                     Q{qIdx + 1}
                   </span>
+                  {lesson.type === 'playlist' && (
+                    <span className="font-mono text-[11px] font-bold text-amber-950 bg-amber-200/80 px-2 py-0.5 rounded border border-amber-300/80 shrink-0">
+                      Part {targetPartIndex + 1}
+                    </span>
+                  )}
                   <span className="text-xs font-semibold text-slate-900 truncate">
                     {q.question.trim() || 'Untitled Question'}
                   </span>
@@ -845,6 +1000,30 @@ function QuizBuilder({
 
               {isExpanded && (
                 <div className="space-y-3 pt-2 border-t border-amber-200/70">
+                  {/* Video Part Selector for Playlist */}
+                  {lesson.type === 'playlist' && (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white/80 p-2 rounded-md border border-amber-200">
+                      <label className="text-xs font-semibold text-slate-700 shrink-0">
+                        Assign to Video Part:
+                      </label>
+                      <select
+                        value={targetPartIndex}
+                        onChange={(e) => updateQuiz(q.id, { partIndex: parseInt(e.target.value) || 0 })}
+                        className="px-2.5 py-1 text-xs border border-slate-300 rounded bg-white font-medium text-slate-800 focus:outline-none focus:border-[#c62828] cursor-pointer"
+                      >
+                        {lesson.segments.map((seg, sIdx) => (
+                          <option key={seg.id} value={sIdx}>
+                            Part {sIdx + 1}: {seg.title.trim() || `Part ${sIdx + 1}`}{' '}
+                            {seg.durationSeconds ? `(${formatSeconds(seg.durationSeconds)})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-[11px] text-slate-500">
+                        (Checkpoint will pause playback during Part {targetPartIndex + 1})
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-medium text-slate-700 shrink-0">
                       Pause Timestamp:
@@ -859,7 +1038,14 @@ function QuizBuilder({
                         className="w-14 text-xs font-mono font-medium focus:outline-none"
                       />
                     </div>
-                    <span className="text-[11px] text-slate-500">(MM:SS)</span>
+                    <span className="text-[11px] text-slate-500">
+                      (MM:SS {lesson.type === 'playlist' ? `within Part ${targetPartIndex + 1}` : 'within lesson'})
+                    </span>
+                    {targetSegment?.durationSeconds ? (
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Max: {formatSeconds(targetSegment.durationSeconds)}
+                      </span>
+                    ) : null}
                   </div>
 
                   <div>
@@ -870,7 +1056,7 @@ function QuizBuilder({
                       type="text"
                       value={q.question}
                       onChange={(e) => updateQuiz(q.id, { question: e.target.value })}
-                      placeholder="e.g. What is the required torque setting for DIN 3017 clamps?"
+                      placeholder="e.g. What is the working principle of the FRL unit?"
                       className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#c62828]"
                     />
                   </div>
@@ -943,7 +1129,6 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
   const [isThumbnailDragging, setIsThumbnailDragging] = useState(false);
 
   // 02 Course Settings
-  const [estimatedDuration, setEstimatedDuration] = useState('2h 30m');
   const [visibility, setVisibility] = useState<'all' | 'specific'>('specific');
   const [selectedDepts, setSelectedDepts] = useState<string[]>(['MAINTENANCE', 'PRODUCTION']);
   const [hasCertificate, setHasCertificate] = useState(true);
@@ -1040,6 +1225,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                     title: p.title || '',
                     file: null,
                     fileName: inferredFileName || p.title || 'Video segment',
+                    durationSeconds: Number(p.duration_seconds || p.durationSeconds || 0),
                     uploadedUrl: p.url || null,
                     uploading: false,
                     error: null,
@@ -1047,6 +1233,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                 }),
                 quizzes: (l.lesson_quizzes || []).map((q: any) => ({
                   id: q.id || uid(),
+                  partIndex: q.part_index !== null && q.part_index !== undefined ? Number(q.part_index) : (l.playlist_urls?.length ? 0 : undefined),
                   timestampSec: q.timestamp_sec || 0,
                   question: q.question || '',
                   options: Array.isArray(q.options) ? q.options : [],
@@ -1213,9 +1400,14 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             alert(`Multi-part lesson "${lesson.title}" must have at least one video part.`);
             return;
           }
-          for (const seg of lesson.segments) {
+          for (let sIdx = 0; sIdx < lesson.segments.length; sIdx++) {
+            const seg = lesson.segments[sIdx];
+            if (seg.uploading) {
+              alert(`Video part ${sIdx + 1} ("${seg.title || 'Untitled'}") is still uploading. Please wait for it to finish.`);
+              return;
+            }
             if (!seg.uploadedUrl) {
-              alert(`Video part "${seg.title || 'Untitled'}" is not yet uploaded.`);
+              alert(`Video part ${sIdx + 1} ("${seg.title || 'Untitled'}") does not have an uploaded video file. Please drop or select a video, or delete this part.`);
               return;
             }
           }
@@ -1248,12 +1440,17 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             video_url: lesson.type === 'single' ? lesson.singleUrl : undefined,
             playlist_urls:
               lesson.type === 'playlist'
-                ? lesson.segments.map((s) => ({ title: s.title, url: s.uploadedUrl }))
+                ? lesson.segments.map((s) => ({
+                    title: s.title,
+                    url: s.uploadedUrl,
+                    duration_seconds: s.durationSeconds || 0,
+                  }))
                 : undefined,
             duration_seconds: lesson.duration_seconds || 0,
             order_index: li,
             quizzes: lesson.quizzes.map((q) => ({
               id: q.id,
+              part_index: lesson.type === 'playlist' ? (q.partIndex ?? 0) : null,
               timestamp_sec: q.timestampSec,
               question: q.question,
               options: q.options,
@@ -1809,26 +2006,10 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column: Estimated Duration & Completion Certificate */}
-          <div className="flex flex-col gap-4">
-            <div>
-              <label className="block font-semibold text-xs text-slate-900 mb-1.5">
-                Estimated Duration
-              </label>
-              <div className="relative">
-                <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={estimatedDuration}
-                  onChange={(e) => setEstimatedDuration(e.target.value)}
-                  placeholder="e.g. 2h 30m"
-                  className="w-full h-10 pl-9 pr-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828] focus:outline-none"
-                />
-              </div>
-            </div>
-
+          {/* Left Column: Completion Certificate */}
+          <div className="flex flex-col justify-start">
             {/* Certificate Checkbox */}
-            <div className="p-3 bg-[#f8fafc] border border-slate-200 rounded-lg mt-1">
+            <div className="p-3.5 bg-[#f8fafc] border border-slate-200 rounded-lg">
               <label className="inline-flex items-start gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -2122,8 +2303,12 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                           />
                           <span className="text-[11px] text-slate-500 font-semibold">sec</span>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-sans">
-                          {lesson.duration_seconds && lesson.duration_seconds > 0 ? '✓ Auto-calculated / Editable' : '(Auto-detects on upload or set manually)'}
+                        <span className="text-[10px] text-slate-500 font-sans font-medium">
+                          {lesson.duration_seconds && lesson.duration_seconds > 0
+                            ? lesson.type === 'playlist'
+                              ? `✓ Auto-summed from ${lesson.segments.length} video parts`
+                              : '✓ Auto-calculated / Editable'
+                            : '(Auto-detects on upload or set manually)'}
                         </span>
                       </div>
                       <div className="text-[11px] text-slate-500">

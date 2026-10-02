@@ -89,9 +89,17 @@ export async function POST(req: NextRequest) {
             for (const q of lesson.quizzes) {
               const quizId = uuidv4();
               await connection.execute(
-                `INSERT INTO lesson_quizzes (id, lesson_id, timestamp_sec, question, options, correct_index)
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [quizId, lessonId, q.timestamp_sec, q.question, JSON.stringify(q.options), q.correct_index]
+                `INSERT INTO lesson_quizzes (id, lesson_id, part_index, timestamp_sec, question, options, correct_index)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                  quizId,
+                  lessonId,
+                  q.part_index !== undefined && q.part_index !== null ? Number(q.part_index) : null,
+                  q.timestamp_sec,
+                  q.question,
+                  JSON.stringify(q.options),
+                  q.correct_index,
+                ]
               );
             }
           }
@@ -127,7 +135,7 @@ export async function GET(req: NextRequest) {
     let sql = `
       SELECT 
         c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at,
-        c.visibility, c.has_certificate, c.created_by,
+        c.visibility, c.has_certificate, c.is_archived, c.created_by,
         u.name AS creator_name, u.department AS creator_department,
         cat.id AS category_id, cat.name AS category_name, cat.slug AS category_slug,
         (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS module_count,
@@ -143,6 +151,11 @@ export async function GET(req: NextRequest) {
 
     const params: any[] = [];
     const conditions: string[] = [];
+
+    // Learners / Non-admins should never see archived courses
+    if (!adminView) {
+      conditions.push('(c.is_archived IS NULL OR c.is_archived = 0)');
+    }
 
     // Admin panel: only show courses this admin created
     if (adminView && currentUser?.role === 'admin') {
@@ -200,6 +213,7 @@ export async function GET(req: NextRequest) {
     }
 
     const userProgressMap: Record<string, number> = {};
+    const userWatchMap: Record<string, number> = {};
     if (currentUser && courseIds.length > 0) {
       const progRows = await query<any[]>(`
         SELECT m.course_id, COUNT(DISTINCT up.lesson_id) as completed_count
@@ -212,12 +226,40 @@ export async function GET(req: NextRequest) {
       for (const pr of progRows) {
         userProgressMap[pr.course_id] = Number(pr.completed_count || 0);
       }
+
+      const watchRows = await query<any[]>(`
+        SELECT m.course_id, COALESCE(SUM(vwt.watched_seconds), 0) as total_watched
+        FROM video_watch_time vwt
+        JOIN lessons l ON vwt.lesson_id = l.id
+        JOIN modules m ON l.module_id = m.id
+        WHERE vwt.user_id = ? AND m.course_id IN (${courseIds.map(() => '?').join(',')})
+        GROUP BY m.course_id
+      `, [currentUser.id, ...courseIds]);
+      for (const wr of watchRows) {
+        userWatchMap[wr.course_id] = Number(wr.total_watched || 0);
+      }
     }
 
     const courses = rows.map((r) => {
       const totalLessons = Number(r.total_lessons || 0);
       const completedLessons = userProgressMap[r.id] || 0;
-      const progressPct = totalLessons > 0 ? Math.min(100, Math.round((completedLessons / totalLessons) * 100)) : 0;
+      const watchedSec = userWatchMap[r.id] || 0;
+      const totalDuration = Number(r.total_duration_seconds || 0);
+
+      let progressPct = 0;
+      if (totalLessons > 0 && completedLessons >= totalLessons) {
+        progressPct = 100;
+      } else if (totalLessons > 0) {
+        const lessonPct = Math.round((completedLessons / totalLessons) * 100);
+        let watchPct = 0;
+        if (totalDuration > 0) {
+          watchPct = Math.min(99, Math.round((watchedSec / totalDuration) * 100));
+        }
+        progressPct = Math.max(lessonPct, watchPct);
+        if (progressPct === 0 && watchedSec > 0) {
+          progressPct = 1;
+        }
+      }
       const isOwner = Boolean(r.created_by && r.created_by === currentUser?.id);
       const isSameDept = Boolean(r.creator_department && currentUser?.department && r.creator_department === currentUser?.department);
       const isHRAdmin = currentUser?.department === 'HR';
@@ -244,6 +286,7 @@ export async function GET(req: NextRequest) {
         creator_name: r.creator_name || 'Admin',
         creator_department: r.creator_department || '',
         can_edit: Boolean(canEdit),
+        is_archived: !!r.is_archived,
       };
     });
 

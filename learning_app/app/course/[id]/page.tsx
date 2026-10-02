@@ -29,6 +29,7 @@ import { useAppStore } from '@/store/useAppStore';
 
 interface Quiz {
   id: string;
+  part_index?: number;
   timestamp_sec: number;
   question: string;
   options: string[];
@@ -126,6 +127,9 @@ export default function CourseDetailPage({
   const [tabInactiveWarning, setTabInactiveWarning] = useState(false);
   const [speedWarning, setSpeedWarning] = useState(false);
   const [antiSkipNotice, setAntiSkipNotice] = useState(false);
+  const [resumeNotice, setResumeNotice] = useState<string | null>(null);
+  const [sequentialLockNotice, setSequentialLockNotice] = useState<string | null>(null);
+  const isResumingRef = useRef(false);
 
   // Scrubber time display
   const [currentTime, setCurrentTime] = useState(0);
@@ -143,6 +147,7 @@ export default function CourseDetailPage({
   const enrollInCourse = useAppStore((s) => s.enrollInCourse);
   const courseCertificates = useAppStore((s) => s.courseCertificates);
   const checkAndIssueCertificate = useAppStore((s) => s.checkAndIssueCertificate);
+  const currentUser = useAppStore((s) => s.user);
 
   // 1. Authenticate and hydrate user state
   useEffect(() => {
@@ -170,7 +175,10 @@ export default function CourseDetailPage({
       try {
         setLoading(true);
         const res = await fetch(`/api/courses/${id}`);
-        if (!res.ok) throw new Error('Course not found.');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Course not found.');
+        }
         const { course: data }: { course: Course } = await res.json();
         setCourse(data);
 
@@ -326,7 +334,25 @@ export default function CourseDetailPage({
     };
   }, [activeLessonId, activeLesson, syncWatchtime]);
 
+  function isLessonUnlocked(lessonId: string): boolean {
+    if (currentUser?.role === 'admin') return true;
+    const idx = allLessons.findIndex((l) => l.id === lessonId);
+    if (idx <= 0) return true; // First lesson is always accessible
+    const prevLesson = allLessons[idx - 1];
+    return Boolean(completedLessons[prevLesson.id]);
+  }
+
   function handleLessonClick(lesson: Lesson) {
+    if (!isLessonUnlocked(lesson.id)) {
+      const idx = allLessons.findIndex((l) => l.id === lesson.id);
+      const prevLesson = allLessons[idx - 1];
+      setSequentialLockNotice(
+        `Sequential Requirement: Please complete "${prevLesson?.title || 'the previous lesson'}" before unlocking this video.`
+      );
+      setTimeout(() => setSequentialLockNotice(null), 3500);
+      return;
+    }
+
     if (activeLessonId !== lesson.id) {
       if (activeLessonId && maxWatchedRef.current > 0) {
         const total = videoRef.current?.duration || activeLesson?.duration_seconds || 0;
@@ -398,8 +424,9 @@ export default function CourseDetailPage({
     const currentMax = maxPlaylistWatchedRef.current[playlistIndex] || 0;
 
     // Anti-skip enforcement
-    if (t > currentMax) {
-      if (t - currentMax > 1.5) {
+    const isPartDone = Boolean(completedPlaylistParts[playlistIndex]) || Boolean(completedLessons[activeLesson.id]);
+    if (!isPartDone && t > currentMax) {
+      if (t - currentMax > 3.0 && !isResumingRef.current) {
         v.currentTime = currentMax;
         setAntiSkipNotice(true);
         setTimeout(() => setAntiSkipNotice(false), 2000);
@@ -416,6 +443,19 @@ export default function CourseDetailPage({
       }
     }
 
+    // In-video Quiz Checkpoint for Multi-Part Video
+    if (activeLesson.lesson_quizzes?.length) {
+      const pendingQuiz = activeLesson.lesson_quizzes.find((q) => {
+        const qPart = q.part_index ?? 0;
+        return qPart === playlistIndex && Math.floor(t) === q.timestamp_sec && !answeredQuizzes[q.id];
+      });
+      if (pendingQuiz && !activeQuizRef.current) {
+        activeQuizRef.current = pendingQuiz;
+        setActiveQuiz(pendingQuiz);
+        playlistVideoRef.current?.pause();
+      }
+    }
+
     if (Math.floor(t) % 5 === 0 && t > 0) {
       const estimatedTotal = activeLesson.duration_seconds || 300;
       const totalWatched = Object.values(maxPlaylistWatchedRef.current).reduce((a, b) => a + b, 0);
@@ -424,9 +464,19 @@ export default function CourseDetailPage({
   }
 
   function handlePlaylistSeeking() {
-    if (!playlistVideoRef.current) return;
+    if (!playlistVideoRef.current || !activeLesson || isResumingRef.current) return;
+    if (rewindingRef.current) return;
+
+    const isPartDone = Boolean(completedPlaylistParts[playlistIndex]) || Boolean(completedLessons[activeLesson.id]);
+    if (isPartDone) return;
+
+    if (activeQuizRef.current) {
+      playlistVideoRef.current.currentTime = activeQuizRef.current.timestamp_sec;
+      return;
+    }
+
     const currentMax = maxPlaylistWatchedRef.current[playlistIndex] || 0;
-    if (playlistVideoRef.current.currentTime > currentMax + 1.5) {
+    if (playlistVideoRef.current.currentTime > currentMax + 3.0) {
       playlistVideoRef.current.currentTime = currentMax;
       setAntiSkipNotice(true);
       setTimeout(() => setAntiSkipNotice(false), 2000);
@@ -444,9 +494,11 @@ export default function CourseDetailPage({
     setCurrentTime(t);
     setDuration(dur);
 
-    // Anti-skip logic
-    if (t > maxWatchedRef.current) {
-      if (t - maxWatchedRef.current > 1.0) {
+    const isLessonDone = Boolean(completedLessons[activeLesson.id]);
+
+    // Anti-skip logic with keyframe tolerance (3.0s)
+    if (!isLessonDone && t > maxWatchedRef.current) {
+      if (t - maxWatchedRef.current > 3.0 && !isResumingRef.current) {
         v.currentTime = maxWatchedRef.current;
         setAntiSkipNotice(true);
         setTimeout(() => setAntiSkipNotice(false), 2000);
@@ -475,15 +527,18 @@ export default function CourseDetailPage({
   }
 
   function handleSeeking() {
-    if (!videoRef.current || !activeLesson) return;
+    if (!videoRef.current || !activeLesson || isResumingRef.current) return;
     if (rewindingRef.current) return;
+
+    const isLessonDone = Boolean(completedLessons[activeLesson.id]);
+    if (isLessonDone) return; // Allow full scrubbing if lesson already completed
 
     if (activeQuizRef.current) {
       videoRef.current.currentTime = activeQuizRef.current.timestamp_sec;
       return;
     }
 
-    if (videoRef.current.currentTime > maxWatchedRef.current + 1.0) {
+    if (videoRef.current.currentTime > maxWatchedRef.current + 3.0) {
       videoRef.current.currentTime = maxWatchedRef.current;
       setAntiSkipNotice(true);
       setTimeout(() => setAntiSkipNotice(false), 2000);
@@ -507,6 +562,9 @@ export default function CourseDetailPage({
         quizAttemptsRef.current[quizId] = 0;
         if (videoRef.current) {
           videoRef.current.play().catch(() => {});
+        }
+        if (playlistVideoRef.current) {
+          playlistVideoRef.current.play().catch(() => {});
         }
       }, 1200);
     } else {
@@ -535,6 +593,12 @@ export default function CourseDetailPage({
             videoRef.current.play().catch(() => {}).finally(() => {
               rewindingRef.current = false;
             });
+          } else if (playlistVideoRef.current) {
+            playlistVideoRef.current.currentTime = 0;
+            maxPlaylistWatchedRef.current[playlistIndex] = 0;
+            playlistVideoRef.current.play().catch(() => {}).finally(() => {
+              rewindingRef.current = false;
+            });
           } else {
             rewindingRef.current = false;
           }
@@ -559,13 +623,16 @@ export default function CourseDetailPage({
   }
 
   if (error || !course) {
+    const isArchived = error?.toLowerCase().includes('archived');
     return (
       <div className="min-h-screen bg-[#f7f9fb] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-3">
+        <div className={`w-12 h-12 rounded-full ${isArchived ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'} flex items-center justify-center mb-3`}>
           <AlertCircle className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900 mb-1">Course Not Found</h2>
-        <p className="text-sm text-slate-500 mb-4">{error ?? 'Unable to retrieve course details.'}</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-1">
+          {isArchived ? 'Course Archived' : 'Course Not Found'}
+        </h2>
+        <p className="text-sm text-slate-600 mb-4 max-w-md">{error ?? 'Unable to retrieve course details.'}</p>
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#c62828] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-[#b71c1c] transition-colors"
@@ -719,6 +786,7 @@ export default function CourseDetailPage({
                         {module.lessons.map((lesson) => {
                           const isActive = activeLessonId === lesson.id;
                           const isDone = !!completedLessons[lesson.id];
+                          const isUnlocked = isLessonUnlocked(lesson.id);
                           const isInProg = !isDone && (maxWatchedTime[lesson.id] || 0) > 0;
                           const isPlaylist = lesson.type === 'playlist' && !!lesson.playlist_urls?.length;
 
@@ -726,18 +794,22 @@ export default function CourseDetailPage({
                             <div
                               key={lesson.id}
                               className={`transition-colors ${
-                                isActive ? 'border-l-4 border-l-[#c62828] bg-red-50/20' : 'hover:bg-slate-50/80'
+                                isActive ? 'border-l-4 border-l-[#c62828] bg-red-50/20' : !isUnlocked ? 'opacity-70 bg-slate-50/40' : 'hover:bg-slate-50/80'
                               }`}
                             >
                               {/* Primary Lesson Click Target */}
                               <div
                                 onClick={() => handleLessonClick(lesson)}
-                                className="p-3.5 flex items-start justify-between cursor-pointer"
+                                className={`p-3.5 flex items-start justify-between ${!isUnlocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                               >
                                 <div className="flex items-start space-x-2.5 min-w-0">
                                   {isDone ? (
                                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
                                       <Check className="w-3.5 h-3.5" />
+                                    </span>
+                                  ) : !isUnlocked ? (
+                                    <span className="w-5 h-5 rounded-full bg-slate-200/80 text-slate-500 flex items-center justify-center flex-shrink-0 mt-0.5" title="Locked • Complete previous lesson to unlock">
+                                      <Lock className="w-3 h-3 text-slate-500" />
                                     </span>
                                   ) : isInProg ? (
                                     <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -752,16 +824,22 @@ export default function CourseDetailPage({
                                   <div className="min-w-0">
                                     <h3
                                       className={`text-xs font-bold leading-snug truncate ${
-                                        isActive ? 'text-slate-900' : 'text-slate-700'
+                                        isActive ? 'text-slate-900' : !isUnlocked ? 'text-slate-400' : 'text-slate-700'
                                       }`}
                                     >
                                       {lesson.title}
                                     </h3>
                                     <div className="flex items-center space-x-2 mt-1 text-[11px] text-slate-500 font-mono">
-                                      <span className="flex items-center">
-                                        <Clock className="w-3 h-3 mr-1" />
-                                        {fmtSeconds(lesson.duration_seconds > 0 ? lesson.duration_seconds : (isActive ? duration : 0))}
-                                      </span>
+                                      {!isUnlocked ? (
+                                        <span className="inline-flex items-center text-slate-400 text-[10px] font-sans">
+                                          <Lock className="w-2.5 h-2.5 mr-1" /> Locked
+                                        </span>
+                                      ) : (
+                                        <span className="flex items-center">
+                                          <Clock className="w-3 h-3 mr-1" />
+                                          {fmtSeconds(lesson.duration_seconds > 0 ? lesson.duration_seconds : (isActive ? duration : 0))}
+                                        </span>
+                                      )}
                                       {isPlaylist && (
                                         <>
                                           <span>•</span>
@@ -981,6 +1059,22 @@ export default function CourseDetailPage({
                 </div>
               )}
 
+              {/* 4. Auto-Resume Playback Toast */}
+              {resumeNotice && (
+                <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <PlayCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{resumeNotice}</span>
+                </div>
+              )}
+
+              {/* 5. Sequential Training Lock Notice Toast */}
+              {sequentialLockNotice && (
+                <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-slate-700 text-white px-4 py-2.5 rounded-lg text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Lock className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  <span>{sequentialLockNotice}</span>
+                </div>
+              )}
+
               {/* ── Active Video Elements ────────────────────────────── */}
               {activeLesson?.type === 'playlist' && activeLesson.playlist_urls ? (
                 /* Playlist Video Player */
@@ -989,7 +1083,7 @@ export default function CourseDetailPage({
                     ref={playlistVideoRef}
                     key={activeLesson.playlist_urls[playlistIndex]?.url}
                     autoPlay
-                    controls
+                    controls={!activeQuiz}
                     controlsList="nodownload noplaybackrate nofullscreen"
                     disablePictureInPicture
                     poster={posterImage}
@@ -1000,6 +1094,18 @@ export default function CourseDetailPage({
                         const dur = Math.round(playlistVideoRef.current.duration || 0);
                         if (dur > 0) {
                           setDuration(dur);
+                        }
+                        const savedTime = maxPlaylistWatchedRef.current[playlistIndex] || 0;
+                        if (savedTime > 2 && dur > 0 && savedTime < dur - 3) {
+                          isResumingRef.current = true;
+                          maxPlaylistWatchedRef.current[playlistIndex] = Math.max(savedTime, maxPlaylistWatchedRef.current[playlistIndex] || 0);
+                          playlistVideoRef.current.currentTime = savedTime;
+                          setCurrentTime(savedTime);
+                          setResumeNotice(`Resumed playback from ${fmtSeconds(savedTime)}`);
+                          setTimeout(() => {
+                            isResumingRef.current = false;
+                            setResumeNotice(null);
+                          }, 3500);
                         }
                       }
                     }}
@@ -1071,6 +1177,19 @@ export default function CourseDetailPage({
                               syncWatchtime(activeLesson.id, maxWatchedRef.current || 0, dur);
                             }
                           }
+                          const savedTime = maxWatchedRef.current || 0;
+                          const isDone = Boolean(completedLessons[activeLesson.id]);
+                          if (!isDone && savedTime > 2 && dur > 0 && savedTime < dur - 3) {
+                            isResumingRef.current = true;
+                            maxWatchedRef.current = Math.max(savedTime, maxWatchedRef.current || 0);
+                            videoRef.current.currentTime = savedTime;
+                            setCurrentTime(savedTime);
+                            setResumeNotice(`Resumed playback from ${fmtSeconds(savedTime)}`);
+                            setTimeout(() => {
+                              isResumingRef.current = false;
+                              setResumeNotice(null);
+                            }, 3500);
+                          }
                         }
                       }}
                       onError={() => setVideoLoadError(`Lesson video could not be loaded from Server storage (${activeLesson?.video_url || 'missing path'}).`)}
@@ -1104,66 +1223,6 @@ export default function CourseDetailPage({
                       </div>
                     )}
 
-                    {/* Quiz Overlay Modal */}
-                    {activeQuiz && (
-                      <div className="absolute inset-0 bg-slate-950/85 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-                        {quizFeedback && (
-                          <div
-                            className={`absolute inset-0 z-60 flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200 ${
-                              quizFeedback === 'correct' ? 'bg-emerald-600/95' : 'bg-[#c62828]/95'
-                            }`}
-                          >
-                            <div className="text-6xl">{quizFeedback === 'correct' ? '✅' : '❌'}</div>
-                            <p className="text-white text-xl font-bold">
-                              {quizFeedback === 'correct'
-                                ? 'Correct Answer!'
-                                : (quizAttemptsRef.current[activeQuiz.id] || 0) >= 2
-                                ? 'Two incorrect attempts: Rewinding section…'
-                                : 'Incorrect — Try once more!'}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="bg-white rounded-xl shadow-2xl p-5 max-w-md w-full border border-slate-200 flex flex-col">
-                          <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                            <div className="flex items-center gap-2 text-[#c62828]">
-                              <BookOpen className="w-5 h-5" />
-                              <h3 className="font-bold text-sm sm:text-base text-slate-900">
-                                Checkpoint Knowledge Check
-                              </h3>
-                            </div>
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                              {(quizAttemptsRef.current[activeQuiz.id] || 0) === 0 ? 'Attempt 1 of 2' : 'Final Attempt'}
-                            </span>
-                          </div>
-
-                          <p className="text-sm font-semibold text-slate-800 mb-4">
-                            {activeQuiz.question}
-                          </p>
-
-                          <div className="space-y-2">
-                            {activeQuiz.options.map((opt, oIdx) => (
-                              <button
-                                key={oIdx}
-                                type="button"
-                                onClick={() => handleQuizAnswer(activeQuiz.id, oIdx)}
-                                disabled={!!quizFeedback}
-                                className={`w-full text-left p-3 rounded-lg border text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                                  selectedOption === oIdx
-                                    ? 'border-[#c62828] bg-red-50 text-slate-900'
-                                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
-                                }`}
-                              >
-                                <span className="font-mono font-bold text-[#c62828] mr-2">
-                                  {String.fromCharCode(65 + oIdx)}.
-                                </span>
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </>
                 ) : (
                   /* Single Lesson Play Button Poster */
@@ -1190,6 +1249,74 @@ export default function CourseDetailPage({
                   </div>
                 )
               )}
+
+              {/* Quiz Overlay Modal (Active for Single & Multi-Part Video Playback) */}
+              {activeQuiz && (
+                <div className="absolute inset-0 bg-slate-950/85 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+                  {quizFeedback && (
+                    <div
+                      className={`absolute inset-0 z-60 flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200 ${
+                        quizFeedback === 'correct' ? 'bg-emerald-600/95' : 'bg-[#c62828]/95'
+                      }`}
+                    >
+                      <div className="text-6xl">{quizFeedback === 'correct' ? '✅' : '❌'}</div>
+                      <p className="text-white text-xl font-bold">
+                        {quizFeedback === 'correct'
+                          ? 'Correct Answer!'
+                          : (quizAttemptsRef.current[activeQuiz.id] || 0) >= 2
+                          ? 'Two incorrect attempts: Rewinding section…'
+                          : 'Incorrect — Try once more!'}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="bg-white rounded-xl shadow-2xl p-5 max-w-md w-full border border-slate-200 flex flex-col">
+                    <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                      <div className="flex items-center gap-2 text-[#c62828]">
+                        <BookOpen className="w-5 h-5" />
+                        <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                          Checkpoint Knowledge Check
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {activeLesson?.type === 'playlist' && (
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-red-100 text-[#c62828] border border-red-200">
+                            Part {playlistIndex + 1}
+                          </span>
+                        )}
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                          {(quizAttemptsRef.current[activeQuiz.id] || 0) === 0 ? 'Attempt 1 of 2' : 'Final Attempt'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-sm font-semibold text-slate-800 mb-4">
+                      {activeQuiz.question}
+                    </p>
+
+                    <div className="space-y-2">
+                      {activeQuiz.options.map((opt, oIdx) => (
+                        <button
+                          key={oIdx}
+                          type="button"
+                          onClick={() => handleQuizAnswer(activeQuiz.id, oIdx)}
+                          disabled={!!quizFeedback}
+                          className={`w-full text-left p-3 rounded-lg border text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+                            selectedOption === oIdx
+                              ? 'border-[#c62828] bg-red-50 text-slate-900'
+                              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <span className="font-mono font-bold text-[#c62828] mr-2">
+                            {String.fromCharCode(65 + oIdx)}.
+                          </span>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── Video Metadata & Interactive Action Bar ─────────────── */}
@@ -1213,22 +1340,13 @@ export default function CourseDetailPage({
                   </div>
                 </div>
 
-                {/* Mark as Complete button */}
+                {/* Lesson Completion Status Badge */}
                 <div className="flex items-center gap-2">
-                  {activeLesson && completedLessons[activeLesson.id] ? (
+                  {activeLesson && completedLessons[activeLesson.id] && (
                     <span className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs flex items-center gap-1.5 shadow-2xs">
                       <Check className="w-4 h-4 text-emerald-600" />
                       Completed
                     </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleMarkComplete}
-                      className="px-4 py-2 rounded-lg bg-[#c62828] hover:bg-[#b71c1c] text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
-                    >
-                      <Check className="w-4 h-4" />
-                      <span>Mark Complete &amp; Next</span>
-                    </button>
                   )}
                 </div>
               </div>

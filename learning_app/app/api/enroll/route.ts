@@ -55,13 +55,42 @@ export async function POST(request: Request) {
       }
     }
 
-    const id = uuidv4();
-    await query(
-      `INSERT INTO enrollments (id, user_id, course_id)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE enrolled_at = enrolled_at`,
-      [id, user.id, course_id]
+    // If new enrollment, clear any leftover progress to start fresh from 0%
+    const existing = await query<any[]>(
+      'SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?',
+      [user.id, course_id]
     );
+
+    if (existing.length === 0) {
+      await query(`
+        DELETE FROM video_watch_time 
+        WHERE user_id = ? 
+          AND lesson_id IN (
+            SELECT l.id FROM lessons l 
+            JOIN modules m ON l.module_id = m.id 
+            WHERE m.course_id = ?
+          )
+      `, [user.id, course_id]);
+
+      await query(`
+        DELETE FROM lesson_progress 
+        WHERE user_id = ? 
+          AND lesson_id IN (
+            SELECT l.id FROM lessons l 
+            JOIN modules m ON l.module_id = m.id 
+            WHERE m.course_id = ?
+          )
+      `, [user.id, course_id]);
+
+      await query('DELETE FROM certificates WHERE user_id = ? AND course_id = ?', [user.id, course_id]);
+
+      const id = uuidv4();
+      await query(
+        `INSERT INTO enrollments (id, user_id, course_id)
+         VALUES (?, ?, ?)`,
+        [id, user.id, course_id]
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

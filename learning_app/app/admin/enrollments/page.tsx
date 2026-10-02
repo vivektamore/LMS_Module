@@ -81,6 +81,12 @@ export default async function EnrollmentsPage() {
           AND lp.is_completed = 1
       ) AS completed_lessons,
       (
+        SELECT COALESCE(SUM(l4.duration_seconds), 0)
+        FROM lessons l4
+        JOIN modules m4 ON l4.module_id = m4.id
+        WHERE m4.course_id = c.id
+      ) AS total_duration_seconds,
+      (
         SELECT COALESCE(SUM(vwt.watched_seconds), 0) 
         FROM video_watch_time vwt 
         WHERE vwt.user_id = u.id 
@@ -102,21 +108,34 @@ export default async function EnrollmentsPage() {
   const initialEnrollments: EnrollmentRecord[] = (rows || []).map((r) => {
     const totalLessons = Number(r.total_lessons || 0);
     const completedLessons = Number(r.completed_lessons || 0);
+    const watchedSeconds = Number(r.watched_seconds || 0);
+    const totalDuration = Number(r.total_duration_seconds || 0);
+
     let progressPct = 0;
-    if (totalLessons > 0) {
-      progressPct = Math.min(100, Math.round((completedLessons / totalLessons) * 100));
+    if (r.completed_at || (totalLessons > 0 && completedLessons >= totalLessons)) {
+      progressPct = 100;
+    } else if (totalLessons > 0) {
+      const lessonPct = Math.round((completedLessons / totalLessons) * 100);
+      let watchPct = 0;
+      if (totalDuration > 0) {
+        watchPct = Math.min(99, Math.round((watchedSeconds / totalDuration) * 100));
+      }
+      progressPct = Math.max(lessonPct, watchPct);
+      if (progressPct === 0 && watchedSeconds > 0) {
+        progressPct = 1;
+      }
     }
 
     const enrolledTime = new Date(r.enrolled_at).getTime();
     const daysSinceEnrolled = (now - enrolledTime) / (1000 * 60 * 60 * 24);
 
     let status: 'Completed' | 'In Progress' | 'Not Started' | 'Overdue' = 'Not Started';
-    if (r.completed_at || progressPct === 100) {
+    if (progressPct === 100 || r.completed_at) {
       status = 'Completed';
       progressPct = 100;
     } else if (daysSinceEnrolled > 21 && progressPct < 100) {
       status = 'Overdue';
-    } else if (progressPct > 0 || Number(r.watched_seconds) > 0) {
+    } else if (progressPct > 0 || watchedSeconds > 0) {
       status = 'In Progress';
     } else {
       status = 'Not Started';

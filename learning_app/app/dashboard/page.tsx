@@ -24,6 +24,7 @@ import {
 import { signout } from '../login/actions';
 import { useAppStore } from '@/store/useAppStore';
 import LeaderboardCard from '@/components/LeaderboardCard';
+import ReminderBanner from '@/components/ReminderBanner';
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface Lesson {
@@ -345,6 +346,19 @@ function hasLessonVideo(l?: Lesson | null): boolean {
     return courses[0] || null;
   }, [courses, completedLessons, maxWatchedTime]);
 
+  const incompleteCourseForReminder = useMemo(() => {
+    const found = courses.find((c) => {
+      const p = coursePct(c);
+      return p < 100;
+    });
+    if (!found) return null;
+    return {
+      id: found.id,
+      title: found.title,
+      progressPct: coursePct(found),
+    };
+  }, [courses, completedLessons, maxWatchedTime]);
+
   // Tab filtered courses
   const filteredCourses = useMemo(() => {
     return courses.filter((c) => {
@@ -558,6 +572,9 @@ function hasLessonVideo(l?: Lesson | null): boolean {
             </div>
           </div>
 
+          {/* ── In-App Reminder / Notification Banner ── */}
+          <ReminderBanner fallbackIncompleteCourse={incompleteCourseForReminder} />
+
           {/* Error Banner */}
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between">
@@ -588,6 +605,9 @@ function hasLessonVideo(l?: Lesson | null): boolean {
                 <span className="text-3xl font-extrabold text-[#0F172A] leading-none font-mono">
                   {String(completedCoursesCount).padStart(2, '0')}
                 </span>
+                <span className="text-sm font-semibold text-[#64748B] font-mono">
+                  / {String(courses.length).padStart(2, '0')}
+                </span>
               </div>
               <p className="text-xs text-[#64748B] mt-3 pt-2.5 border-t border-[#E2E8F0]">
                 Completed training
@@ -615,24 +635,24 @@ function hasLessonVideo(l?: Lesson | null): boolean {
               </p>
             </div>
 
-            {/* Card 3: Modules Completed */}
+            {/* Card 3: Total Enrolled */}
             <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-[#CBD5E1] transition-colors">
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#CBD5E1]" />
               <div className="flex items-center justify-between mb-4">
                 <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                  Modules Completed
+                  Total Enrolled
                 </span>
                 <div className="w-8 h-8 rounded-lg bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center text-[#64748B]">
-                  <Layers className="w-4 h-4" />
+                  <BookOpen className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold text-[#0F172A] leading-none font-mono">
-                  {totalDone} / {totalLessons}
+                  {String(courses.length).padStart(2, '0')}
                 </span>
               </div>
               <p className="text-xs text-[#64748B] mt-3 pt-2.5 border-t border-[#E2E8F0]">
-                Learning modules
+                Assigned training courses
               </p>
             </div>
 
@@ -744,7 +764,7 @@ function hasLessonVideo(l?: Lesson | null): boolean {
                         <div className="flex flex-wrap items-center gap-3 text-[#64748B] text-xs">
                           <span className="inline-flex items-center gap-1.5 bg-[#F1F5F9] px-2.5 py-1 rounded border border-[#E2E8F0]">
                             <Layers className="w-3.5 h-3.5 text-[#0F172A]" />
-                            {doneCount} / {continueCourse.allLessons.length} Modules
+                            {continueCourse.modules?.length || 1} {(continueCourse.modules?.length || 1) === 1 ? 'Module' : 'Modules'} ({doneCount}/{continueCourse.allLessons.length} Lessons)
                           </span>
                           <span className="inline-flex items-center gap-1.5 bg-[#F1F5F9] px-2.5 py-1 rounded border border-[#E2E8F0]">
                             <Clock className="w-3.5 h-3.5 text-[#0F172A]" />
@@ -859,7 +879,7 @@ function hasLessonVideo(l?: Lesson | null): boolean {
                           </h4>
 
                           <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-[#64748B]">
-                            <span>{doneCount} / {course.allLessons.length} Modules</span>
+                            <span>{course.modules?.length || 1} {(course.modules?.length || 1) === 1 ? 'Module' : 'Modules'} ({doneCount}/{course.allLessons.length} Lessons)</span>
                             <span>•</span>
                             <span>{getCourseDuration(course)}</span>
                             <span>•</span>
@@ -952,11 +972,11 @@ function hasLessonVideo(l?: Lesson | null): boolean {
                       <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
                       Courses Completed
                     </span>
-                    <span className="font-mono font-bold text-[#0F172A]">{completedCoursesCount}</span>
+                    <span className="font-mono font-bold text-[#0F172A]">{completedCoursesCount} / {courses.length}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[#64748B] flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#CBD5E1]" />
+                      <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />
                       In Progress
                     </span>
                     <span className="font-mono font-bold text-[#0F172A]">{inProgressCoursesCount}</span>
@@ -964,9 +984,9 @@ function hasLessonVideo(l?: Lesson | null): boolean {
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[#64748B] flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-[#CBD5E1]" />
-                      Modules Completed
+                      Total Enrolled
                     </span>
-                    <span className="font-mono font-bold text-[#0F172A]">{totalDone} / {totalLessons}</span>
+                    <span className="font-mono font-bold text-[#0F172A]">{courses.length} {courses.length === 1 ? 'Course' : 'Courses'}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs pt-3 border-t border-[#E2E8F0]">
                     <span className="text-[#64748B]">Learning Time</span>

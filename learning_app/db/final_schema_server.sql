@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS courses (
   created_by      VARCHAR(36)             NULL,
   visibility      ENUM('all', 'specific') NOT NULL DEFAULT 'all',
   has_certificate BOOLEAN                 NOT NULL DEFAULT FALSE,
+  is_archived     BOOLEAN                 NOT NULL DEFAULT FALSE,
   created_at      DATETIME                NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_courses_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
@@ -108,6 +109,7 @@ CREATE TABLE IF NOT EXISTS lessons (
 CREATE TABLE IF NOT EXISTS lesson_quizzes (
   id            VARCHAR(36) NOT NULL PRIMARY KEY,
   lesson_id     VARCHAR(36) NOT NULL,
+  part_index    INT         NULL DEFAULT NULL,
   timestamp_sec INT         NOT NULL,
   question      TEXT        NOT NULL,
   options       JSON        NOT NULL,
@@ -195,22 +197,64 @@ INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES
   ('max_upload_limit_mb', '500');
 
 -- ============================================================================
--- PERFORMANCE INDEXES
+-- TABLE 13: notifications (In-app reminders & system alerts)
 -- ============================================================================
-CREATE INDEX idx_courses_category_id          ON courses(category_id);
-CREATE INDEX idx_courses_created_by           ON courses(created_by);
-CREATE INDEX idx_course_departments_course_id ON course_departments(course_id);
-CREATE INDEX idx_modules_course_id            ON modules(course_id);
-CREATE INDEX idx_lessons_module_id            ON lessons(module_id);
-CREATE INDEX idx_quizzes_lesson_id            ON lesson_quizzes(lesson_id);
-CREATE INDEX idx_enrollments_user_id          ON enrollments(user_id);
-CREATE INDEX idx_enrollments_course_id        ON enrollments(course_id);
-CREATE INDEX idx_lesson_progress_user_id      ON lesson_progress(user_id);
-CREATE INDEX idx_lesson_progress_lesson_id    ON lesson_progress(lesson_id);
-CREATE INDEX idx_watch_time_user_id           ON video_watch_time(user_id);
-CREATE INDEX idx_watch_time_lesson_id         ON video_watch_time(lesson_id);
-CREATE INDEX idx_certificates_user_id         ON certificates(user_id);
-CREATE INDEX idx_certificates_course_id       ON certificates(course_id);
+CREATE TABLE IF NOT EXISTS notifications (
+  id         VARCHAR(36)  NOT NULL PRIMARY KEY,
+  user_id    VARCHAR(36)  NOT NULL,
+  course_id  VARCHAR(36)  NULL,
+  title      VARCHAR(255) NOT NULL,
+  message    TEXT         NOT NULL,
+  type       ENUM('reminder', 'course_assigned', 'info', 'system') NOT NULL DEFAULT 'reminder',
+  is_read    TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notif_user   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_notif_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- PERFORMANCE INDEXES (Idempotent: only creates if index does not exist)
+-- ============================================================================
+DELIMITER $$
+DROP PROCEDURE IF EXISTS CreateIndexIfNotExists $$
+CREATE PROCEDURE CreateIndexIfNotExists(
+  IN tblName VARCHAR(64),
+  IN idxName VARCHAR(64),
+  IN colName VARCHAR(255)
+)
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = tblName
+      AND index_name = idxName
+  ) THEN
+    SET @sql = CONCAT('CREATE INDEX ', idxName, ' ON ', tblName, '(', colName, ')');
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+  END IF;
+END $$
+DELIMITER ;
+
+CALL CreateIndexIfNotExists('courses', 'idx_courses_category_id', 'category_id');
+CALL CreateIndexIfNotExists('courses', 'idx_courses_created_by', 'created_by');
+CALL CreateIndexIfNotExists('course_departments', 'idx_course_departments_course_id', 'course_id');
+CALL CreateIndexIfNotExists('modules', 'idx_modules_course_id', 'course_id');
+CALL CreateIndexIfNotExists('lessons', 'idx_lessons_module_id', 'module_id');
+CALL CreateIndexIfNotExists('lesson_quizzes', 'idx_quizzes_lesson_id', 'lesson_id');
+CALL CreateIndexIfNotExists('enrollments', 'idx_enrollments_user_id', 'user_id');
+CALL CreateIndexIfNotExists('enrollments', 'idx_enrollments_course_id', 'course_id');
+CALL CreateIndexIfNotExists('lesson_progress', 'idx_lesson_progress_user_id', 'user_id');
+CALL CreateIndexIfNotExists('lesson_progress', 'idx_lesson_progress_lesson_id', 'lesson_id');
+CALL CreateIndexIfNotExists('video_watch_time', 'idx_watch_time_user_id', 'user_id');
+CALL CreateIndexIfNotExists('video_watch_time', 'idx_watch_time_lesson_id', 'lesson_id');
+CALL CreateIndexIfNotExists('certificates', 'idx_certificates_user_id', 'user_id');
+CALL CreateIndexIfNotExists('certificates', 'idx_certificates_course_id', 'course_id');
+CALL CreateIndexIfNotExists('notifications', 'idx_notifications_user_id', 'user_id');
+CALL CreateIndexIfNotExists('notifications', 'idx_notifications_course_id', 'course_id');
+
+DROP PROCEDURE IF EXISTS CreateIndexIfNotExists;
 
 SET FOREIGN_KEY_CHECKS = 1;
 

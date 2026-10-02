@@ -279,6 +279,20 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const completedCount = courseLessonIds.filter((id) => state.completedLessons[id]).length;
     if (completedCount === courseLessonIds.length) return 100;
 
-    return Math.round((completedCount / courseLessonIds.length) * 100);
+    const basePct = (completedCount / courseLessonIds.length) * 100;
+
+    // Add partial progress for in-progress lessons
+    let partialPct = 0;
+    const remainingLessonIds = courseLessonIds.filter((id) => !state.completedLessons[id]);
+    for (const lid of remainingLessonIds) {
+      const watched = state.maxWatchedTime[lid] || 0;
+      const total = state.lessonTotalSeconds[lid] || 0;
+      if (watched > 0 && total > 0) {
+        partialPct += ((watched / total) / courseLessonIds.length) * 100;
+      }
+    }
+
+    const calculated = Math.round(basePct + partialPct);
+    return Math.min(99, calculated);
   },
 }));

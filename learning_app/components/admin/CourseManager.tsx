@@ -235,10 +235,26 @@ export default function CourseManager({ initialCourses, initialCategories = [] }
       return;
     }
     const newStatus = course.status === 'Archived' ? 'Published' : 'Archived';
-    setCourses((prev) =>
-      prev.map((c) => (c.id === course.id ? { ...c, status: newStatus } : c))
-    );
-    setArchiveTarget(null);
+    const isArchived = newStatus === 'Archived';
+
+    try {
+      const res = await fetch(`/api/courses/${course.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_archived: isArchived }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update course status');
+
+      setCourses((prev) =>
+        prev.map((c) => (c.id === course.id ? { ...c, status: newStatus } : c))
+      );
+      router.refresh();
+    } catch (err: any) {
+      alert(`Archive Error: ${err.message}`);
+    } finally {
+      setArchiveTarget(null);
+    }
   }
 
   async function handleConfirmDelete() {

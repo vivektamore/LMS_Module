@@ -12,7 +12,7 @@ export default async function CoursesPage() {
   const rows = await query<any[]>(`
     SELECT 
       c.id, c.title, c.course_code, c.description, c.thumbnail_url, c.created_at, c.updated_at,
-      c.visibility, c.has_certificate, c.created_by,
+      c.visibility, c.has_certificate, c.is_archived, c.created_by,
       u.name AS creator_name, u.department AS creator_department,
       cat.id AS category_id,
       cat.name AS category_name,
@@ -65,7 +65,7 @@ export default async function CoursesPage() {
       totalDurationSeconds: Number(c.totalDurationSeconds || 0),
       enrollments: Number(c.enrollmentCount || 0),
       createdAt: c.created_at ? new Date(c.created_at).toISOString() : new Date().toISOString(),
-      status: 'Published' as const,
+      status: (c.is_archived ? 'Archived' : 'Published') as 'Published' | 'Archived',
       created_by: c.created_by || '',
       creator_name: c.creator_name || 'Admin',
       creator_department: c.creator_department || '',

@@ -120,6 +120,10 @@ async function migrate() {
   console.log('\n[6/7] Checking `certificates` table...');
   await ensureColumn('certificates', 'recipient_name', 'VARCHAR(255) NULL');
 
+  // 6b. Lesson Quizzes Table Columns
+  console.log('\nChecking `lesson_quizzes` table...');
+  await ensureColumn('lesson_quizzes', 'part_index', 'INT NULL DEFAULT NULL');
+
   // 7. App Settings Table
   console.log('\n[7/7] Checking `app_settings` table...');
   await conn.query(`

@@ -45,6 +45,79 @@ async function locateFile(segments: string[]): Promise<{ absolutePath: string; s
   return null;
 }
 
+function nodeStreamToWebStream(nodeStream: fs.ReadStream, signal?: AbortSignal): ReadableStream<Uint8Array> {
+  let isClosed = false;
+
+  const destroyNodeStream = () => {
+    if (!nodeStream.destroyed) {
+      try {
+        nodeStream.destroy();
+      } catch {}
+    }
+  };
+
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      nodeStream.on('data', (chunk: string | Buffer) => {
+        if (isClosed) return;
+        try {
+          const uint8 = typeof chunk === 'string'
+            ? Buffer.from(chunk)
+            : new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+          controller.enqueue(uint8);
+        } catch {
+          isClosed = true;
+          destroyNodeStream();
+        }
+      });
+
+      nodeStream.on('end', () => {
+        if (isClosed) return;
+        isClosed = true;
+        try {
+          controller.close();
+        } catch {}
+      });
+
+      nodeStream.on('error', (err) => {
+        if (isClosed) return;
+        isClosed = true;
+        try {
+          controller.error(err);
+        } catch {}
+      });
+
+      nodeStream.on('close', () => {
+        isClosed = true;
+      });
+
+      if (signal) {
+        if (signal.aborted) {
+          isClosed = true;
+          destroyNodeStream();
+          try {
+            controller.close();
+          } catch {}
+          return;
+        }
+
+        signal.addEventListener('abort', () => {
+          if (isClosed) return;
+          isClosed = true;
+          destroyNodeStream();
+          try {
+            controller.close();
+          } catch {}
+        }, { once: true });
+      }
+    },
+    cancel() {
+      isClosed = true;
+      destroyNodeStream();
+    },
+  });
+}
+
 /**
  * GET /uploads/[...path]
  * Streams videos, thumbnails, and documents from Server PC storage with HTTP 206 Range support.
@@ -98,7 +171,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
       const chunkSize = end - start + 1;
       const nodeStream = fs.createReadStream(absolutePath, { start, end });
-      const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
+      const webStream = nodeStreamToWebStream(nodeStream, req.signal);
 
       return new Response(webStream, {
         status: 206,
@@ -114,7 +187,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     // ── Full File Delivery (Images, Thumbnails, Small Documents) ───────────
     const nodeStream = fs.createReadStream(absolutePath);
-    const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
+    const webStream = nodeStreamToWebStream(nodeStream, req.signal);
 
     return new Response(webStream, {
       status: 200,

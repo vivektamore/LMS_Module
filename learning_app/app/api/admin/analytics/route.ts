@@ -181,6 +181,7 @@ export async function GET() {
             c.title AS course_title,
             (SELECT COUNT(*) FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = c.id) AS total_lessons,
             (SELECT COUNT(*) FROM lesson_progress lp JOIN lessons l2 ON lp.lesson_id = l2.id JOIN modules m2 ON l2.module_id = m2.id WHERE m2.course_id = c.id AND lp.user_id = u.id AND lp.is_completed = 1) AS completed_lessons,
+            (SELECT COALESCE(SUM(l4.duration_seconds), 0) FROM lessons l4 JOIN modules m4 ON l4.module_id = m4.id WHERE m4.course_id = c.id) AS total_course_duration,
             (SELECT COALESCE(SUM(vwt.watched_seconds), 0) FROM video_watch_time vwt WHERE vwt.user_id = u.id AND vwt.lesson_id IN (SELECT l3.id FROM lessons l3 JOIN modules m3 ON l3.module_id = m3.id WHERE m3.course_id = c.id)) AS course_watched_seconds
           FROM enrollments e
           JOIN users u ON e.user_id = u.id
@@ -196,6 +197,7 @@ export async function GET() {
             c.title AS course_title,
             (SELECT COUNT(*) FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = c.id) AS total_lessons,
             (SELECT COUNT(*) FROM lesson_progress lp JOIN lessons l2 ON lp.lesson_id = l2.id JOIN modules m2 ON l2.module_id = m2.id WHERE m2.course_id = c.id AND lp.user_id = u.id AND lp.is_completed = 1) AS completed_lessons,
+            (SELECT COALESCE(SUM(l4.duration_seconds), 0) FROM lessons l4 JOIN modules m4 ON l4.module_id = m4.id WHERE m4.course_id = c.id) AS total_course_duration,
             (SELECT COALESCE(SUM(vwt.watched_seconds), 0) FROM video_watch_time vwt WHERE vwt.user_id = u.id AND vwt.lesson_id IN (SELECT l3.id FROM lessons l3 JOIN modules m3 ON l3.module_id = m3.id WHERE m3.course_id = c.id)) AS course_watched_seconds
           FROM enrollments e
           JOIN users u ON e.user_id = u.id
@@ -212,23 +214,34 @@ export async function GET() {
       const totalLessons = Number(r.total_lessons || 0);
       const completedLessons = Number(r.completed_lessons || 0);
       const watchedSec = Number(r.course_watched_seconds || 0);
+      const totalDuration = Number(r.total_course_duration || 0);
       const isCompleted = !!r.completed_at || (totalLessons > 0 && completedLessons >= totalLessons);
 
       let progressPct = 0;
       if (isCompleted) {
         progressPct = 100;
         completedCount++;
-      } else if (totalLessons > 0 && completedLessons > 0) {
-        progressPct = Math.min(Math.round((completedLessons / totalLessons) * 100), 99);
-        inProgressCount++;
-      } else if (watchedSec > 0) {
-        progressPct = 10;
-        inProgressCount++;
+      } else if (totalLessons > 0) {
+        const lessonPct = Math.round((completedLessons / totalLessons) * 100);
+        let watchPct = 0;
+        if (totalDuration > 0) {
+          watchPct = Math.min(99, Math.round((watchedSec / totalDuration) * 100));
+        }
+        progressPct = Math.max(lessonPct, watchPct);
+        if (progressPct === 0 && watchedSec > 0) {
+          progressPct = 1;
+        }
+
+        if (progressPct > 0 || watchedSec > 0) {
+          inProgressCount++;
+        } else {
+          notStartedCount++;
+        }
       } else {
         notStartedCount++;
       }
 
-      const status = isCompleted ? 'Completed' : progressPct > 0 ? 'In Progress' : 'Not Started';
+      const status = isCompleted ? 'Completed' : (progressPct > 0 || watchedSec > 0) ? 'In Progress' : 'Not Started';
 
       return {
         id: r.enrollment_id,

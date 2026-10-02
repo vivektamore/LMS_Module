@@ -287,11 +287,42 @@ export default function EnrollmentManager({
     }
   }
 
+  // Single Send Reminder
+  async function handleSendReminderSingle(enrollmentId: string, employeeName: string) {
+    try {
+      const res = await fetch('/api/admin/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enrollment_ids: [enrollmentId] }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to dispatch reminder');
+      }
+      setNotificationMsg(`Reminder notice sent to ${employeeName}. In-app notification delivered.`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error sending reminder');
+    }
+  }
+
   // Batch Send Reminder
-  function handleBatchSendReminder() {
+  async function handleBatchSendReminder() {
     if (selectedIds.length === 0) return;
-    setNotificationMsg(`Training reminder notices dispatched to ${selectedIds.length} employee(s).`);
-    setSelectedIds([]);
+    try {
+      const res = await fetch('/api/admin/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enrollment_ids: selectedIds }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to batch dispatch reminders');
+      }
+      setNotificationMsg(`Training reminder notices dispatched to ${selectedIds.length} employee(s).`);
+      setSelectedIds([]);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error dispatching batch reminders');
+    }
   }
 
   // Submit Enroll Employees
@@ -774,11 +805,9 @@ export default function EnrollmentManager({
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => {
-                              setNotificationMsg(`Reminder notice sent to ${item.name} (${item.email}).`);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                            title="Send Reminder"
+                            onClick={() => handleSendReminderSingle(item.id, item.name)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                            title="Send Reminder Notice"
                           >
                             <Send className="w-3.5 h-3.5" />
                           </button>
