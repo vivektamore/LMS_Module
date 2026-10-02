@@ -143,6 +143,18 @@ export default function DashboardPage() {
   const [signingOut, setSigningOut] = useState(false);
   const [openingCertCourseId, setOpeningCertCourseId] = useState<string | null>(null);
   const [recentProgress, setRecentProgress] = useState<ProgressRecord[]>([]);
+  const [trend, setTrend] = useState<{ day: string; date: string; seconds: number; minutes: number; formatted: string }[]>([]);
+  const [weeklyMinutes, setWeeklyMinutes] = useState<number>(0);
+
+  const maxDailyMinutes = useMemo(() => {
+    const max = Math.max(...trend.map((d) => d.minutes), 0);
+    return max > 0 ? max : 60;
+  }, [trend]);
+
+  const peakDay = useMemo(() => {
+    if (!trend.length) return null;
+    return [...trend].sort((a, b) => b.seconds - a.seconds)[0];
+  }, [trend]);
 
   // Safety net: stop spinner after 8s
   useEffect(() => {
@@ -210,12 +222,16 @@ export default function DashboardPage() {
         setUserRole(user.role ?? null);
         setUserDept(user.department ?? null);
 
-        // Fetch user progress and store raw records for activity timeline
+        // Fetch user progress and store raw records for activity timeline & weekly chart
         const progRes = await fetch('/api/progress');
         if (progRes.ok) {
-          const { progress } = await progRes.json();
-          if (active && Array.isArray(progress)) {
-            setRecentProgress(progress);
+          const progData = await progRes.json();
+          if (active && Array.isArray(progData.progress)) {
+            setRecentProgress(progData.progress);
+          }
+          if (active && Array.isArray(progData.trend)) {
+            setTrend(progData.trend);
+            setWeeklyMinutes(progData.weeklyMinutes || 0);
           }
         }
 
@@ -999,57 +1015,145 @@ function hasLessonVideo(l?: Lesson | null): boolean {
             </div>
           </div>
 
-          {/* ── 5. Recent Learning Activity Timeline ─────────────────── */}
-          <section className="flex flex-col gap-3">
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-              <div>
-                <h2 className="text-xl font-bold text-[#0F172A]">Recent Learning Activity</h2>
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 shadow-sm">
-              {recentActivities.length === 0 ? (
-                <p className="text-xs text-[#64748B] text-center py-4">
-                  Your recent learning milestones will appear here as you complete lessons.
-                </p>
-              ) : (
-                <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-[#E2E8F0]">
-                  {recentActivities.map((act, i) => (
-                    <div
-                      key={i}
-                      className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                    >
-                      <div
-                        className={`absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full ring-4 ring-white ${
-                          act.type === 'completed' ? 'bg-[#16A34A]' : 'bg-[#a20513]'
-                        }`}
-                      />
-                      <div className="flex flex-col">
-                        <span className="font-mono text-[11px] text-[#64748B] uppercase font-semibold">
-                          {act.time}
-                        </span>
-                        <span className="text-sm font-bold text-[#0F172A] mt-0.5">
-                          {act.title}
-                        </span>
-                        <span className="text-xs text-[#64748B]">{act.courseTitle}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span
-                          className={`px-2 py-1 rounded text-[10px] font-mono font-bold uppercase ${
-                            act.type === 'completed'
-                              ? 'bg-[#DCFCE7] border border-[#BBF7D0] text-[#166534]'
-                              : 'bg-[#F1F5F9] border border-[#CBD5E1] text-[#64748B]'
-                          }`}
-                        >
-                          {act.type === 'completed' ? 'Completed' : 'Started'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+          {/* ── 5. Recent Learning Activity Timeline & Personal Weekly Chart ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Left: Recent Learning Activity Timeline (7 Cols) */}
+            <section className="lg:col-span-7 flex flex-col gap-3">
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+                <div>
+                  <h2 className="text-xl font-bold text-[#0F172A]">Recent Learning Activity</h2>
+                  <p className="text-xs text-[#64748B]">Recent milestones and course progress history.</p>
                 </div>
-              )}
-            </div>
-          </section>
+              </div>
+
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 shadow-sm flex-1 flex flex-col justify-center">
+                {recentActivities.length === 0 ? (
+                  <p className="text-xs text-[#64748B] text-center py-4">
+                    Your recent learning milestones will appear here as you complete lessons.
+                  </p>
+                ) : (
+                  <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-[#E2E8F0]">
+                    {recentActivities.map((act, i) => (
+                      <div
+                        key={i}
+                        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      >
+                        <div
+                          className={`absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full ring-4 ring-white ${
+                            act.type === 'completed' ? 'bg-[#16A34A]' : 'bg-[#a20513]'
+                          }`}
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-mono text-[11px] text-[#64748B] uppercase font-semibold">
+                            {act.time}
+                          </span>
+                          <span className="text-sm font-bold text-[#0F172A] mt-0.5">
+                            {act.title}
+                          </span>
+                          <span className="text-xs text-[#64748B]">{act.courseTitle}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span
+                            className={`px-2 py-1 rounded text-[10px] font-mono font-bold uppercase ${
+                              act.type === 'completed'
+                                ? 'bg-[#DCFCE7] border border-[#BBF7D0] text-[#166534]'
+                                : 'bg-[#F1F5F9] border border-[#CBD5E1] text-[#64748B]'
+                            }`}
+                          >
+                            {act.type === 'completed' ? 'Completed' : 'Started'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Right: Personal Weekly Learning Activity Chart (5 Cols) */}
+            <section className="lg:col-span-5 flex flex-col gap-3">
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+                <div>
+                  <h2 className="text-xl font-bold text-[#0F172A]">Learning Activity</h2>
+                  <p className="text-xs text-[#64748B]">Personal training minutes • Last 7 Days</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-extrabold text-[#0F172A] font-mono">
+                    {weeklyMinutes} min
+                  </span>
+                  <span className="block text-[10px] text-[#64748B] uppercase font-semibold font-mono">
+                    Weekly Total
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm flex flex-col justify-between flex-1">
+                {/* Minimal Industrial Bar Chart (Last 7 Days) */}
+                <div className="h-44 flex items-end justify-between gap-2 pt-6 pb-2 px-1">
+                  {trend.map((d, i) => {
+                    const hasData = d.minutes > 0;
+                    const isPeak = peakDay && d.date === peakDay.date && d.seconds > 0;
+                    const pct = hasData
+                      ? Math.max(18, Math.round((d.minutes / maxDailyMinutes) * 100))
+                      : 0;
+
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end relative">
+                        {/* Floating tooltip badge */}
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-all pointer-events-none whitespace-nowrap mb-1 ${
+                          hasData
+                            ? 'opacity-0 group-hover:opacity-100 bg-slate-900 text-white shadow-sm'
+                            : 'opacity-0 group-hover:opacity-100 bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}>
+                          {hasData ? `${d.minutes}m` : '0m'}
+                        </span>
+
+                        {/* Bar / Baseline */}
+                        {hasData ? (
+                          <div
+                            className={`w-full rounded-t transition-all cursor-pointer ${
+                              isPeak
+                                ? 'bg-[#c62828] hover:bg-[#a20513] shadow-sm'
+                                : 'bg-slate-600 hover:bg-[#c62828]'
+                            }`}
+                            style={{ height: `${pct}%` }}
+                            title={`${d.day} (${d.date}): ${d.minutes} min (${d.formatted})`}
+                          ></div>
+                        ) : (
+                          <div
+                            className="w-full h-1.5 bg-slate-200 rounded-full group-hover:bg-slate-300 transition-colors cursor-pointer"
+                            title={`${d.day} (${d.date}): 0 min`}
+                          ></div>
+                        )}
+
+                        <span className={`text-[11px] uppercase font-bold tracking-tight mt-1 ${
+                          isPeak ? 'text-[#c62828]' : hasData ? 'text-slate-800' : 'text-slate-400'
+                        }`}>
+                          {d.day}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748B]">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <span className={`w-2 h-2 rounded-full ${peakDay && peakDay.seconds > 0 ? 'bg-[#c62828]' : 'bg-slate-300'}`}></span>
+                    {peakDay && peakDay.seconds > 0 ? (
+                      <span>
+                        Peak: <strong className="text-slate-800">{peakDay.day}</strong> ({peakDay.formatted})
+                      </span>
+                    ) : (
+                      <span>No activity in last 7 days</span>
+                    )}
+                  </span>
+                  <span className="font-bold text-slate-800" title="Your cumulative watch time">
+                    Total: {formatWatchTime(totalWatchedSeconds)}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
 
           {/* ── 6. Leaderboard ─────────────── */}
           <section>

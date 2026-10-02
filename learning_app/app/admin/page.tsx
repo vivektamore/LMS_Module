@@ -1180,9 +1180,9 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Learning Activity
+                    Plant-Wide Learning Activity
                   </h2>
-                  <p className="text-xs text-slate-500">Training minutes • Last 7 Days</p>
+                  <p className="text-xs text-slate-500">Learner training minutes across all departments • Last 7 Days</p>
                 </div>
                 <div className="text-right">
                   <span className="text-base font-bold text-slate-900">
