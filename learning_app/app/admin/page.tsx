@@ -766,17 +766,11 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Factory Leadership Board — Top Tutorial Achievers
+                    Leaderboard
                   </h2>
-                  <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold tracking-wide border border-slate-200">
-                    Plant #04 Stamping & Assembly
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] text-[11px] font-bold tracking-wide border border-[#166534]/20">
-                    Q3 Active Sprint
-                  </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Recognizing shop-floor technical learners, speed to qualification, and ISO compliance metrics.
+                  Recognizing top technical learners, speed to qualification, and compliance metrics.
                 </p>
               </div>
             </div>
@@ -837,9 +831,9 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-3 shadow-xs">
                   <Trophy className="w-6 h-6 text-amber-500" />
                 </div>
-                <h3 className="text-sm font-bold text-slate-800">No Shop-Floor Learners Recorded Yet</h3>
+                <h3 className="text-sm font-bold text-slate-800">No Learners Recorded Yet</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-md">
-                  This leadership board recognizes shop-floor technical learners, speed to qualification, and ISO compliance metrics. When employees begin learning tutorials, top performers will appear here.
+                  This leaderboard recognizes top technical learners, speed to qualification, and compliance metrics. When employees begin learning courses, top performers will appear here.
                 </p>
                 <div className="mt-4 flex items-center gap-2">
                   <Link

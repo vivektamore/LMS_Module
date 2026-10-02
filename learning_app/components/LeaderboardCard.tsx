@@ -33,7 +33,7 @@ interface LeaderboardCardProps {
 
 export default function LeaderboardCard({
   compact = false,
-  title = "Leadership Achievement Board",
+  title = "Leaderboard",
   className = "",
 }: LeaderboardCardProps) {
   const [leaders, setLeaders] = useState<LeaderboardUser[]>([]);
@@ -100,7 +100,7 @@ export default function LeaderboardCard({
         <Trophy className="w-10 h-10 text-amber-400 mx-auto mb-2 opacity-80" />
         <h3 className="font-bold text-gray-900 text-sm mb-1">{title}</h3>
         <p className="text-xs text-gray-500 max-w-xs mx-auto">
-          Start completing course tutorials and earning certificates to top the factory leadership board!
+          Start completing courses and earning certificates to top the leaderboard!
         </p>
       </div>
     );

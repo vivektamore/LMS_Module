@@ -1051,9 +1051,9 @@ function hasLessonVideo(l?: Lesson | null): boolean {
             </div>
           </section>
 
-          {/* ── 6. Factory Leadership Achievement Board ─────────────── */}
+          {/* ── 6. Leaderboard ─────────────── */}
           <section>
-            <LeaderboardCard title="Leadership Board — Top Factory Achievers" />
+            <LeaderboardCard title="Leaderboard" />
           </section>
 
         </div>
