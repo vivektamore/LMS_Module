@@ -75,7 +75,7 @@ export async function GET(
 
     for (const mod of modules) {
       const lessons = await query<any[]>(`
-        SELECT id, title, type, video_url, playlist_urls, order_index, duration_seconds
+        SELECT id, title, type, video_url, document_url, playlist_urls, order_index, duration_seconds
         FROM lessons
         WHERE module_id = ?
         ORDER BY order_index ASC
@@ -336,6 +336,7 @@ export async function PUT(
             let lessonId = lesson.id;
             const lessonType = lesson.type || 'single';
             const videoUrl = lessonType === 'single' ? (lesson.video_url || null) : null;
+            const documentUrl = lessonType === 'document' ? (lesson.document_url || null) : null;
             const playlistUrlsJson = lessonType === 'playlist' && lesson.playlist_urls ? JSON.stringify(lesson.playlist_urls) : null;
             const durationSec = Number(lesson.duration_seconds) || 0;
 
@@ -343,17 +344,17 @@ export async function PUT(
               // In-place update preserving user progress and watch time
               await connection.execute(
                 `UPDATE lessons 
-                 SET title = ?, type = ?, video_url = ?, playlist_urls = ?, order_index = ?, duration_seconds = ?
+                 SET title = ?, type = ?, video_url = ?, document_url = ?, playlist_urls = ?, order_index = ?, duration_seconds = ?
                  WHERE id = ?`,
-                [lesson.title, lessonType, videoUrl, playlistUrlsJson, lessonOrder, durationSec, lessonId]
+                [lesson.title, lessonType, videoUrl, documentUrl, playlistUrlsJson, lessonOrder, durationSec, lessonId]
               );
             } else {
               // Insert new lesson
               lessonId = (lessonId && !lessonId.startsWith('temp-') && !lessonId.startsWith('les-')) ? lessonId : randomUUID();
               await connection.execute(
-                `INSERT INTO lessons (id, module_id, title, type, video_url, playlist_urls, order_index, duration_seconds)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [lessonId, moduleId, lesson.title, lessonType, videoUrl, playlistUrlsJson, lessonOrder, durationSec]
+                `INSERT INTO lessons (id, module_id, title, type, video_url, document_url, playlist_urls, order_index, duration_seconds)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [lessonId, moduleId, lesson.title, lessonType, videoUrl, documentUrl, playlistUrlsJson, lessonOrder, durationSec]
               );
             }
             keptLessonIds.push(lessonId);

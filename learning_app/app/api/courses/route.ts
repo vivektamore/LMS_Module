@@ -73,14 +73,15 @@ export async function POST(req: NextRequest) {
           const lessonId = uuidv4();
           const lessonType = lesson.type || 'single';
           const videoUrl = lessonType === 'single' ? (lesson.video_url || null) : null;
+          const documentUrl = lessonType === 'document' ? (lesson.document_url || null) : null;
           const playlistUrlsJson = lessonType === 'playlist' && lesson.playlist_urls ? JSON.stringify(lesson.playlist_urls) : null;
 
           await connection.execute(
-            `INSERT INTO lessons (id, module_id, title, type, video_url, playlist_urls, order_index, duration_seconds)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO lessons (id, module_id, title, type, video_url, document_url, playlist_urls, order_index, duration_seconds)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               lessonId, moduleId, lesson.title, lessonType,
-              videoUrl, playlistUrlsJson,
+              videoUrl, documentUrl, playlistUrlsJson,
               lesson.order_index || 0, lesson.duration_seconds || 0
             ]
           );

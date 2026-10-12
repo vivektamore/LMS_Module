@@ -6,7 +6,7 @@ import {
   Plus, Loader2, CheckCircle2, AlertCircle, X, Film,
   Award, Users, Lock, Image as ImageIcon, Link2, Sparkles,
   ChevronUp, ChevronDown, RefreshCw, Check, ArrowLeft,
-  Clock, HelpCircle, Eye, Save, Send, FileVideo
+  Clock, HelpCircle, Eye, Save, Send, FileVideo, FileText
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -99,7 +99,7 @@ interface Quiz {
 interface Lesson {
   id: string;
   title: string;
-  type: 'single' | 'playlist';
+  type: 'single' | 'playlist' | 'document';
   duration_seconds?: number;
   // single
   singleFile: File | null;
@@ -108,6 +108,12 @@ interface Lesson {
   singleError: string | null;
   // playlist
   segments: PlaylistSegment[];
+  // document (PDF / PPT)
+  documentFile?: File | null;
+  documentUrl?: string | null;
+  documentName?: string;
+  documentUploading?: boolean;
+  documentError?: string | null;
   // quizzes
   quizzes: Quiz[];
 }
@@ -191,6 +197,11 @@ function makeLesson(): Lesson {
     singleUploading: false,
     singleError: null,
     segments: [],
+    documentFile: null,
+    documentUrl: null,
+    documentName: '',
+    documentUploading: false,
+    documentError: null,
     quizzes: [],
   };
 }
@@ -421,6 +432,253 @@ function SingleVideoUploader({
         <p className="text-xs text-red-600 flex items-center gap-1">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           {lesson.singleError}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── PPT / PDF Document Uploader ─────────────────────────────────────────────
+
+function DocumentUploader({
+  lesson,
+  onUpdate,
+}: {
+  lesson: Lesson;
+  onUpdate: (patch: Partial<Lesson>) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [mode, setMode] = useState<'upload' | 'url'>('upload');
+  const [urlInput, setUrlInput] = useState(lesson.documentUrl ?? '');
+  const [uploadPercent, setUploadPercent] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  async function handleFile(file: File) {
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    const allowed = ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.txt'];
+    if (!allowed.includes(ext)) {
+      onUpdate({ documentError: `File type "${ext}" not supported. Please upload a PDF, PowerPoint (.ppt, .pptx), or Word document.` });
+      return;
+    }
+
+    setUploadPercent(0);
+    onUpdate({
+      documentFile: file,
+      documentName: file.name,
+      documentUploading: true,
+      documentError: null,
+      documentUrl: null,
+      duration_seconds: lesson.duration_seconds && lesson.duration_seconds > 0 ? lesson.duration_seconds : 300,
+    });
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload-document');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        setUploadPercent(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          setUploadPercent(100);
+          onUpdate({
+            documentUrl: json.publicUrl,
+            documentName: file.name,
+            documentUploading: false,
+          });
+        } catch {
+          onUpdate({ documentUploading: false, documentError: 'Upload failed: invalid server response' });
+        }
+      } else {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          onUpdate({ documentUploading: false, documentError: json.error || 'Upload failed' });
+        } catch {
+          onUpdate({ documentUploading: false, documentError: `Upload failed (status ${xhr.status})` });
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      onUpdate({ documentUploading: false, documentError: 'Network error occurred during document upload' });
+    };
+
+    xhr.send(fd);
+  }
+
+  function handleUrlSave() {
+    const url = urlInput.trim();
+    if (!url) {
+      onUpdate({ documentError: 'Please enter a document URL or file path.' });
+      return;
+    }
+    const inferredName = decodeURIComponent(url.split('/').pop() || 'Document').replace(/^\d+_/, '');
+    onUpdate({
+      documentUrl: url,
+      documentName: inferredName,
+      documentError: null,
+      duration_seconds: lesson.duration_seconds && lesson.duration_seconds > 0 ? lesson.duration_seconds : 300,
+    });
+  }
+
+  // Document ready state
+  if (lesson.documentUrl) {
+    const isPpt = /\.(ppt|pptx)$/i.test(lesson.documentUrl);
+    const isPdf = /\.pdf$/i.test(lesson.documentUrl);
+    const docBadge = isPpt ? 'PowerPoint Presentation' : isPdf ? 'PDF Document' : 'Document';
+
+    return (
+      <div className="flex items-center justify-between gap-3 p-3 bg-red-50/70 border border-red-200 rounded-lg">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-red-100 text-[#c62828] flex items-center justify-center shrink-0 border border-red-200">
+            <FileText className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-slate-900 truncate">
+              {lesson.documentName || lesson.documentFile?.name || lesson.documentUrl}
+            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-white text-[#c62828] border border-red-200">
+                {docBadge}
+              </span>
+              <a
+                href={lesson.documentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-[#c62828] hover:underline font-semibold"
+              >
+                Open preview ↗
+              </a>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            onUpdate({ documentFile: null, documentUrl: null, documentName: '' });
+            setUrlInput('');
+          }}
+          className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-red-700 hover:bg-red-50 rounded border border-slate-200 bg-white transition cursor-pointer"
+        >
+          Replace
+        </button>
+      </div>
+    );
+  }
+
+  if (lesson.documentUploading) {
+    return (
+      <div className="p-3 bg-red-50/60 border border-red-200 rounded-lg space-y-2">
+        <div className="flex items-center justify-between text-xs font-medium text-slate-800">
+          <span className="flex items-center gap-2 truncate">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#c62828] shrink-0" />
+            Uploading {lesson.documentName || lesson.documentFile?.name || 'document'}…
+          </span>
+          <span className="font-mono font-bold text-[#c62828] bg-white px-2 py-0.5 rounded border border-red-200">
+            {uploadPercent}%
+          </span>
+        </div>
+        <div className="w-full bg-red-200/80 rounded-full h-2 overflow-hidden">
+          <div
+            className="bg-[#c62828] h-full rounded-full transition-all duration-300"
+            style={{ width: `${Math.max(5, uploadPercent)}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg w-max text-xs">
+        <button
+          type="button"
+          onClick={() => setMode('upload')}
+          className={`px-3 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+            mode === 'upload' ? 'bg-white shadow-xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          Upload PPT / PDF
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('url')}
+          className={`px-3 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+            mode === 'url' ? 'bg-white shadow-xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          Direct URL / Path
+        </button>
+      </div>
+
+      {mode === 'upload' ? (
+        <label
+          className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-5 transition cursor-pointer group ${
+            isDragging
+              ? 'border-[#c62828] bg-red-50/50'
+              : 'border-slate-300 hover:border-[#c62828] bg-[#f8fafc] hover:bg-red-50/20'
+          }`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            const f = e.dataTransfer.files[0];
+            if (f) handleFile(f);
+          }}
+        >
+          <UploadCloud className="w-7 h-7 text-slate-400 group-hover:text-[#c62828] mb-1.5 transition" />
+          <span className="text-xs font-semibold text-slate-700 group-hover:text-[#c62828]">
+            Click to upload, or drag &amp; drop PPT, PPTX, or PDF
+          </span>
+          <span className="text-[11px] text-slate-400 mt-0.5">
+            Supports PowerPoint (.ppt, .pptx), PDF (.pdf), Word (.docx) • Max 50 MB
+          </span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf,.ppt,.pptx,.doc,.docx"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+            }}
+          />
+        </label>
+      ) : (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="/uploads/documents/lesson-slides.pptx or https://..."
+            className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-[#c62828] focus:ring-1 focus:ring-[#c62828]"
+          />
+          <button
+            type="button"
+            onClick={handleUrlSave}
+            className="px-3 py-1.5 bg-[#c62828] text-white text-xs font-semibold rounded-lg hover:bg-[#a20513] transition cursor-pointer"
+          >
+            Apply Document
+          </button>
+        </div>
+      )}
+
+      {lesson.documentError && (
+        <p className="text-xs text-red-600 flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          {lesson.documentError}
         </p>
       )}
     </div>
@@ -886,6 +1144,119 @@ function PlaylistBuilder({
   );
 }
 
+// ─── Typeable & Scrollable Timestamp Input ──────────────────────────────────
+
+function QuizTimestampInput({
+  timestampSec,
+  maxSec,
+  onChange,
+}: {
+  timestampSec: number;
+  maxSec?: number;
+  onChange: (sec: number) => void;
+}) {
+  const formatTimeStr = (sec: number) => {
+    const safe = Math.max(0, sec || 0);
+    const m = Math.floor(safe / 60);
+    const s = safe % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const parseToSec = (str: string) => {
+    const parts = str.split(':').map((p) => parseInt(p, 10));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      return parts[0] * 60 + parts[1];
+    }
+    const num = parseInt(str, 10);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const [localVal, setLocalVal] = useState(() => formatTimeStr(timestampSec));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setLocalVal(formatTimeStr(timestampSec));
+  }, [timestampSec]);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+
+    const onWheelHandler = (e: WheelEvent) => {
+      e.preventDefault();
+      const currentSec = parseToSec(el.value || '01:00');
+      const step = e.deltaY < 0 ? 5 : -5;
+      let nextSec = currentSec + step;
+      if (nextSec < 0) nextSec = 0;
+      if (maxSec && nextSec > maxSec) nextSec = maxSec;
+      const formatted = formatTimeStr(nextSec);
+      setLocalVal(formatted);
+      onChange(nextSec);
+    };
+
+    el.addEventListener('wheel', onWheelHandler, { passive: false });
+    return () => el.removeEventListener('wheel', onWheelHandler);
+  }, [maxSec, onChange]);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let val = e.target.value.replace(/[^0-9:]/g, '');
+    if (val.length === 2 && !val.includes(':') && !localVal.endsWith(':')) {
+      val = val + ':';
+    }
+    if (val.length > 5) {
+      val = val.slice(0, 5);
+    }
+    setLocalVal(val);
+
+    if (/^\d{1,2}:\d{2}$/.test(val)) {
+      let sec = parseToSec(val);
+      if (maxSec && sec > maxSec) sec = maxSec;
+      onChange(sec);
+    }
+  }
+
+  function handleBlur() {
+    let sec = parseToSec(localVal);
+    if (maxSec && sec > maxSec) sec = maxSec;
+    if (sec < 0) sec = 0;
+    const formatted = formatTimeStr(sec);
+    setLocalVal(formatted);
+    onChange(sec);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const currentSec = parseToSec(localVal);
+      const step = e.key === 'ArrowUp' ? 5 : -5;
+      let nextSec = currentSec + step;
+      if (nextSec < 0) nextSec = 0;
+      if (maxSec && nextSec > maxSec) nextSec = maxSec;
+      const formatted = formatTimeStr(nextSec);
+      setLocalVal(formatted);
+      onChange(nextSec);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-slate-300 shadow-2xs hover:border-slate-400 focus-within:border-[#c62828] focus-within:ring-2 focus-within:ring-[#c62828]/20 transition">
+      <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="01:00"
+        maxLength={5}
+        value={localVal}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        title="Type MM:SS (e.g. 01:30), scroll mouse wheel, or use Up/Down arrows to adjust by 5s"
+        className="w-14 text-xs font-mono font-medium text-slate-800 text-center focus:outline-none"
+      />
+    </div>
+  );
+}
+
 // ─── In-Video Quiz Checkpoint Builder ─────────────────────────────────────────
 
 function QuizBuilder({
@@ -1028,16 +1399,11 @@ function QuizBuilder({
                     <label className="text-xs font-medium text-slate-700 shrink-0">
                       Pause Timestamp:
                     </label>
-                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded border border-slate-300">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        value={formatTime(q.timestampSec)}
-                        onChange={(e) => updateQuiz(q.id, { timestampSec: parseTime(e.target.value) })}
-                        placeholder="01:30"
-                        className="w-14 text-xs font-mono font-medium focus:outline-none"
-                      />
-                    </div>
+                    <QuizTimestampInput
+                      timestampSec={q.timestampSec}
+                      maxSec={targetSegment?.durationSeconds || lesson.duration_seconds || undefined}
+                      onChange={(sec) => updateQuiz(q.id, { timestampSec: sec })}
+                    />
                     <span className="text-[11px] text-slate-500">
                       (MM:SS {lesson.type === 'playlist' ? `within Part ${targetPartIndex + 1}` : 'within lesson'})
                     </span>
@@ -1142,6 +1508,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
   const [isManualCode, setIsManualCode] = useState(false);
 
   // 03 Curriculum
+  const [structureType, setStructureType] = useState<'single' | 'modular'>('single');
   const [modules, setModules] = useState<Module[]>([makeModule(1)]);
 
   // Auto-generate course code based on selected department or category
@@ -1208,12 +1575,17 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               lessons: (m.lessons || []).map((l: any) => ({
                 id: l.id || uid(),
                 title: l.title || 'Untitled Lesson',
-                type: l.playlist_urls?.length ? 'playlist' : 'single',
+                type: (l.type === 'document' || l.document_url) ? 'document' : (l.playlist_urls?.length ? 'playlist' : 'single'),
                 duration_seconds: l.duration_seconds || 0,
                 singleFile: null,
                 singleUrl: l.video_url || null,
                 singleUploading: false,
                 singleError: null,
+                documentFile: null,
+                documentUrl: l.document_url || null,
+                documentName: l.document_url ? decodeURIComponent(l.document_url.split('/').pop() || '').replace(/^\d+_/, '') : '',
+                documentUploading: false,
+                documentError: null,
                 segments: (l.playlist_urls || []).map((p: any) => {
                   let inferredFileName = '';
                   if (p.url) {
@@ -1242,6 +1614,11 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               })),
             }));
             setModules(loadedModules);
+            if (loadedModules.length > 1 || (loadedModules[0]?.lessons?.length > 1)) {
+              setStructureType('modular');
+            } else {
+              setStructureType('single');
+            }
           }
         }
       })
@@ -1379,13 +1756,26 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
       alert('Please select at least one department under "Department Access" or switch to "All Departments".');
       return;
     }
-    if (!modules.length) {
+    const effectiveModules: Module[] = structureType === 'single'
+      ? [{
+          id: modules[0]?.id || uid(),
+          title: modules[0]?.title?.trim() || courseTitle.trim() || 'Main Lesson',
+          lessons: [
+            {
+              ...(modules[0]?.lessons?.[0] || makeLesson()),
+              title: modules[0]?.lessons?.[0]?.title?.trim() || courseTitle.trim() || 'Main Lesson',
+            }
+          ]
+        }]
+      : modules;
+
+    if (!effectiveModules.length) {
       alert('Add at least one curriculum module.');
       return;
     }
 
     // Validate lessons
-    for (const mod of modules) {
+    for (const mod of effectiveModules) {
       for (const lesson of mod.lessons) {
         if (!lesson.title.trim()) {
           alert(`A lesson in "${mod.title}" has no title.`);
@@ -1394,6 +1784,16 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
         if (lesson.type === 'single' && !lesson.singleUrl) {
           alert(`Lesson "${lesson.title}" needs a video upload or direct URL.`);
           return;
+        }
+        if (lesson.type === 'document') {
+          if (lesson.documentUploading) {
+            alert(`Document in lesson "${lesson.title}" is still uploading. Please wait for it to finish.`);
+            return;
+          }
+          if (!lesson.documentUrl) {
+            alert(`Document lesson "${lesson.title}" needs a PPT, PPTX, or PDF document uploaded.`);
+            return;
+          }
         }
         if (lesson.type === 'playlist') {
           if (lesson.segments.length === 0) {
@@ -1429,7 +1829,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
         visibility,
         departments: visibility === 'specific' ? selectedDepts : [],
         has_certificate: hasCertificate,
-        modules: modules.map((mod, mi) => ({
+        modules: effectiveModules.map((mod, mi) => ({
           id: mod.id,
           title: mod.title,
           order_index: mi,
@@ -1438,6 +1838,7 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             title: lesson.title,
             type: lesson.type,
             video_url: lesson.type === 'single' ? lesson.singleUrl : undefined,
+            document_url: lesson.type === 'document' ? lesson.documentUrl : undefined,
             playlist_urls:
               lesson.type === 'playlist'
                 ? lesson.segments.map((s) => ({
@@ -2128,22 +2529,196 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
             <div>
               <h2 className="text-base font-bold text-slate-900">Curriculum</h2>
               <p className="text-xs text-slate-500">
-                Course → Module → Lesson → Multi-Part Video → Checkpoint Quiz
+                {structureType === 'single'
+                  ? 'Single Lesson Mode: Upload 1 video or presentation directly. No chapters or modules needed.'
+                  : 'Multi-Module Curriculum: Organize content into modules, chapters, and multiple lessons.'}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setModules((ms) => [...ms, makeModule(ms.length + 1)])}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-[#c62828]" />
-            <span>Add Module</span>
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Format Switcher */}
+            <div className="inline-flex p-0.5 bg-slate-100 border border-slate-300 rounded-lg text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  if (structureType === 'modular' && (modules.length > 1 || modules[0]?.lessons.length > 1)) {
+                    if (!confirm('Switching to Single Lesson mode will focus on the primary lesson. Other extra modules will remain saved if you switch back. Continue?')) {
+                      return;
+                    }
+                  }
+                  setStructureType('single');
+                }}
+                className={`px-3 py-1.5 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
+                  structureType === 'single'
+                    ? 'bg-white text-[#c62828] shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Single Lesson (Quick)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStructureType('modular')}
+                className={`px-3 py-1.5 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
+                  structureType === 'modular'
+                    ? 'bg-white text-[#c62828] shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ListVideo className="w-3.5 h-3.5" />
+                <span>Multi-Module (Chapters)</span>
+              </button>
+            </div>
+
+            {structureType === 'modular' && (
+              <button
+                type="button"
+                onClick={() => setModules((ms) => [...ms, makeModule(ms.length + 1)])}
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-[#c62828]" />
+                <span>Add Module</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Modules List */}
-        <div className="flex flex-col gap-5">
+        {/* ── Mode 1: Single Lesson Quick Format (No Modules UI) ── */}
+        {structureType === 'single' ? (
+          (() => {
+            const primaryMod = modules[0] || makeModule(1);
+            const singleLesson = primaryMod.lessons[0] || makeLesson();
+
+            return (
+              <div className="bg-[#fafafa] border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
+                  <div className="flex items-center gap-2.5 flex-1">
+                    <span className="font-mono text-[11px] font-bold uppercase text-[#c62828] bg-red-50 px-2 py-0.5 rounded border border-red-200 shrink-0">
+                      TRAINING LESSON
+                    </span>
+                    <input
+                      type="text"
+                      value={singleLesson.title}
+                      onChange={(e) => updateLesson(primaryMod.id, singleLesson.id, { title: e.target.value })}
+                      placeholder={courseTitle.trim() ? `Lesson Title (default: ${courseTitle.trim()})` : "Lesson Title (e.g. Safety Drill & Precautions)"}
+                      className="font-semibold text-sm text-slate-900 bg-white hover:bg-slate-50 focus:bg-white px-2.5 py-1 rounded border border-slate-300 focus:border-[#c62828] focus:outline-none w-full max-w-md shadow-2xs"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Content Type Selector */}
+                    <div className="inline-flex p-0.5 bg-slate-100 border border-slate-300 rounded-md text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => updateLesson(primaryMod.id, singleLesson.id, { type: 'single' })}
+                        className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                          singleLesson.type === 'single'
+                            ? 'bg-white text-[#c62828] shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Single Video
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateLesson(primaryMod.id, singleLesson.id, { type: 'playlist' })}
+                        className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                          singleLesson.type === 'playlist'
+                            ? 'bg-white text-[#c62828] shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Multi-Part Video
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateLesson(primaryMod.id, singleLesson.id, { type: 'document' })}
+                        className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                          singleLesson.type === 'document'
+                            ? 'bg-white text-[#c62828] shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        PPT / PDF Document
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lesson Content Uploader */}
+                {singleLesson.type === 'single' ? (
+                  <SingleVideoUploader
+                    lesson={singleLesson}
+                    onUpdate={(patch) => updateLesson(primaryMod.id, singleLesson.id, patch)}
+                  />
+                ) : singleLesson.type === 'playlist' ? (
+                  <PlaylistBuilder
+                    lesson={singleLesson}
+                    onUpdate={(patch) => updateLesson(primaryMod.id, singleLesson.id, patch)}
+                  />
+                ) : (
+                  <DocumentUploader
+                    lesson={singleLesson}
+                    onUpdate={(patch) => updateLesson(primaryMod.id, singleLesson.id, patch)}
+                  />
+                )}
+
+                {/* In-Video Quizzes */}
+                <QuizBuilder
+                  lesson={singleLesson}
+                  onUpdate={(patch) => updateLesson(primaryMod.id, singleLesson.id, patch)}
+                />
+
+                {/* Lesson Duration Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200 text-xs text-slate-600 bg-slate-50/80 p-3 rounded-lg border border-slate-200">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-[#c62828] flex-shrink-0" />
+                    <span className="font-semibold text-slate-800">Lesson Duration:</span>
+                    <div className="flex items-center gap-1.5 font-mono">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={singleLesson.duration_seconds ? Math.floor(singleLesson.duration_seconds / 60) : ''}
+                        onChange={(e) => {
+                          const mins = Math.max(0, parseInt(e.target.value) || 0);
+                          const secs = (singleLesson.duration_seconds || 0) % 60;
+                          updateLesson(primaryMod.id, singleLesson.id, { duration_seconds: mins * 60 + secs });
+                        }}
+                        className="w-14 px-2 py-1 text-center bg-white border border-slate-300 rounded text-xs text-slate-900 font-bold focus:border-[#c62828] focus:outline-none shadow-2xs"
+                        title="Duration in minutes (auto-calculated from video, or edit manually)"
+                      />
+                      <span className="text-[11px] text-slate-500 font-semibold">min</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="0"
+                        value={singleLesson.duration_seconds ? (singleLesson.duration_seconds % 60) : ''}
+                        onChange={(e) => {
+                          const secs = Math.min(59, Math.max(0, parseInt(e.target.value) || 0));
+                          const mins = Math.floor((singleLesson.duration_seconds || 0) / 60);
+                          updateLesson(primaryMod.id, singleLesson.id, { duration_seconds: mins * 60 + secs });
+                        }}
+                        className="w-14 px-2 py-1 text-center bg-white border border-slate-300 rounded text-xs text-slate-900 font-bold focus:border-[#c62828] focus:outline-none shadow-2xs"
+                        title="Duration in seconds"
+                      />
+                      <span className="text-[11px] text-slate-500 font-semibold">sec</span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    💡 Total Training Time: {formatSeconds(singleLesson.duration_seconds || 0)}
+                  </span>
+                </div>
+              </div>
+            );
+          })()
+        ) : (
+          /* ── Mode 2: Multi-Module Curriculum (Existing Code) ── */
+          <div className="flex flex-col gap-5">
           {modules.map((mod, modIdx) => (
             <div key={mod.id} className="border border-slate-200 rounded-xl bg-[#fafafa] overflow-hidden">
               {/* Module Header */}
@@ -2233,6 +2808,17 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                           >
                             Multi-Part Video
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => updateLesson(mod.id, lesson.id, { type: 'document' })}
+                            className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                              lesson.type === 'document'
+                                ? 'bg-white text-[#c62828] shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            PPT / PDF Document
+                          </button>
                         </div>
 
                         {mod.lessons.length > 1 && (
@@ -2248,14 +2834,19 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
                       </div>
                     </div>
 
-                    {/* Lesson Content Video Uploader */}
+                    {/* Lesson Content Uploader */}
                     {lesson.type === 'single' ? (
                       <SingleVideoUploader
                         lesson={lesson}
                         onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
                       />
-                    ) : (
+                    ) : lesson.type === 'playlist' ? (
                       <PlaylistBuilder
+                        lesson={lesson}
+                        onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
+                      />
+                    ) : (
+                      <DocumentUploader
                         lesson={lesson}
                         onUpdate={(patch) => updateLesson(mod.id, lesson.id, patch)}
                       />
@@ -2320,7 +2911,8 @@ export function CourseBuilder({ editingCourseId, onCourseSaved, onCancelEdit }: 
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* ── Footer Actions ── */}

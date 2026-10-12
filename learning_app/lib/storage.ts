@@ -88,6 +88,8 @@ export const MIME_TYPES: Record<string, string> = {
 
   // Documents
   '.pdf': 'application/pdf',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   '.doc': 'application/msword',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.xls': 'application/vnd.ms-excel',

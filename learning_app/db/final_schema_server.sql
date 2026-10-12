@@ -91,15 +91,16 @@ CREATE TABLE IF NOT EXISTS modules (
 -- TABLE 6: lessons
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS lessons (
-  id               VARCHAR(36)                NOT NULL PRIMARY KEY,
-  module_id        VARCHAR(36)                NOT NULL,
-  title            VARCHAR(500)               NOT NULL,
-  type             ENUM('single', 'playlist') NOT NULL DEFAULT 'single',
-  video_url        TEXT                       NULL,
-  playlist_urls    JSON                       NULL,
-  order_index      INT                        NOT NULL DEFAULT 0,
-  duration_seconds INT                        NOT NULL DEFAULT 0,
-  created_at       DATETIME                   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id               VARCHAR(36)                            NOT NULL PRIMARY KEY,
+  module_id        VARCHAR(36)                            NOT NULL,
+  title            VARCHAR(500)                           NOT NULL,
+  type             ENUM('single', 'playlist', 'document') NOT NULL DEFAULT 'single',
+  video_url        TEXT                                   NULL,
+  document_url     TEXT                                   NULL,
+  playlist_urls    JSON                                   NULL,
+  order_index      INT                                    NOT NULL DEFAULT 0,
+  duration_seconds INT                                    NOT NULL DEFAULT 0,
+  created_at       DATETIME                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_lessons_module FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

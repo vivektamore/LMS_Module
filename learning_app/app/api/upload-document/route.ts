@@ -7,12 +7,12 @@ import { ensureStorageDir, generateStorageFilename } from '@/lib/storage';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
+const ALLOWED_EXTENSIONS = ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
 const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 /**
  * POST /api/upload-document
- * Admin only. Body: FormData with field "file" (PDF, DOCX, XLSX, max 50 MB)
+ * Admin only. Body: FormData with field "file" (PDF, PPT, PPTX, DOCX, XLSX, max 50 MB)
  * Saves documents directly to Server PC storage (uploads/pdfs or uploads/documents).
  */
 export async function POST(req: NextRequest) {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const ext = path.extname(file.name).toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       return NextResponse.json(
-        { error: `File type "${ext}" is not permitted. Allowed: PDF, Word (DOCX), Excel (XLSX), TXT.` },
+        { error: `File type "${ext}" is not permitted. Allowed: PDF, PowerPoint (PPT, PPTX), Word (DOCX), Excel (XLSX), TXT.` },
         { status: 415 }
       );
     }

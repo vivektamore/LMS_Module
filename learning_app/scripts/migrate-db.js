@@ -97,8 +97,9 @@ async function migrate() {
 
   // 3. Lessons Table Columns
   console.log('\n[3/7] Checking `lessons` table...');
-  await ensureColumn('lessons', 'type', "ENUM('single', 'playlist') NOT NULL DEFAULT 'single'");
+  await conn.query("ALTER TABLE `lessons` MODIFY COLUMN `type` ENUM('single', 'playlist', 'document') NOT NULL DEFAULT 'single'").catch(() => {});
   await ensureColumn('lessons', 'video_url', 'TEXT NULL');
+  await ensureColumn('lessons', 'document_url', 'TEXT NULL');
   await ensureColumn('lessons', 'playlist_urls', 'JSON NULL');
   await ensureColumn('lessons', 'duration_seconds', 'INT NOT NULL DEFAULT 0');
   await ensureColumn('lessons', 'order_index', 'INT NOT NULL DEFAULT 0');

@@ -24,8 +24,12 @@ import {
   AlertCircle,
   ShieldAlert,
   Sparkles,
+  FileText,
+  Download,
+  ExternalLink,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import PptxViewer from '@/components/common/PptxViewer';
 
 interface Quiz {
   id: string;
@@ -39,8 +43,9 @@ interface Quiz {
 interface Lesson {
   id: string;
   title: string;
-  type: 'single' | 'playlist';
+  type: 'single' | 'playlist' | 'document';
   video_url: string | null;
+  document_url?: string | null;
   playlist_urls: { title: string; url: string }[] | null;
   duration_seconds: number;
   order_index: number;
@@ -811,6 +816,10 @@ export default function CourseDetailPage({
                                     <span className="w-5 h-5 rounded-full bg-slate-200/80 text-slate-500 flex items-center justify-center flex-shrink-0 mt-0.5" title="Locked • Complete previous lesson to unlock">
                                       <Lock className="w-3 h-3 text-slate-500" />
                                     </span>
+                                  ) : (lesson.type === 'document' || lesson.document_url) ? (
+                                    <span className="w-5 h-5 rounded-full bg-red-50 text-[#c62828] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <FileText className="w-3.5 h-3.5" />
+                                    </span>
                                   ) : isInProg ? (
                                     <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
                                       <PlayCircle className="w-3.5 h-3.5" />
@@ -833,6 +842,11 @@ export default function CourseDetailPage({
                                       {!isUnlocked ? (
                                         <span className="inline-flex items-center text-slate-400 text-[10px] font-sans">
                                           <Lock className="w-2.5 h-2.5 mr-1" /> Locked
+                                        </span>
+                                      ) : (lesson.type === 'document' || lesson.document_url) ? (
+                                        <span className="flex items-center text-[#c62828] font-medium font-sans">
+                                          <FileText className="w-3 h-3 mr-1" />
+                                          {/\.(ppt|pptx)$/i.test(lesson.document_url || '') ? 'PowerPoint (PPT)' : 'PDF Document'}
                                         </span>
                                       ) : (
                                         <span className="flex items-center">
@@ -989,6 +1003,10 @@ export default function CourseDetailPage({
                     <span className="bg-[#c62828] text-white text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
                       Part {playlistIndex + 1} of {activeLesson.playlist_urls.length}
                     </span>
+                  ) : (activeLesson?.type === 'document' || activeLesson?.document_url) ? (
+                    <span className="bg-amber-600 text-white text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
+                      {/\.(ppt|pptx)$/i.test(activeLesson.document_url || '') ? 'PowerPoint Presentation' : 'Technical Document'}
+                    </span>
                   ) : (
                     <span className="bg-slate-800 text-slate-300 text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded">
                       Standard Module
@@ -1075,8 +1093,93 @@ export default function CourseDetailPage({
                 </div>
               )}
 
-              {/* ── Active Video Elements ────────────────────────────── */}
-              {activeLesson?.type === 'playlist' && activeLesson.playlist_urls ? (
+              {/* ── Active Video / Document Elements ──────────────────── */}
+              {activeLesson?.type === 'document' || activeLesson?.document_url ? (
+                /* PPT / PDF Document Viewer */
+                <div className="w-full h-full flex flex-col bg-slate-900 text-white relative">
+                  {activeLesson.document_url && /\.pdf$/i.test(activeLesson.document_url) ? (
+                    /* PDF Embedded Viewer (View Only, Toolbar/Download Disabled) */
+                    <div className="w-full h-full flex flex-col">
+                      <iframe
+                        src={`${activeLesson.document_url}#toolbar=0&navpanes=0`}
+                        className="w-full flex-1 border-0 bg-slate-950"
+                        title={activeLesson.title}
+                      />
+                      <div className="bg-slate-950/95 border-t border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-red-500" />
+                          <span className="font-semibold text-slate-200 truncate max-w-xs">{activeLesson.title}</span>
+                          <span className="text-[10px] font-mono bg-red-950 text-red-400 border border-red-800 px-1.5 py-0.5 rounded">PDF</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-mono text-slate-400 hidden sm:inline mr-1">
+                            🔒 View Only Mode
+                          </span>
+                          {!completedLessons[activeLesson.id] ? (
+                            <button
+                              type="button"
+                              onClick={handleMarkComplete}
+                              className="px-3.5 py-1.5 rounded bg-[#c62828] hover:bg-[#a20513] text-white text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Mark Lesson Completed</span>
+                            </button>
+                          ) : (
+                            <span className="px-3 py-1.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Completed</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : activeLesson.document_url && /\.(ppt|pptx)$/i.test(activeLesson.document_url) ? (
+                    /* PowerPoint (PPT/PPTX) Native Inline Slide Viewer */
+                    <PptxViewer
+                      url={activeLesson.document_url}
+                      title={activeLesson.title}
+                      isCompleted={Boolean(completedLessons[activeLesson.id])}
+                      onMarkComplete={handleMarkComplete}
+                    />
+                  ) : (
+                    /* Other Document Presentation Card */
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
+                      <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 mb-4 shadow-xl">
+                        <FileText className="w-8 h-8" />
+                      </div>
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full mb-2">
+                        Technical Document
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-bold text-white mb-2 max-w-lg">
+                        {activeLesson.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
+                        This technical module contains study materials. Read the document directly to complete your training.
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center gap-3">
+                        <span className="text-[11px] font-mono text-slate-400 block w-full mb-2">
+                          🔒 View Only Mode • Download Disabled
+                        </span>
+                        {!completedLessons[activeLesson.id] ? (
+                          <button
+                            type="button"
+                            onClick={handleMarkComplete}
+                            className="px-4 py-2.5 rounded-lg bg-[#c62828] hover:bg-[#a20513] text-white font-bold text-xs flex items-center gap-2 shadow-lg transition cursor-pointer"
+                          >
+                            <Check className="w-4 h-4" />
+                            <span>Mark Lesson Completed</span>
+                          </button>
+                        ) : (
+                          <span className="px-4 py-2.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-2">
+                            <Check className="w-4 h-4" />
+                            <span>Completed</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeLesson?.type === 'playlist' && activeLesson.playlist_urls ? (
                 /* Playlist Video Player */
                 isPlaying ? (
                   <video
@@ -1329,19 +1432,42 @@ export default function CourseDetailPage({
                       : activeLesson?.title ?? 'Technical Lesson'}
                   </h2>
                   <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 font-mono">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      {fmtSeconds(activeLesson?.duration_seconds ?? 0)}
-                    </span>
-                    <span>•</span>
-                    <span className="text-[#c62828] font-bold">Standard 1.0x Playback</span>
-                    <span>•</span>
-                    <span>Anti-Skip Guard Active</span>
+                    {activeLesson?.type === 'document' || activeLesson?.document_url ? (
+                      <>
+                        <span className="flex items-center gap-1 text-amber-700 font-bold">
+                          <FileText className="w-3.5 h-3.5 text-amber-600" />
+                          {/\.(ppt|pptx)$/i.test(activeLesson.document_url || '') ? 'PowerPoint Presentation' : 'Technical Document'}
+                        </span>
+                        <span>•</span>
+                        <span className="text-slate-600">Self-Paced Training</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          {fmtSeconds(activeLesson?.duration_seconds ?? 0)}
+                        </span>
+                        <span>•</span>
+                        <span className="text-[#c62828] font-bold">Standard 1.0x Playback</span>
+                        <span>•</span>
+                        <span>Anti-Skip Guard Active</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Lesson Completion Status Badge */}
+                {/* Lesson Completion Status Badge / Button */}
                 <div className="flex items-center gap-2">
+                  {activeLesson && (activeLesson.type === 'document' || activeLesson.document_url) && !completedLessons[activeLesson.id] && (
+                    <button
+                      type="button"
+                      onClick={handleMarkComplete}
+                      className="px-3.5 py-1.5 rounded-lg bg-[#c62828] hover:bg-[#a20513] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Mark Lesson Completed</span>
+                    </button>
+                  )}
                   {activeLesson && completedLessons[activeLesson.id] && (
                     <span className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs flex items-center gap-1.5 shadow-2xs">
                       <Check className="w-4 h-4 text-emerald-600" />
