@@ -142,22 +142,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid department' }, { status: 400 });
     }
 
-    const userIsSuperAdmin = isSuperAdmin(currentUser);
-    const adminDept = (currentUser.department || '').toUpperCase();
-
-    // Department Scoping: Department Admins can ONLY add users to their own department
-    if (!userIsSuperAdmin) {
-      if (!adminDept) {
-        return NextResponse.json({ error: 'Your admin account has no department assigned.' }, { status: 403 });
-      }
-      if (department && department.toUpperCase() !== adminDept) {
-        return NextResponse.json({
-          error: `Access denied: As a ${adminDept} Department Admin, you can only register users for the ${adminDept} department.`
-        }, { status: 403 });
-      }
+    const adminDept = (currentUser.department || '').toUpperCase().trim();
+    if (!adminDept) {
+      return NextResponse.json(
+        { error: 'Your admin account has no department assigned. Please contact the administrator.' },
+        { status: 403 }
+      );
     }
 
-    const finalDepartment = !userIsSuperAdmin ? currentUser.department : (department || null);
+    // Strict Rule: One admin can create User (learner or admin), but from the same department only!
+    if (department && department.toUpperCase().trim() !== adminDept) {
+      return NextResponse.json(
+        { error: `Access denied: As a ${adminDept} Admin, you can only create users for the ${adminDept} department.` },
+        { status: 403 }
+      );
+    }
+
+    const finalDepartment = currentUser.department;
+
+    // Validate role: learner (employee) or administrator (admin)
+    const validRoles = ['employee', 'admin'];
+    const finalRole = validRoles.includes(role) ? role : 'employee';
 
     const existing = await query<any[]>('SELECT id FROM users WHERE email = ?', [email.trim()]);
     if (existing.length > 0) {
@@ -177,10 +182,10 @@ export async function POST(req: Request) {
 
     await query(
       'INSERT INTO users (id, email, name, employee_id, password_hash, role, department, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [userId, email.trim(), finalName, finalEmpId, hashedPassword, role, finalDepartment, currentUser.id]
+      [userId, email.trim(), finalName, finalEmpId, hashedPassword, finalRole, finalDepartment, currentUser.id]
     );
 
-    return NextResponse.json({ success: true, userId, employee_id: finalEmpId }, { status: 201 });
+    return NextResponse.json({ success: true, userId, employee_id: finalEmpId, role: finalRole, department: finalDepartment }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });
@@ -231,14 +236,14 @@ export async function PUT(req: Request) {
     const userIsSuperAdmin = isSuperAdmin(currentUser);
     const adminDept = (currentUser.department || '').toUpperCase();
 
-    // Creator & Department Scoping: Department Admins can only edit users created by their account (or their own profile)
+    // Creator & Department Scoping: Admins can only edit users in their own department (or their own profile)
     if (!userIsSuperAdmin && id !== currentUser.id) {
       const targetUsers = await query<any[]>('SELECT created_by, role, department FROM users WHERE id = ?', [id]);
       if (targetUsers.length > 0) {
         const target = targetUsers[0];
-        if (target.role === 'admin') {
+        if (target.role === 'admin' && target.created_by !== currentUser.id) {
           return NextResponse.json({
-            error: 'Access denied: Department Admins cannot modify other Administrator accounts.'
+            error: 'Access denied: You cannot modify other Administrator accounts that were not created by your account.'
           }, { status: 403 });
         }
         if (target.created_by !== currentUser.id) {
@@ -249,7 +254,7 @@ export async function PUT(req: Request) {
       }
       if (department && department.toUpperCase() !== adminDept) {
         return NextResponse.json({
-          error: `Access denied: Only Super Admins can reassign employees to other departments.`
+          error: `Access denied: Users cannot be reassigned outside the ${adminDept} department.`
         }, { status: 403 });
       }
     }

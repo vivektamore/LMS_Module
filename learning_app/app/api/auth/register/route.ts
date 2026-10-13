@@ -24,14 +24,15 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = uuidv4();
-    const userRole = role === 'admin' ? 'admin' : role === 'student' ? 'student' : 'employee';
+    const userRole = role === 'admin' ? 'admin' : 'employee';
+    const userDept = currentUser.department || null;
 
     await query(
-      'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [userId, email, hashedPassword, userRole]
+      'INSERT INTO users (id, email, password_hash, role, department, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, email, hashedPassword, userRole, userDept, currentUser.id]
     );
 
-    const user = { id: userId, email, role: userRole };
+    const user = { id: userId, email, role: userRole, department: userDept };
     const token = signToken(user as any);
 
     const response = NextResponse.json({ success: true, user });
