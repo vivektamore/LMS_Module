@@ -24,7 +24,8 @@ import {
   Info,
   Check,
   X,
-  Sparkles
+  Sparkles,
+  Code2
 } from 'lucide-react';
 
 export interface SettingsData {
@@ -876,6 +877,33 @@ export default function SettingsManager({ initialData }: SettingsManagerProps) {
                 </div>
               </div>
 
+              {/* Developer & System Architect Representation */}
+              <div className="p-3.5 rounded-lg border border-red-200/80 bg-gradient-to-r from-red-50/60 via-slate-50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#c62828] to-[#8e0000] text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0 tracking-wider">
+                    VT
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-sm text-slate-900 tracking-tight">Vivek Tamore</span>
+                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-[#c62828] text-[10px] font-bold uppercase tracking-wider">
+                        System Architect &amp; Lead Developer
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Technical Training LMS Architecture &bull; Designed &amp; Developed for Jolly Clamps
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-[11px] font-mono text-slate-700 shadow-2xs">
+                    <Code2 className="w-3.5 h-3.5 text-[#c62828]" />
+                    <span>LMS v2.0 Production</span>
+                  </span>
+                </div>
+              </div>
+
               {/* Security Notice */}
               <div className="flex items-start gap-2 p-2.5 rounded bg-slate-100 text-slate-600 border border-slate-200 text-xs">
                 <Lock className="w-3.5 h-3.5 text-slate-500 mt-0.5 shrink-0" />
@@ -883,6 +911,22 @@ export default function SettingsManager({ initialData }: SettingsManagerProps) {
                   Database credentials, SSL client certificates, and master encryption keys are managed through server environment variables and cannot be modified from the UI.
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* Footer Representation Badge */}
+          <div className="pt-4 pb-2 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-800">Jolly Clamps Technical Training LMS v2.0</span>
+              <span>•</span>
+              <span>Designed &amp; Developed by <strong className="text-slate-900 font-bold">Vivek Tamore</strong></span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+              <span>Next.js 16 (Turbopack)</span>
+              <span>•</span>
+              <span>MySQL 8.0</span>
+              <span>•</span>
+              <span>Single-Server Office LAN</span>
             </div>
           </div>
 
