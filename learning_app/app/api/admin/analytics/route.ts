@@ -35,9 +35,10 @@ export async function GET() {
     const filterByAdmin = !isSuper && !!adminId;
 
     // 1. Fetch live metrics from MySQL
-    const [coursesCount] = filterByAdmin
-      ? await query<any[]>('SELECT COUNT(*) AS total FROM courses WHERE created_by = ?', [adminId])
-      : await query<any[]>('SELECT COUNT(*) AS total FROM courses');
+    const [coursesCount] = await query<any[]>('SELECT COUNT(*) AS total FROM courses WHERE is_archived = 0 OR is_archived IS NULL');
+
+
+
 
     const [enrollsCount] = filterByAdmin
       ? await query<any[]>(
@@ -149,7 +150,7 @@ export async function GET() {
         `);
 
     // 4. Fetch courses overview for admin dashboard
-    const coursesList = filterByAdmin
+    const coursesList = false
       ? await query<any[]>(`
           SELECT 
             c.id, c.title, c.course_code, c.created_at,
