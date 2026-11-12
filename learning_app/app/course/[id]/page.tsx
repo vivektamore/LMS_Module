@@ -134,6 +134,7 @@ export default function CourseDetailPage({
   const [antiSkipNotice, setAntiSkipNotice] = useState(false);
   const [resumeNotice, setResumeNotice] = useState<string | null>(null);
   const [sequentialLockNotice, setSequentialLockNotice] = useState<string | null>(null);
+  const [certNotice, setCertNotice] = useState<string | null>(null);
   const isResumingRef = useRef(false);
 
   // Scrubber time display
@@ -410,6 +411,8 @@ export default function CourseDetailPage({
         if (certRes?.issued && certRes?.certificate_id) {
           setEarnedCertId(certRes.certificate_id);
           setShowCertCelebration(true);
+        } else if (certRes && !certRes.issued && certRes.reason) {
+          setCertNotice(certRes.reason);
         }
       }, 600);
     }
@@ -550,13 +553,35 @@ export default function CourseDetailPage({
     }
   }
 
-  // ── Quiz Submission Handler ─────────────────────────────────────────
+  // ── Quiz Submission Handler (3 Attempts & Video Rewind on 3rd failure) ──
   function handleQuizAnswer(quizId: string, optionIndex: number) {
     if (!activeQuiz || activeQuiz.id !== quizId || quizFeedback) return;
 
     setSelectedOption(optionIndex);
+    const isCorrect = activeQuiz.correct_index === optionIndex;
+    const prevAttempts = quizAttemptsRef.current[quizId] || 0;
+    const newAttempts = prevAttempts + 1;
+    quizAttemptsRef.current[quizId] = newAttempts;
+    const willRewind = !isCorrect && newAttempts >= 3;
 
-    if (activeQuiz.correct_index === optionIndex) {
+    // Persist attempt log to server (records attempts, chosen options, and rewind resets)
+    if (course?.id && activeLesson?.id) {
+      fetch('/api/quiz-attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          course_id: course.id,
+          lesson_id: activeLesson.id,
+          quiz_id: quizId,
+          attempt_number: newAttempts,
+          selected_index: optionIndex,
+          is_correct: isCorrect,
+          resets_triggered: willRewind ? 1 : 0,
+        }),
+      }).catch((e) => console.error('Failed to log quiz attempt:', e));
+    }
+
+    if (isCorrect) {
       setQuizFeedback('correct');
       setTimeout(() => {
         setAnsweredQuizzes((prev) => ({ ...prev, [quizId]: true }));
@@ -573,12 +598,9 @@ export default function CourseDetailPage({
         }
       }, 1200);
     } else {
-      const prevAttempts = quizAttemptsRef.current[quizId] || 0;
-      const newAttempts = prevAttempts + 1;
-      quizAttemptsRef.current[quizId] = newAttempts;
       setQuizFeedback('wrong');
 
-      if (newAttempts >= 2) {
+      if (newAttempts >= 3) {
         setTimeout(() => {
           rewindingRef.current = true;
           maxWatchedRef.current = 0;
@@ -607,7 +629,7 @@ export default function CourseDetailPage({
           } else {
             rewindingRef.current = false;
           }
-        }, 1800);
+        }, 2200);
       } else {
         setTimeout(() => {
           setQuizFeedback(null);
@@ -1093,6 +1115,21 @@ export default function CourseDetailPage({
                 </div>
               )}
 
+              {/* 6. Certificate 75% Score Threshold Notice Toast */}
+              {certNotice && (
+                <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-4 py-2.5 rounded-lg text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 max-w-lg text-center">
+                  <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1">{certNotice}</span>
+                  <button
+                    type="button"
+                    onClick={() => setCertNotice(null)}
+                    className="ml-2 text-white/80 hover:text-white font-bold cursor-pointer text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
               {/* ── Active Video / Document Elements ──────────────────── */}
               {activeLesson?.type === 'document' || activeLesson?.document_url ? (
                 /* PPT / PDF Document Viewer */
@@ -1363,12 +1400,12 @@ export default function CourseDetailPage({
                       }`}
                     >
                       <div className="text-6xl">{quizFeedback === 'correct' ? '✅' : '❌'}</div>
-                      <p className="text-white text-xl font-bold">
+                      <p className="text-white text-xl font-bold text-center px-4">
                         {quizFeedback === 'correct'
                           ? 'Correct Answer!'
-                          : (quizAttemptsRef.current[activeQuiz.id] || 0) >= 2
-                          ? 'Two incorrect attempts: Rewinding section…'
-                          : 'Incorrect — Try once more!'}
+                          : (quizAttemptsRef.current[activeQuiz.id] || 0) >= 3
+                          ? '3 Incorrect attempts: Maximum attempts exceeded! Rewinding to start of video for re-study…'
+                          : `Incorrect — Attempt ${quizAttemptsRef.current[activeQuiz.id] || 1} of 3 (${3 - (quizAttemptsRef.current[activeQuiz.id] || 1)} remaining)`}
                       </p>
                     </div>
                   )}
@@ -1387,8 +1424,16 @@ export default function CourseDetailPage({
                             Part {playlistIndex + 1}
                           </span>
                         )}
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                          {(quizAttemptsRef.current[activeQuiz.id] || 0) === 0 ? 'Attempt 1 of 2' : 'Final Attempt'}
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                          (quizAttemptsRef.current[activeQuiz.id] || 0) >= 2
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>
+                          {(quizAttemptsRef.current[activeQuiz.id] || 0) === 0
+                            ? 'Attempt 1 of 3'
+                            : (quizAttemptsRef.current[activeQuiz.id] || 0) === 1
+                            ? 'Attempt 2 of 3'
+                            : 'Final Attempt (3 of 3)'}
                         </span>
                       </div>
                     </div>

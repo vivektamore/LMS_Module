@@ -66,6 +66,38 @@ export async function POST(req: Request) {
     return NextResponse.json({ issued: false, reason: `${completed}/${total} lessons completed` });
   }
 
+  // Check Quiz Score Threshold (Minimum 75% required for certificate generation)
+  const courseQuizzes = await query<any[]>(`
+    SELECT lq.id
+    FROM lesson_quizzes lq
+    JOIN lessons l ON l.id = lq.lesson_id
+    JOIN modules m ON m.id = l.module_id
+    WHERE m.course_id = ?
+  `, [course_id]);
+
+  const totalQuizzes = courseQuizzes.length;
+  if (totalQuizzes > 0) {
+    const passedQuizzes = await query<any[]>(`
+      SELECT COUNT(DISTINCT quiz_id) AS passed_count
+      FROM user_quiz_attempts
+      WHERE user_id = ? AND course_id = ? AND is_correct = 1
+    `, [user.id, course_id]);
+
+    const passedCount = Number(passedQuizzes[0]?.passed_count) || 0;
+    const scorePct = Math.round((passedCount / totalQuizzes) * 100);
+
+    if (scorePct < 75) {
+      return NextResponse.json({
+        issued: false,
+        reason: `Quiz passing score requirement not met: ${scorePct}% achieved (${passedCount}/${totalQuizzes} checkpoints passed). Minimum 75% score required for certification. Please review lessons and retry.`,
+        score_pct: scorePct,
+        passed_quizzes: passedCount,
+        total_quizzes: totalQuizzes,
+        required_pct: 75,
+      });
+    }
+  }
+
   // Issue certificate
   const certId = randomUUID();
   const userRows = await query<any[]>('SELECT name, email FROM users WHERE id = ?', [user.id]);

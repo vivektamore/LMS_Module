@@ -6,7 +6,8 @@ import {
   BookOpen, Users, Clock, TrendingUp, ArrowLeft, 
   PlayCircle, UserCheck, Activity, Search, RefreshCw, Loader2, Award, X,
   CheckCircle, Film, Eye, Download, ShieldCheck, Trophy, ChevronRight,
-  Filter, ArrowUpRight, BarChart3, AlertCircle, Medal, Sparkles, UserPlus
+  Filter, ArrowUpRight, BarChart3, AlertCircle, Medal, Sparkles, UserPlus,
+  ClipboardCheck, RotateCcw, HelpCircle, Check, AlertTriangle
 } from 'lucide-react';
 
 interface Stats {
@@ -158,6 +159,75 @@ export default function AdminDashboard() {
       setCertModal((prev) => (prev ? { ...prev, certs: data.certificates || [], loading: false } : null));
     } catch {
       setCertModal((prev) => (prev ? { ...prev, certs: [], loading: false } : null));
+    }
+  }
+
+  // ── Quiz Scorecard State & Fetchers ─────────────────────────────────
+  const [scorecardModal, setScorecardModal] = useState<{
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userDept?: string | null;
+    courseId?: string;
+    courseTitle?: string;
+    loading: boolean;
+    error: string | null;
+    data: any | null;
+  } | null>(null);
+
+  async function openScorecardModal(
+    userId: string,
+    courseId?: string,
+    userName?: string | null,
+    userEmail?: string | null,
+    userDept?: string | null,
+    courseTitle?: string | null
+  ) {
+    if (!userId) return;
+    setScorecardModal({
+      userId,
+      userName: userName || userEmail?.split('@')[0] || 'Employee',
+      userEmail: userEmail || '',
+      userDept: userDept || 'General',
+      courseId,
+      courseTitle: courseTitle || undefined,
+      loading: true,
+      error: null,
+      data: null,
+    });
+
+    try {
+      const url =
+        courseId && courseId !== 'general'
+          ? `/api/admin/quiz-scorecard?user_id=${userId}&course_id=${courseId}`
+          : `/api/admin/quiz-scorecard?user_id=${userId}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to load quiz scorecard');
+      }
+      const data = await res.json();
+      setScorecardModal((prev) => (prev ? { ...prev, data, loading: false } : null));
+    } catch (err: any) {
+      setScorecardModal((prev) => (prev ? { ...prev, error: err.message, loading: false } : null));
+    }
+  }
+
+  async function switchScorecardCourse(newCourseId: string) {
+    if (!scorecardModal?.userId) return;
+    setScorecardModal((prev) => (prev ? { ...prev, loading: true, courseId: newCourseId } : null));
+    try {
+      const res = await fetch(
+        `/api/admin/quiz-scorecard?user_id=${scorecardModal.userId}&course_id=${newCourseId}`
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to load course scorecard');
+      }
+      const data = await res.json();
+      setScorecardModal((prev) => (prev ? { ...prev, data, loading: false } : null));
+    } catch (err: any) {
+      setScorecardModal((prev) => (prev ? { ...prev, error: err.message, loading: false } : null));
     }
   }
 
@@ -680,6 +750,24 @@ export default function AdminDashboard() {
                         {/* Action Buttons */}
                         <td className="py-3.5 px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openScorecardModal(
+                                  item.userId || matchedUser?.id || '',
+                                  item.courseId,
+                                  displayName,
+                                  item.email,
+                                  item.department,
+                                  item.courseTitle
+                                )
+                              }
+                              className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-red-50 hover:border-red-300 text-slate-700 hover:text-[#c62828] rounded-md text-xs font-semibold transition cursor-pointer shadow-sm flex items-center gap-1"
+                              title="View employee checkpoint quiz scorecard, attempts & scores"
+                            >
+                              <ClipboardCheck className="w-3.5 h-3.5 text-[#c62828]" />
+                              <span>Scorecard</span>
+                            </button>
                             {matchedUser && (
                               <button
                                 type="button"
@@ -1446,6 +1534,427 @@ export default function AdminDashboard() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── QUIZ SCORECARD MODAL ──────────────────────────────────────── */}
+      {scorecardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center text-[#c62828] flex-shrink-0">
+                  <ClipboardCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                    <span>Quiz Scorecard &amp; Assessment Audit</span>
+                    {scorecardModal.data?.summary && (
+                      <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
+                        scorecardModal.data.summary.is_qualified
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                          : 'bg-red-50 text-red-700 border-red-300'
+                      }`}>
+                        {scorecardModal.data.summary.score_pct}% Score
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    <strong>{scorecardModal.userName}</strong> ({scorecardModal.userEmail}) •{' '}
+                    <span className="font-mono">{scorecardModal.userDept || 'Operations'}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                {/* Course Switcher if multiple enrolled courses */}
+                {scorecardModal.data?.enrolledCourses && scorecardModal.data.enrolledCourses.length > 1 && (
+                  <div className="relative">
+                    <select
+                      value={scorecardModal.data?.course?.id || ''}
+                      onChange={(e) => switchScorecardCourse(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#c62828] cursor-pointer shadow-xs"
+                    >
+                      {scorecardModal.data.enrolledCourses.map((c: any) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setScorecardModal(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition cursor-pointer"
+                  title="Close Scorecard"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-5">
+              {scorecardModal.loading ? (
+                <div className="py-14 flex flex-col items-center justify-center text-slate-400 gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#c62828]" />
+                  <p className="text-xs font-semibold">Loading checkpoint quiz attempts &amp; scorecard…</p>
+                </div>
+              ) : scorecardModal.error ? (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{scorecardModal.error}</span>
+                </div>
+              ) : !scorecardModal.data || !scorecardModal.data.quizzes || scorecardModal.data.quizzes.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <HelpCircle className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                  <p className="text-xs font-medium text-slate-600">
+                    No checkpoint quizzes configured for {scorecardModal.courseTitle || 'this course'}.
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Checkpoint quizzes can be assigned at exact video timestamps in the Course Builder.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Active Course Banner */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                    <div>
+                      <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400">
+                        Course Curriculum
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        {scorecardModal.data.course?.title || scorecardModal.courseTitle}
+                      </h4>
+                    </div>
+                    {scorecardModal.data.course?.course_code && (
+                      <span className="px-2 py-0.5 bg-slate-100 rounded text-xs font-mono font-bold text-slate-600 border border-slate-200">
+                        {scorecardModal.data.course.course_code}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* ── Top Summary Cards Grid (4 Cards) ──────────────── */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {/* 1. Score Percentage */}
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg flex flex-col justify-between">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                        Quiz Score
+                      </span>
+                      <div className="my-1.5 flex items-baseline gap-1.5">
+                        <span className={`text-2xl font-black ${
+                          scorecardModal.data.summary.is_qualified ? 'text-emerald-600' : 'text-[#c62828]'
+                        }`}>
+                          {scorecardModal.data.summary.score_pct}%
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-mono">/ 100%</span>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        scorecardModal.data.summary.is_qualified
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {scorecardModal.data.summary.is_qualified ? '✓ Qualified (≥75%)' : '✕ Below 75% Threshold'}
+                      </span>
+                    </div>
+
+                    {/* 2. Checkpoints Passed */}
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg flex flex-col justify-between">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                        Checkpoints Passed
+                      </span>
+                      <div className="my-1.5 flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-900">
+                          {scorecardModal.data.summary.passed_quizzes}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          of {scorecardModal.data.summary.total_quizzes}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-1.5 rounded-full ${
+                            scorecardModal.data.summary.is_qualified ? 'bg-emerald-600' : 'bg-[#c62828]'
+                          }`}
+                          style={{
+                            width: `${
+                              scorecardModal.data.summary.total_quizzes > 0
+                                ? Math.round(
+                                    (scorecardModal.data.summary.passed_quizzes /
+                                      scorecardModal.data.summary.total_quizzes) *
+                                      100
+                                  )
+                                : 0
+                            }%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3. Attempts Recorded */}
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg flex flex-col justify-between">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                        Total Attempts
+                      </span>
+                      <div className="my-1.5 flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-900">
+                          {scorecardModal.data.summary.total_attempts}
+                        </span>
+                        <span className="text-xs text-slate-500">recorded</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500">
+                        Max 3 attempts per quiz
+                      </span>
+                    </div>
+
+                    {/* 4. Resets Triggered (Rewinds) */}
+                    <div className={`p-3.5 border rounded-lg flex flex-col justify-between ${
+                      scorecardModal.data.summary.resets_triggered > 0
+                        ? 'bg-amber-50/60 border-amber-200'
+                        : 'bg-slate-50 border-slate-200'
+                    }`}>
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                        Video Rewinds
+                      </span>
+                      <div className="my-1.5 flex items-baseline gap-1.5">
+                        <span className={`text-2xl font-black ${
+                          scorecardModal.data.summary.resets_triggered > 0 ? 'text-[#c62828]' : 'text-slate-900'
+                        }`}>
+                          {scorecardModal.data.summary.resets_triggered}
+                        </span>
+                        <span className="text-xs text-slate-500">rewinds</span>
+                      </div>
+                      <span className={`text-[10px] font-bold ${
+                        scorecardModal.data.summary.resets_triggered > 0 ? 'text-red-700' : 'text-slate-500'
+                      }`}>
+                        {scorecardModal.data.summary.resets_triggered > 0
+                          ? 'Triggered by 3 failed tries'
+                          : '0 Section rewinds'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* ── Certificate Qualification Status Banner ───────── */}
+                  {scorecardModal.data.summary.certificate_issued ? (
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2.5 text-emerald-800">
+                        <Award className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                        <div>
+                          <strong>Official Certificate Issued:</strong> This employee passed with {scorecardModal.data.summary.score_pct}% quiz score and completed all lessons.
+                          {scorecardModal.data.summary.certificate_issued_at && (
+                            <span className="text-emerald-700 text-[11px] ml-1">
+                              (Awarded on {new Date(scorecardModal.data.summary.certificate_issued_at).toLocaleDateString()})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {scorecardModal.data.summary.certificate_id && (
+                        <Link
+                          href={`/certificate/${scorecardModal.data.summary.certificate_id}`}
+                          target="_blank"
+                          className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded font-bold text-xs flex items-center gap-1 shadow-xs flex-shrink-0"
+                        >
+                          <span>View Certificate</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </Link>
+                      )}
+                    </div>
+                  ) : scorecardModal.data.summary.is_qualified ? (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-xs text-blue-800">
+                      <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      <span>
+                        <strong>Score Requirement Satisfied:</strong> Employee achieved {scorecardModal.data.summary.score_pct}% (&ge; 75% required). Official verified certificate will automatically unlock when 100% of curriculum lessons are watched.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-xs text-red-800">
+                      <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                      <span>
+                        <strong>Certificate Locked:</strong> Current score ({scorecardModal.data.summary.score_pct}%) is below the mandatory <strong>75% passing threshold</strong>. Certificate generation is blocked until remaining checkpoint quizzes are successfully completed.
+                      </span>
+                    </div>
+                  )}
+
+                  {/* ── Question-by-Question Breakdown Table ──────────── */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Checkpoint Questions &amp; Attempts Log ({scorecardModal.data.quizzes.length})
+                      </h4>
+                      <span className="text-[11px] text-slate-500 font-mono">
+                        Rule: 3 incorrect attempts rewinds video to 0:00
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {scorecardModal.data.quizzes.map((q: any, idx: number) => {
+                        const m = Math.floor((q.timestamp_sec || 0) / 60);
+                        const s = (q.timestamp_sec || 0) % 60;
+                        const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
+
+                        return (
+                          <div
+                            key={q.quiz_id || idx}
+                            className={`border rounded-lg p-4 transition-all ${
+                              q.is_passed
+                                ? 'bg-white border-slate-200'
+                                : 'bg-red-50/20 border-red-200'
+                            }`}
+                          >
+                            {/* Quiz Card Header */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100">
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="font-mono font-bold text-slate-400">
+                                  #{idx + 1}
+                                </span>
+                                <span className="font-semibold text-slate-800">
+                                  {q.lesson_title}
+                                </span>
+                                {q.part_index !== null && q.part_index !== undefined && (
+                                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                    Part {q.part_index + 1}
+                                  </span>
+                                )}
+                                <span className="text-[10px] font-mono text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
+                                  <Clock className="w-3 h-3 text-slate-400" />
+                                  {timeStr}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                {q.resets_triggered > 0 && (
+                                  <span className="px-2 py-0.5 bg-red-100 text-red-800 border border-red-300 rounded text-[10px] font-bold flex items-center gap-1">
+                                    <RotateCcw className="w-3 h-3" />
+                                    <span>{q.resets_triggered} Rewind{q.resets_triggered > 1 ? 's' : ''}</span>
+                                  </span>
+                                )}
+
+                                {q.is_passed ? (
+                                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded text-[10px] font-bold flex items-center gap-1">
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    <span>Passed on Attempt #{q.passed_on_attempt}</span>
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-red-50 text-red-800 border border-red-300 rounded text-[10px] font-bold">
+                                    Not Yet Passed
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Question Text */}
+                            <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-3">
+                              {q.question}
+                            </p>
+
+                            {/* Multiple Choice Options List */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
+                              {q.options.map((opt: string, oIdx: number) => {
+                                const isCorrectOpt = oIdx === q.correct_index;
+                                return (
+                                  <div
+                                    key={oIdx}
+                                    className={`px-3 py-1.5 rounded-md text-xs border flex items-center justify-between ${
+                                      isCorrectOpt
+                                        ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950 font-medium'
+                                        : 'bg-slate-50 border-slate-200 text-slate-700'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 truncate">
+                                      <span className={`font-mono font-bold text-[11px] ${
+                                        isCorrectOpt ? 'text-emerald-700' : 'text-slate-400'
+                                      }`}>
+                                        {String.fromCharCode(65 + oIdx)}.
+                                      </span>
+                                      <span className="truncate">{opt}</span>
+                                    </div>
+                                    {isCorrectOpt && (
+                                      <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider ml-1 flex-shrink-0">
+                                        Correct
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Attempts Timeline */}
+                            <div className="bg-slate-50/80 rounded-md p-2.5 border border-slate-200/80">
+                              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block mb-1.5">
+                                Attempt History ({q.attempts.length} of max 3 attempts)
+                              </span>
+                              {q.attempts.length === 0 ? (
+                                <p className="text-[11px] text-slate-400 italic">
+                                  No attempts recorded yet for this checkpoint.
+                                </p>
+                              ) : (
+                                <div className="space-y-1">
+                                  {q.attempts.map((att: any, aIdx: number) => (
+                                    <div
+                                      key={att.id || aIdx}
+                                      className="flex flex-wrap items-center justify-between text-xs py-0.5 border-b border-slate-100 last:border-0"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono font-bold text-[11px] text-slate-600">
+                                          Try #{att.attempt_number}:
+                                        </span>
+                                        <span className="text-slate-700">
+                                          Selected: <strong className="text-slate-900">{att.selected_text}</strong>
+                                        </span>
+                                        {att.is_correct ? (
+                                          <span className="text-emerald-700 font-bold text-[11px] flex items-center gap-0.5">
+                                            ✓ Correct
+                                          </span>
+                                        ) : (
+                                          <span className="text-red-700 font-bold text-[11px] flex items-center gap-0.5">
+                                            ✕ Incorrect
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                        {att.resets_triggered > 0 && (
+                                          <span className="text-[#c62828] font-bold bg-red-100 px-1.5 py-0.2 rounded border border-red-200">
+                                            🚨 3rd Failed Attempt: Video rewound to 0:00
+                                          </span>
+                                        )}
+                                        <span>
+                                          {att.created_at ? new Date(att.created_at).toLocaleString() : ''}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+              <span className="font-medium text-[11px]">
+                Standard: Jolly Clamps LMS Assessment Engine • 75% Score Threshold Enforced
+              </span>
+              <button
+                type="button"
+                onClick={() => setScorecardModal(null)}
+                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition cursor-pointer text-xs"
+              >
+                Close Scorecard
+              </button>
+            </div>
+
           </div>
         </div>
       )}

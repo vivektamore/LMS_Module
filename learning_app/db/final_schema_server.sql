@@ -120,6 +120,28 @@ CREATE TABLE IF NOT EXISTS lesson_quizzes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
+-- TABLE 7b: user_quiz_attempts (Tracks quiz attempts, rewind resets, scores)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS user_quiz_attempts (
+  id               VARCHAR(36) NOT NULL PRIMARY KEY,
+  user_id          VARCHAR(36) NOT NULL,
+  course_id        VARCHAR(36) NOT NULL,
+  lesson_id        VARCHAR(36) NOT NULL,
+  quiz_id          VARCHAR(36) NOT NULL,
+  attempt_number   INT         NOT NULL DEFAULT 1,
+  selected_index   INT         NOT NULL,
+  is_correct       TINYINT(1)  NOT NULL DEFAULT 0,
+  resets_triggered INT         NOT NULL DEFAULT 0,
+  created_at       DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_uqa_user_course (user_id, course_id),
+  INDEX idx_uqa_quiz (quiz_id),
+  CONSTRAINT fk_uqa_user   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_uqa_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  CONSTRAINT fk_uqa_lesson FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+  CONSTRAINT fk_uqa_quiz   FOREIGN KEY (quiz_id)   REFERENCES lesson_quizzes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
 -- TABLE 8: enrollments (User course enrollments)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS enrollments (

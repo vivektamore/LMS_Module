@@ -125,6 +125,26 @@ async function migrate() {
   console.log('\nChecking `lesson_quizzes` table...');
   await ensureColumn('lesson_quizzes', 'part_index', 'INT NULL DEFAULT NULL');
 
+  // 6c. User Quiz Attempts Table (tracks checkpoint quiz attempts, scores, and rewind events)
+  console.log('\nChecking `user_quiz_attempts` table...');
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS user_quiz_attempts (
+      id               VARCHAR(36) NOT NULL PRIMARY KEY,
+      user_id          VARCHAR(36) NOT NULL,
+      course_id        VARCHAR(36) NOT NULL,
+      lesson_id        VARCHAR(36) NOT NULL,
+      quiz_id          VARCHAR(36) NOT NULL,
+      attempt_number   INT         NOT NULL DEFAULT 1,
+      selected_index   INT         NOT NULL,
+      is_correct       TINYINT(1)  NOT NULL DEFAULT 0,
+      resets_triggered INT         NOT NULL DEFAULT 0,
+      created_at       DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_uqa_user_course (user_id, course_id),
+      INDEX idx_uqa_quiz (quiz_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+  console.log('  ✓ Table `user_quiz_attempts` verified');
+
   // 7. App Settings Table
   console.log('\n[7/7] Checking `app_settings` table...');
   await conn.query(`
