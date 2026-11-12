@@ -569,7 +569,9 @@ export default function CourseDetailPage({
       fetch('/api/quiz-attempts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
+          user_id: currentUser?.id,
           course_id: course.id,
           lesson_id: activeLesson.id,
           quiz_id: quizId,

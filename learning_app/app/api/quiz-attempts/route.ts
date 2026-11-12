@@ -5,13 +5,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 // POST /api/quiz-attempts — records each quiz attempt from learner player
 export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const authUser = await getCurrentUser();
+    const userId = authUser?.id || body.user_id;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized: User not identified' }, { status: 401 });
+    }
+
     const {
       course_id,
       lesson_id,
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         id,
-        user.id,
+        userId,
         course_id,
         lesson_id,
         quiz_id,
@@ -58,6 +60,10 @@ export async function POST(req: Request) {
       },
     });
   } catch (err: any) {
+    console.error('[API quiz-attempts POST error]:', err);
+    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
+  }
+}
     console.error('[API quiz-attempts POST error]:', err);
     return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
   }
